@@ -5,12 +5,13 @@ import { BODIES, BODY_ORDER, type SelectableId } from "./bodies";
 import { fitCanvas, observeSize, useInView, usePrefersReducedMotion } from "./motion";
 import { ELEMENTS, heliocentric, julianDate, type ViewId } from "./orbits";
 import { type Camera, createScene, drawScene, type Hit } from "./orreryScene";
+import { PlanetPortrait } from "./PlanetPortrait";
 
 const SPEEDS = [
-  { id: "day", label: "1 day/s", days: 1 },
-  { id: "week", label: "1 week/s", days: 7 },
-  { id: "month", label: "1 month/s", days: 30.44 },
-  { id: "year", label: "1 year/s", days: 365.25 },
+  { id: "day", label: "Day", days: 1 },
+  { id: "week", label: "Week", days: 7 },
+  { id: "month", label: "Month", days: 30.44 },
+  { id: "year", label: "Year", days: 365.25 },
 ] as const;
 
 type SpeedId = (typeof SPEEDS)[number]["id"];
@@ -25,7 +26,7 @@ const JD_MAX = julianDate(Date.UTC(2050, 0, 1));
 
 const dateFormat = new Intl.DateTimeFormat("en-GB", {
   day: "numeric",
-  month: "short",
+  month: "long",
   year: "numeric",
   timeZone: "UTC",
 });
@@ -37,7 +38,7 @@ function formatJd(jd: number): string {
 function distanceText(id: SelectableId, jd: number): string {
   if (id === "sun") return "At the centre, holding everything else in orbit.";
   const r = heliocentric(ELEMENTS[id], jd).r;
-  return `${r.toFixed(2)} au from the Sun on this date`;
+  return `${r.toFixed(2)} au from the Sun on this date.`;
 }
 
 export function Orrery() {
@@ -52,18 +53,18 @@ export function Orrery() {
   const [playing, setPlaying] = useState(!reduced);
   const [speed, setSpeed] = useState<SpeedId>("month");
   const [view, setView] = useState<ViewId>("whole");
-  const [selected, setSelected] = useState<SelectableId | null>("earth");
+  const [selected, setSelected] = useState<SelectableId>("earth");
   const [hovered, setHovered] = useState<SelectableId | null>(null);
   const [startJd] = useState(() => julianDate(Date.now()));
 
   // Everything the animation loop reads lives here, so the loop never restarts on a control change.
   const sim = useRef({
     jd: startJd,
-    cam: { yaw: -0.6, elev: 0.95, mix: 1 } as Camera,
+    cam: { az: -1.95, el: 0.9, mix: 1 } as Camera,
     playing,
     days: 30.44,
     view,
-    selected,
+    selected: selected as SelectableId | null,
     hovered,
     reduced,
   });
@@ -83,7 +84,7 @@ export function Orrery() {
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx) return;
 
-    // Off screen we draw one still frame so the sketch is there when it scrolls in.
+    // Off screen we draw one still frame so the picture is there when it scrolls in.
     const animate = inView;
     const s = sim.current;
     const scene = createScene(s.jd);
@@ -129,8 +130,8 @@ export function Orrery() {
         const dx = p.x - drag.x;
         const dy = p.y - drag.y;
         drag.moved += Math.abs(dx) + Math.abs(dy);
-        s.cam.yaw += dx * 0.006;
-        s.cam.elev = Math.min(1.45, Math.max(0.28, s.cam.elev - dy * 0.005));
+        s.cam.az -= dx * 0.006;
+        s.cam.el = Math.min(1.45, Math.max(0.25, s.cam.el - dy * 0.005));
         drag.x = p.x;
         drag.y = p.y;
         return;
@@ -174,15 +175,15 @@ export function Orrery() {
         s.jd += dt * s.days;
         if (s.jd > JD_MAX) s.jd = julianDate(Date.now());
       }
-      if (!drag && !s.reduced) s.cam.yaw += dt * 0.025;
+      if (!drag && !s.reduced) s.cam.az -= dt * 0.015;
       const target = s.view === "inner" ? 0 : 1;
       s.cam.mix += (target - s.cam.mix) * Math.min(1, dt * (s.reduced ? 60 : 3.5));
 
       ctx.setTransform(size.dpr, 0, 0, size.dpr, 0, 0);
       hits = drawScene(ctx, scene, size.width, size.height, s.cam, {
         jd: s.jd,
-        t: s.reduced ? 0 : t,
-        boil: s.reduced ? 0 : Math.floor(t * 6),
+        t: s.reduced ? 4 : t,
+        dpr: size.dpr,
         selected: s.selected,
         hovered: s.hovered,
       });
@@ -195,7 +196,7 @@ export function Orrery() {
       const h = s.hovered ? hits.find((x) => x.id === s.hovered) : undefined;
       if (tip) {
         tip.style.opacity = h ? "1" : "0";
-        if (h) tip.style.transform = `translate(${Math.round(h.x + h.r + 10)}px, ${Math.round(h.y + h.r + 4)}px)`;
+        if (h) tip.style.transform = `translate(${Math.round(h.x + h.r + 12)}px, ${Math.round(h.y + h.r + 6)}px)`;
       }
 
       if (animate && !document.hidden) raf = requestAnimationFrame(frame);
@@ -228,29 +229,32 @@ export function Orrery() {
     sim.current.jd = julianDate(Date.now());
   };
 
-  const info = selected ? BODIES[selected] : null;
+  const info = BODIES[selected];
 
   return (
-    <div ref={wrapRef} className="flex flex-col gap-4">
+    <div ref={wrapRef} className="flex flex-col gap-5">
       <div className="relative">
         <canvas
           ref={canvasRef}
           role="img"
-          aria-label="An animated pencil sketch of the Sun, the eight planets, the asteroid belt and the asteroid (7) Iris on their orbits, shown at their approximate positions for the date above. Drag to turn the view."
-          className="block h-[clamp(20rem,52vw,34rem)] w-full cursor-grab touch-pan-y select-none"
+          aria-label="An animated view of the Sun, the eight planets, the asteroid belt and the asteroid (7) Iris on their orbits, at their approximate positions for the date shown. Drag to turn the view."
+          className="block h-[clamp(18rem,50vw,36rem)] w-full cursor-grab touch-pan-y select-none"
         />
-        <div className="pointer-events-none absolute left-3 top-2 flex flex-col">
-          <span className="hand text-[1.6rem] text-text" ref={dateRef} aria-live="off">
+        <div className="pointer-events-none absolute left-1 top-0 flex flex-col gap-1">
+          <span className="kicker">The solar system on</span>
+          <span className="font-display text-[1.9rem] leading-none text-text" ref={dateRef} aria-live="off">
             {formatJd(startJd)}
           </span>
-          <span className="text-xs text-faint">Planet positions for this date · sizes not to scale</span>
         </div>
+        <p className="pointer-events-none absolute right-1 top-0 hidden max-w-[13rem] text-right text-xs text-faint sm:block">
+          Positions from JPL orbital elements. Distances compressed, sizes not to scale. Drag to turn.
+        </p>
         <div
           ref={tipRef}
           aria-hidden="true"
-          className="hand pointer-events-none absolute left-0 top-0 rounded-md bg-raised/90 px-2 py-0.5 text-lg text-text opacity-0 shadow-sketch-sm transition-opacity"
+          className="glass pointer-events-none absolute left-0 top-0 rounded-full px-3 py-1 text-xs font-medium text-text opacity-0 transition-opacity"
         >
-          {hovered ? `${BODIES[hovered].name} · click to learn more` : ""}
+          {hovered ? `${BODIES[hovered].name} · click for details` : ""}
         </div>
       </div>
 
@@ -262,14 +266,17 @@ export function Orrery() {
           aria-label={playing ? "Pause the planets" : "Play the planets"}
           aria-pressed={playing}
         >
-          {playing ? <Pause size={16} aria-hidden /> : <Play size={16} aria-hidden />}
+          {playing ? <Pause size={15} aria-hidden /> : <Play size={15} aria-hidden />}
         </button>
-        <div className="segmented" role="group" aria-label="Speed">
-          {SPEEDS.map((o) => (
-            <button key={o.id} type="button" aria-pressed={speed === o.id} onClick={() => setSpeed(o.id)}>
-              {o.label}
-            </button>
-          ))}
+        <div className="flex items-center gap-2">
+          <div className="segmented" role="group" aria-label="Time that passes each second">
+            {SPEEDS.map((o) => (
+              <button key={o.id} type="button" aria-pressed={speed === o.id} onClick={() => setSpeed(o.id)}>
+                {o.label}
+              </button>
+            ))}
+          </div>
+          <span className="text-xs text-faint">per second</span>
         </div>
         <button type="button" className="btn btn-ghost btn-sm" onClick={resetToToday}>
           <RotateCcw size={14} aria-hidden /> Today
@@ -283,7 +290,7 @@ export function Orrery() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-[1fr_minmax(0,17rem)]">
+      <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,21rem)] md:items-start">
         <div role="group" aria-label="Pick a body to read about" className="flex flex-wrap content-start gap-2">
           {(["sun", ...BODY_ORDER] as SelectableId[]).map((id) => (
             <button
@@ -293,28 +300,21 @@ export function Orrery() {
               aria-pressed={selected === id}
               onClick={() => setSelected(id)}
             >
-              <span
-                aria-hidden="true"
-                className="inline-block size-2.5 rounded-full border border-text/70"
-                style={{ background: BODIES[id].color }}
-              />
+              <span aria-hidden="true" className="swatch" style={{ background: BODIES[id].color }} />
               {BODIES[id].name}
             </button>
           ))}
         </div>
-        <div aria-live="polite" className="sheet sheet-alt px-4 py-3">
-          {info ? (
-            <>
-              <p className="font-display text-xl text-text">{info.name}</p>
-              <p className="mt-1 text-sm text-muted">{info.fact}</p>
-              <p className="mt-2 text-xs text-faint">
-                {info.year ? <>One orbit: {info.year}. </> : null}
-                <span ref={distRef} />
-              </p>
-            </>
-          ) : (
-            <p className="text-sm text-muted">Pick a planet to read about it.</p>
-          )}
+        <div aria-live="polite" className="card flex items-center gap-4 p-4">
+          <PlanetPortrait key={selected} id={selected} className="size-28 shrink-0" />
+          <div className="min-w-0">
+            <p className="font-display text-2xl leading-tight text-text">{info.name}</p>
+            <p className="mt-1 text-sm text-muted">{info.fact}</p>
+            <p className="mt-2 text-xs text-faint">
+              {info.year ? <>One orbit: {info.year}. </> : null}
+              <span ref={distRef} />
+            </p>
+          </div>
         </div>
       </div>
     </div>
