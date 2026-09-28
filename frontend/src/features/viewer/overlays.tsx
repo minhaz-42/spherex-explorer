@@ -55,3 +55,43 @@ export function ScaleAndCompass({ scale, arcsecPerPixel }: { scale: number; arcs
     </div>
   );
 }
+
+export interface TrackPoint {
+  x: number;
+  y: number;
+  current: boolean;
+}
+
+/** A known body's predicted positions: a faint track through the sequence, a ring now. */
+export function PredictedTrack({ name, points, scale }: { name: string; points: TrackPoint[]; scale: number }) {
+  if (points.length === 0) return null;
+  const now = points.find((p) => p.current);
+  const path = points.map((p, i) => `${i === 0 ? "M" : "L"}${p.x} ${p.y}`).join(" ");
+  const r = 8 / scale;
+  return (
+    <g>
+      <title>{`${name}: position predicted by JPL`}</title>
+      <path d={path} fill="none" stroke="var(--focus)" strokeOpacity={0.55} strokeWidth={1} vectorEffect="non-scaling-stroke" />
+      {points.map((p) => (
+        <circle key={`${p.x},${p.y}`} cx={p.x} cy={p.y} r={1.6 / scale} fill="var(--focus)" fillOpacity={0.7} />
+      ))}
+      {now && (
+        <>
+          <circle cx={now.x} cy={now.y} r={r} fill="none" stroke="var(--focus)" strokeWidth={1.5} vectorEffect="non-scaling-stroke" />
+          <text
+            x={now.x + r * 1.3}
+            y={now.y - r * 1.1}
+            fontSize={11 / scale}
+            fill="var(--focus)"
+            stroke="rgb(0 0 0 / 0.6)"
+            strokeWidth={3 / scale}
+            paintOrder="stroke"
+            fontFamily="var(--font-sans)"
+          >
+            {name.replace(/\s*\(.*\)$/, "")}
+          </text>
+        </>
+      )}
+    </g>
+  );
+}

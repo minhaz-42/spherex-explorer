@@ -1,6 +1,6 @@
 import { ChevronRight, ExternalLink } from "lucide-react";
 
-import { band, describeWavelength, wavelengthColor } from "../../lib/bands";
+import { band, describeWavelength } from "../../lib/bands";
 import { formatDate, formatFlux, formatNumber, formatTime, formatWavelength } from "../../lib/format";
 import type { DecodedCutout, Frame } from "../../lib/types";
 
@@ -33,7 +33,6 @@ export function FramePanel({ frame, cutout, index, count }: Props) {
       <div>
         <p className="panel-title">Wavelength at the target</p>
         <p className="mt-2 flex items-center gap-2.5">
-          <span className="inline-block h-3 w-3 rounded-full" style={{ background: wavelengthColor(wavelength) }} aria-hidden />
           <span className="num text-xl text-text">{formatWavelength(wavelength)}</span>
           {bandwidth != null && <span className="num text-sm text-faint">± {(bandwidth / 2).toFixed(3)}</span>}
         </p>

@@ -1,7 +1,7 @@
 import { ChevronLeft, ChevronRight, Pause, Play, SkipBack } from "lucide-react";
 import { Fragment, useEffect, useRef } from "react";
 
-import { wavelengthColor } from "../../lib/bands";
+import { band } from "../../lib/bands";
 import { formatDate, formatGap, formatMonth, formatRange, formatTime, formatWavelength, mjdToDate, plural } from "../../lib/format";
 import type { Frame, Pass } from "../../lib/types";
 import { SPEEDS } from "./speeds";
@@ -94,7 +94,11 @@ interface FrameStripProps {
   onSelect: (index: number) => void;
 }
 
-/** One tick per frame, coloured by the wavelength it saw at the target, with time breaks labelled. */
+/**
+ * One column per frame. The dot's height is the wavelength that frame saw at the target, within
+ * its detector's band, so the filter stepping through wavelengths is visible as a pattern. Frames
+ * within half a spectral channel of the reference A carry a ring: those are the fair comparisons.
+ */
 export function FrameStrip({ frames, current, reference, status, onSelect }: FrameStripProps) {
   const scroller = useRef<HTMLOListElement>(null);
   // Keep the current tick in view by scrolling the strip itself, never the page.
@@ -109,53 +113,78 @@ export function FrameStrip({ frames, current, reference, status, onSelect }: Fra
     }
   }, [current]);
 
+  const detector = frames[0]?.detector ?? 1;
+  const b = band(detector);
+  const lo = Math.min(b.minUm, ...frames.map((f) => f.wavelengthUm ?? b.minUm));
+  const hi = Math.max(b.maxUm, ...frames.map((f) => f.wavelengthUm ?? b.maxUm));
+  const ref = reference !== null ? frames[reference] : undefined;
+  const matchesRef = (f: Frame) =>
+    !!ref && ref !== f && f.wavelengthUm != null && ref.wavelengthUm != null && ref.bandwidthUm != null &&
+    Math.abs(f.wavelengthUm - ref.wavelengthUm) <= 0.5 * ref.bandwidthUm;
+
   return (
-    <ol
-      ref={scroller}
-      className="flex items-end gap-[3px] overflow-x-auto pb-2 pt-1 [scrollbar-width:thin]"
-      aria-label="Frames in this sequence"
-    >
-      {frames.map((f, i) => {
-        const gap = i === 0 ? 0 : f.mjdMid - frames[i - 1]!.mjdMid;
-        const active = i === current;
-        const state = status[i] ?? "idle";
-        const label =
-          `Frame ${i + 1}: ${formatDate(f.isoMid)}, ${formatTime(f.isoMid)}, ` +
-          `${formatWavelength(f.wavelengthUm)}${i === reference ? ", reference" : ""}${state === "error" ? ", failed to load" : ""}`;
-        return (
-          <Fragment key={f.id}>
-            {i > 0 && gap > BREAK_DAYS && (
-              <li aria-hidden="true" className="flex h-10 shrink-0 items-center px-1.5">
-                <span className="whitespace-nowrap font-mono text-[0.6875rem] text-faint">+{formatGap(gap)}</span>
+    <div className="flex gap-2">
+      <div className="flex h-14 shrink-0 flex-col justify-between py-1 text-right font-mono text-[0.625rem] leading-none text-faint" aria-hidden="true">
+        <span>{hi.toFixed(2)} µm</span>
+        <span>{lo.toFixed(2)}</span>
+      </div>
+      <ol
+        ref={scroller}
+        className="flex min-w-0 flex-1 items-stretch gap-[2px] overflow-x-auto pb-2 [scrollbar-width:thin]"
+        aria-label="Frames in this sequence"
+      >
+        {frames.map((f, i) => {
+          const gap = i === 0 ? 0 : f.mjdMid - frames[i - 1]!.mjdMid;
+          const active = i === current;
+          const state = status[i] ?? "idle";
+          const matched = matchesRef(f);
+          const t = f.wavelengthUm == null ? 0.5 : (f.wavelengthUm - lo) / Math.max(hi - lo, 1e-6);
+          const label =
+            `Frame ${i + 1}: ${formatDate(f.isoMid)}, ${formatTime(f.isoMid)}, ${formatWavelength(f.wavelengthUm)}` +
+            `${i === reference ? ", reference A" : ""}${matched ? ", same wavelength as A" : ""}` +
+            `${state === "error" ? ", failed to load" : state === "ready" ? "" : ", not loaded yet"}`;
+          return (
+            <Fragment key={f.id}>
+              {i > 0 && gap > BREAK_DAYS && (
+                <li aria-hidden="true" className="flex shrink-0 items-end px-1 pb-3">
+                  <span className="whitespace-nowrap font-mono text-[0.625rem] text-faint">+{formatGap(gap)}</span>
+                </li>
+              )}
+              <li className="shrink-0">
+                <button
+                  type="button"
+                  data-index={i}
+                  aria-label={label}
+                  aria-current={active ? "true" : undefined}
+                  title={label}
+                  onClick={() => onSelect(i)}
+                  className={`group relative block h-14 w-5 rounded-[2px] transition-colors ${active ? "bg-accent-wash" : "hover:bg-hover"}`}
+                >
+                  {i === reference && (
+                    <span className="absolute left-1/2 top-0 -translate-x-1/2 font-mono text-[0.625rem] font-medium leading-none text-text">A</span>
+                  )}
+                  <span className="absolute inset-x-0 bottom-3 top-3" aria-hidden="true">
+                    <span
+                      className={`absolute left-1/2 block -translate-x-1/2 translate-y-1/2 rounded-full ${
+                        state === "error"
+                          ? "h-2 w-2 bg-danger"
+                          : active
+                            ? "h-2.5 w-2.5 bg-accent"
+                            : state === "ready"
+                              ? "h-2 w-2 bg-muted"
+                              : "h-2 w-2 border border-faint"
+                      } ${matched ? "ring-2 ring-accent/70 ring-offset-1 ring-offset-[var(--bg)]" : ""}`}
+                      style={{ bottom: `${t * 100}%` }}
+                    />
+                  </span>
+                  <span className={`absolute inset-x-1 bottom-0.5 block h-[2px] rounded-full ${active ? "bg-accent" : "bg-transparent"}`} aria-hidden="true" />
+                </button>
               </li>
-            )}
-            <li className="shrink-0">
-              <button
-                type="button"
-                data-index={i}
-                aria-label={label}
-                aria-current={active ? "true" : undefined}
-                title={label}
-                onClick={() => onSelect(i)}
-                className="group relative flex h-11 w-4 flex-col items-center justify-end rounded-[2px] focus-visible:outline-2"
-              >
-                {i === reference && (
-                  <span className="absolute -top-0.5 font-mono text-[0.625rem] leading-none text-muted">A</span>
-                )}
-                <span
-                  className={`block w-[6px] rounded-[1px] transition-[height,opacity] ${active ? "h-8" : "h-5 group-hover:h-6"}`}
-                  style={{
-                    background: state === "error" ? "var(--danger)" : wavelengthColor(f.wavelengthUm),
-                    opacity: state === "ready" || active ? 1 : state === "error" ? 0.9 : 0.35,
-                  }}
-                />
-                <span className={`mt-1 block h-[2px] w-3 ${active ? "bg-accent" : "bg-transparent"}`} />
-              </button>
-            </li>
-          </Fragment>
-        );
-      })}
-    </ol>
+            </Fragment>
+          );
+        })}
+      </ol>
+    </div>
   );
 }
 

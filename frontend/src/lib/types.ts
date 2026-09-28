@@ -131,3 +131,23 @@ export interface DecodedCutout {
   pixels: Float32Array;
   mask: Uint8Array;
 }
+
+/** A frame's brightness and wavelength at the target, without pixels (``/api/measure``). */
+export type Measurement = Pick<CutoutPayload, "key" | "obsId" | "detector" | "release" | "time" | "wavelength" | "target" | "photometry" | "background" | "retrievedAt">;
+
+export interface KnownObject {
+  name: string;
+  vmag: number | null;
+  rateArcsecPerHour: number | null;
+  positions: { key: string; mjd: number; ra: number; dec: number; inField: boolean; distanceAu: number }[];
+}
+
+export interface KnownObjects {
+  field: { ra: number; dec: number; sizeDeg: number };
+  searched: { referenceKey: string; referenceMjd: number; halfWidthDeg: number; vmagLimit: number; candidates: number };
+  objects: KnownObject[];
+  framesWithoutState: string[];
+  source: string;
+  method: string;
+  retrievedAt: string;
+}

@@ -3,7 +3,6 @@ import { type KeyboardEvent, useEffect, useMemo, useRef, useState } from "react"
 
 import type { DataSource } from "../../lib/api";
 import { ApiError } from "../../lib/api";
-import { wavelengthColor } from "../../lib/bands";
 import { formatDate, formatGap, formatNumber, formatTime, formatWavelength, plural } from "../../lib/format";
 import { autoStretch, renderDifference, renderGray, sampleAt, type StretchKind } from "../../lib/pixels";
 import {
@@ -15,13 +14,15 @@ import {
   type SequenceSpec,
 } from "../../lib/sequence";
 import { tokenRgb } from "../../lib/theme";
-import type { DecodedCutout, Frame, Observations } from "../../lib/types";
-import { formatDec, formatRa, gridToSky } from "../../lib/wcs";
+import type { DecodedCutout, Frame, KnownObjects, Observations } from "../../lib/types";
+import { formatDec, formatRa, gridToSky, skyToGrid } from "../../lib/wcs";
 import { SPEEDS } from "../timeline/speeds";
 import { FrameStrip, PassTrack, Transport } from "../timeline/Timeline";
 import { BandPicker } from "../wavelength/BandPicker";
+import { Measurements } from "../wavelength/Measurements";
 import { FramePanel } from "./FramePanel";
-import { ScaleAndCompass, TargetMarker } from "./overlays";
+import { KnownObjectsPanel } from "../known/KnownObjects";
+import { PredictedTrack, ScaleAndCompass, TargetMarker } from "./overlays";
 import { SkyCanvas } from "./SkyCanvas";
 import { type CompareMode, FIELDS, type ViewerState } from "./state";
 import { useSequence } from "./useSequence";
@@ -56,6 +57,8 @@ export function Viewer({ observations, target, source, initial, onStateChange }:
   const [contrast, setContrast] = useState(1);
   const [showA, setShowA] = useState(false);
   const [hover, setHover] = useState<{ x: number; y: number } | null>(null);
+  const [known, setKnown] = useState<KnownObjects | undefined>(undefined);
+  const [showKnown, setShowKnown] = useState(true);
 
   const sequence = useMemo(() => buildSequence(frames, spec), [frames, spec]);
   const count = sequence.length;
@@ -142,6 +145,25 @@ export function Viewer({ observations, target, source, initial, onStateChange }:
     setIndex((i) => (Math.min(i, count - 1) + delta + count) % count);
   };
 
+  const passFrames = useMemo(
+    () => (frame ? frames.filter((f) => f.passIndex === frame.passIndex) : []),
+    [frames, frame],
+  );
+
+  /** Show any frame: within this sequence if it is in it, otherwise switch to its detector's pass. */
+  const goToFrame = (f: Frame) => {
+    setPlaying(false);
+    const here = sequence.findIndex((x) => x.id === f.id);
+    if (here >= 0) {
+      setIndex(here);
+      return;
+    }
+    const next: SequenceSpec = { mode: "pass", detector: f.detector, passIndex: f.passIndex, wavelengthUm: spec.wavelengthUm };
+    setSpec(next);
+    setIndex(Math.max(buildSequence(frames, next).findIndex((x) => x.id === f.id), 0));
+    setReference(0);
+  };
+
   const changeSpec = (next: Partial<SequenceSpec>) => {
     setPlaying(false);
     setSpec((s) => ({ ...s, ...next }));
@@ -183,7 +205,27 @@ export function Viewer({ observations, target, source, initial, onStateChange }:
   const readoutSky = hover ? gridToSky(grid, hover.x, hover.y) : null;
   const currentError = results[cur]?.error;
 
-  const overlay = (scale: number) => <TargetMarker x={centre} y={centre} scale={scale} label={target.label} />;
+  // Known bodies are drawn only for the sequence they were computed for (same frames, same field).
+  const knownFor = (shownFrame: Frame | undefined) => {
+    if (!known || !showKnown || !shownFrame || known.field.sizeDeg !== fov) return [];
+    const keys = new Set(sequence.map((f) => f.key));
+    return known.objects.map((o) => ({
+      name: o.name,
+      points: o.positions
+        .filter((p) => keys.has(p.key))
+        .map((p) => ({ ...skyToGrid(grid, p.ra, p.dec)!, current: p.key === shownFrame.key }))
+        .filter((p) => Number.isFinite(p.x)),
+    }));
+  };
+  const overlayFor = (shownFrame: Frame | undefined) => (scale: number) => (
+    <>
+      <TargetMarker x={centre} y={centre} scale={scale} label={target.label} />
+      {knownFor(shownFrame).map((t) => (
+        <PredictedTrack key={t.name} name={t.name} points={t.points} scale={scale} />
+      ))}
+    </>
+  );
+  const overlay = overlayFor(compare === "blink" && showA ? refFrame : frame);
   const hud = (scale: number) => <ScaleAndCompass scale={scale} arcsecPerPixel={6.15} />;
 
   const caption = (f: Frame | undefined, tag: "A" | "B" | null, img: DecodedCutout | undefined) =>
@@ -193,10 +235,7 @@ export function Viewer({ observations, target, source, initial, onStateChange }:
         <span className="num">
           {formatDate(f.isoMid)} {formatTime(f.isoMid, false)}
         </span>
-        <span className="inline-flex items-center gap-1 num">
-          <span className="h-2 w-2 rounded-full" style={{ background: wavelengthColor(img?.payload.wavelength.atTargetUm ?? f.wavelengthUm) }} />
-          {formatWavelength(img?.payload.wavelength.atTargetUm ?? f.wavelengthUm)}
-        </span>
+        <span className="num">{formatWavelength(img?.payload.wavelength.atTargetUm ?? f.wavelengthUm)}</span>
       </div>
     ) : null;
 
@@ -272,7 +311,7 @@ export function Viewer({ observations, target, source, initial, onStateChange }:
                 size={size}
                 view={view}
                 onViewChange={setView}
-                overlay={overlay}
+                overlay={overlayFor(f)}
                 onHover={setHover}
                 label={`Frame ${tag}: ${f ? `${formatDate(f.isoMid)} ${formatTime(f.isoMid)}` : ""}`}
               >
@@ -363,14 +402,25 @@ export function Viewer({ observations, target, source, initial, onStateChange }:
             setIndex(i);
           }} />
           <p className="text-xs text-faint">
-            {plural(loaded, "frame")} of {count} loaded. Tick colour shows the wavelength each frame saw at the target.
-            Keys: ← → step, space play, R set reference.
+            {plural(loaded, "frame")} of {count} loaded. Each dot’s height is the wavelength that frame saw at the target;
+            a ring marks frames at the same wavelength as A. Keys: ← → step, space play, R set reference.
           </p>
         </div>
 
         {compare !== "single" && frame && refFrame && compat && (
           <ComparisonNote a={refFrame} b={frame} compat={compat} onUseCurrent={() => setReference(cur)} isSame={cur === ref} />
         )}
+
+        <Measurements
+          mode={spec.mode}
+          sequence={sequence}
+          results={results}
+          current={cur}
+          passFrames={passFrames}
+          target={target}
+          source={source}
+          onSelectFrame={goToFrame}
+        />
       </div>
 
       <aside className="space-y-8 lg:border-l lg:border-rule lg:pl-8">
@@ -422,6 +472,19 @@ export function Viewer({ observations, target, source, initial, onStateChange }:
             </button>
           )}
         </section>
+
+        <KnownObjectsPanel
+          key={`${spec.mode}:${spec.detector}:${spec.passIndex}:${fov}`}
+          sequence={sequence}
+          current={frame}
+          target={target}
+          fov={fov}
+          source={source}
+          enabled={spec.mode === "pass" && count > 0 && sequence[count - 1]!.mjdMid - sequence[0]!.mjdMid < 20}
+          show={showKnown}
+          onShow={setShowKnown}
+          onResult={setKnown}
+        />
 
         <section aria-labelledby="display-title" className="space-y-3 border-t border-rule pt-6">
           <h2 id="display-title" className="panel-title">

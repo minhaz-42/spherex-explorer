@@ -2,9 +2,9 @@
 
 import { queryOptions } from "@tanstack/react-query";
 
-import { type DataSource, getJson } from "./api";
+import { type DataSource, getJson, postJson } from "./api";
 import { decodeCutout } from "./pixels";
-import type { CutoutPayload, DecodedCutout, Observations, Target } from "./types";
+import type { CutoutPayload, DecodedCutout, KnownObjects, Measurement, Observations, Target } from "./types";
 
 export function resolveQuery(q: string, source: DataSource) {
   return queryOptions({
@@ -32,5 +32,26 @@ export function cutoutQuery(key: string, ra: number, dec: number, size: number, 
     staleTime: Infinity,
     gcTime: 20 * 60 * 1000,
     retry: 1,
+  });
+}
+
+export function measureQuery(key: string, ra: number, dec: number, source: DataSource) {
+  return queryOptions({
+    queryKey: ["measure", key, ra.toFixed(6), dec.toFixed(6), source],
+    queryFn: ({ signal }) => getJson<Measurement>("/measure", { key, ra, dec, source }, signal),
+    staleTime: Infinity,
+    gcTime: 30 * 60 * 1000,
+    retry: 1,
+  });
+}
+
+export function knownObjectsQuery(ra: number, dec: number, size: number, keys: string[], source: DataSource) {
+  const sorted = [...keys].sort();
+  return queryOptions({
+    queryKey: ["known", ra.toFixed(6), dec.toFixed(6), size, sorted.join("|"), source],
+    queryFn: ({ signal }) => postJson<KnownObjects>("/known-objects", { ra, dec, size, keys: sorted }, { source }, signal),
+    staleTime: Infinity,
+    gcTime: 60 * 60 * 1000,
+    retry: false,
   });
 }

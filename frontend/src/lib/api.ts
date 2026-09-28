@@ -34,9 +34,22 @@ export function buildUrl(path: string, params: Params = {}): string {
 }
 
 export async function getJson<T>(path: string, params: Params = {}, signal?: AbortSignal): Promise<T> {
+  return request<T>(buildUrl(path, params), { signal, headers: { Accept: "application/json" } });
+}
+
+export async function postJson<T>(path: string, body: unknown, params: Params = {}, signal?: AbortSignal): Promise<T> {
+  return request<T>(buildUrl(path, params), {
+    method: "POST",
+    signal,
+    headers: { Accept: "application/json", "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+async function request<T>(url: string, init: RequestInit): Promise<T> {
   let response: Response;
   try {
-    response = await fetch(buildUrl(path, params), { signal, headers: { Accept: "application/json" } });
+    response = await fetch(url, init);
   } catch (err) {
     if (err instanceof DOMException && err.name === "AbortError") throw err;
     throw new ApiError(0, "network_error", "Could not reach the SPHEREx Explorer server. Check your connection.");
