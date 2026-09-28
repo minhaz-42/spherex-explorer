@@ -20,7 +20,7 @@ from ..archive.meta import frame_meta
 from ..errors import UpstreamError
 from ..services import Services
 from .jpl import HORIZONS, Candidate, ephemeris, horizons_command, identify
-from .parallax import from_spacecraft
+from .parallax import from_spacecraft, separation_arcsec
 
 # Main-belt asteroids move up to about 0.3° a day near quadrature, where SPHEREx looks.
 MAX_RATE_DEG_PER_DAY = 0.35
@@ -97,10 +97,20 @@ async def known_objects(
             )
         if not inside_any:
             return None
+        # Average apparent rate over the sequence. SBIdent's own rate is instantaneous from the
+        # orbiting spacecraft and swings with SPHEREx's 7.5 km/s orbital motion.
+        first, last = positions[0], positions[-1]
+        hours = (last["mjd"] - first["mjd"]) * 24
+        mean_rate = (
+            round(separation_arcsec(first["ra"], first["dec"], last["ra"], last["dec"]) / hours, 2)
+            if hours > 0.1
+            else None
+        )
         return {
             "name": c.name,
             "vmag": c.vmag,
-            "rateArcsecPerHour": (
+            "rateArcsecPerHour": mean_rate,
+            "instantRateArcsecPerHour": (
                 round(math.hypot(c.ra_rate or 0.0, c.dec_rate or 0.0), 2)
                 if c.ra_rate is not None or c.dec_rate is not None
                 else None

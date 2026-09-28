@@ -19,7 +19,8 @@ from ..errors import InvalidQuery
 from ..resolve import coords, sesame
 from ..resolve.target import deep_field_at, describe
 from ..science.cutout import build_payload, fetch_window
-from ..science.grid import make_grid
+from ..science.grid import Grid, make_grid
+from ..science.moving import moving_candidates
 from ..services import Services
 from ..solar_system.known import known_objects
 
@@ -181,7 +182,12 @@ async def cutout(
         raise InvalidQuery(f"The field of view can be at most {svc.settings.max_cutout_deg}°.")
     frame = FrameKey.parse(key)
     grid = make_grid(ra, dec, size)
+    return await _cutout(svc, request, frame, grid, source)
 
+
+async def _cutout(
+    svc: Services, request: Request, frame: FrameKey, grid: Grid, source: Source
+) -> dict[str, Any]:
     async def compute() -> dict[str, Any]:
         svc.limiter.check(_client(request))
         window = await fetch_window(svc, frame, grid)
@@ -265,3 +271,29 @@ async def known(
 
     ck = cache_key(body.ra, body.dec, body.size, keys, body.vmagLimit)
     return await svc.store.get_or_compute("known", ck, compute, ttl_s=30 * DAY, source=source)
+
+
+class CandidatesRequest(BaseModel):
+    ra: float = Field(ge=0, lt=360)
+    dec: float = Field(ge=-90, le=90)
+    size: float = Field(ge=0.03, le=0.5)
+    keys: list[str] = Field(min_length=2, max_length=60)
+
+
+@router.post("/candidates")
+async def candidates(
+    request: Request, body: CandidatesRequest, source: Source = "live"
+) -> dict[str, Any]:
+    """Candidate moving sources in a pass, found by our own simple search (not by JPL)."""
+    svc = services(request)
+    frames = [FrameKey.parse(k) for k in sorted(set(body.keys))]
+    grid = make_grid(body.ra, body.dec, body.size)
+
+    async def compute() -> dict[str, Any]:
+        payloads = await asyncio.gather(*(_cutout(svc, request, f, grid, source) for f in frames))
+        result = await asyncio.to_thread(moving_candidates, grid, payloads)
+        result["retrievedAt"] = _now()
+        return result
+
+    ck = cache_key(body.ra, body.dec, grid.size_px, [f.key for f in frames], "v1")
+    return await svc.store.get_or_compute("candidates", ck, compute, ttl_s=30 * DAY, source=source)
