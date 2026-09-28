@@ -217,7 +217,8 @@ export function About() {
           <p>
             Questions to the assistant go to the same server, where the language model runs; they are not sent to an AI
             company or any other service, except an object name you ask about, which is looked up with CDS Sesame like a
-            search. The conversation exists only in your browser tab and is gone when you close it.
+            search. Your chats are kept only in this browser, so you can come back to them; the server keeps
+            nothing, and the chat list deletes them one by one or all at once.
           </p>
           <p>
             <Link to="/explore">Start exploring</Link>

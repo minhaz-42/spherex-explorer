@@ -13,9 +13,9 @@ const NAV = [
   { to: "/about", label: "About" },
 ];
 
-/** The viewer compares faint changes between frames, and Ask is for reading, so nothing moves behind them. */
+/** The viewer compares faint changes between frames, so nothing moves behind it. */
 function skyMood(pathname: string): SkyMood | null {
-  if (pathname.startsWith("/explore") || pathname.startsWith("/ask")) return null;
+  if (pathname.startsWith("/explore")) return null;
   return pathname === "/" ? "lively" : "calm";
 }
 
@@ -168,8 +168,6 @@ function Footer() {
 export function Layout() {
   const { pathname } = useLocation();
   const mood = skyMood(pathname);
-  // The Ask page is a full-height conversation, with its own composer where a footer would be.
-  const chat = pathname.startsWith("/ask");
 
   return (
     <div className="relative isolate flex min-h-dvh flex-col">
@@ -184,7 +182,7 @@ export function Layout() {
       <main id="main" className="flex flex-1 flex-col">
         <Outlet />
       </main>
-      {chat ? null : <Footer />}
+      <Footer />
       <ScrollRestoration />
     </div>
   );

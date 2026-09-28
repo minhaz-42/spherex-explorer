@@ -76,3 +76,17 @@ const getStore = () => store;
 export function useViewStore(): Store {
   return useSyncExternalStore(subscribe, getStore, getStore);
 }
+
+const COMPARE: Record<ViewContext["compare"], string> = {
+  single: "one frame",
+  blink: "blinking A and B",
+  side: "A and B side by side",
+  diff: "difference of A and B",
+};
+
+/** "frame 10 of 19 · detector 2 · blinking A and B · demo snapshot" */
+export function describeView(view: ViewContext): string {
+  const parts = [`frame ${view.frameIndex + 1} of ${view.frameCount}`, `detector ${view.detector}`, COMPARE[view.compare]];
+  if (view.source === "snapshot") parts.push("demo snapshot");
+  return parts.join(" · ");
+}

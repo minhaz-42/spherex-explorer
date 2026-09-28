@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { routes } from "../src/app/router";
 import { AnswerText } from "../src/features/assistant/AnswerText";
-import { resetConversation } from "../src/features/assistant/conversation";
+import { groupChats, reloadChats, resetChats, STORAGE_KEY, type Chat } from "../src/features/assistant/chats";
 import { toBlocks } from "../src/features/assistant/blocks";
 import { type EvidenceSource, historyFor, parseEvents, viewPayload } from "../src/features/assistant/stream";
 import { publishView, resetViewContext, type ViewContext } from "../src/features/assistant/viewContext";
@@ -98,9 +98,10 @@ const IRIS: ViewContext = {
 };
 
 const question = () => screen.getByRole("textbox", { name: "Your question" });
+const sidebar = () => screen.getAllByRole("navigation", { name: "Chats" })[0]!;
 
 beforeEach(() => {
-  resetConversation();
+  resetChats();
   resetViewContext();
   window.requestAnimationFrame = (cb: FrameRequestCallback) => {
     cb(0);
@@ -163,7 +164,16 @@ describe("answer text", () => {
   });
 });
 
-describe("Ask page", () => {
+describe("chat history", () => {
+  it("groups chats the way chat apps do", () => {
+    const now = new Date("2026-09-28T15:00:00").getTime();
+    const at = (iso: string): Chat => ({ id: iso, title: iso, createdAt: 0, updatedAt: new Date(iso).getTime(), turns: [] });
+    const groups = groupChats([at("2026-09-28T09:00:00"), at("2026-09-27T20:00:00"), at("2026-09-24T10:00:00"), at("2026-09-10T10:00:00"), at("2026-01-01T10:00:00")], now);
+    expect(groups.map((g) => g.label)).toEqual(["Today", "Yesterday", "Previous 7 days", "Previous 30 days", "Earlier"]);
+  });
+});
+
+describe("Ask, the chat app", () => {
   const answer = (text: string, grounding = { checked: 0, unverified: [] as string[], unknownTags: [] as string[] }) =>
     sse([
       ["meta", { mode: "local-model", model: "qwen3:4b", sources: SOURCES, actions: [{ label: "Explore M 31", href: "/explore?q=M31" }, { label: "Elsewhere", href: "//evil.example" }], notes: [] }],
@@ -171,24 +181,30 @@ describe("Ask page", () => {
       ["done", { grounding, mode: "local-model" }],
     ]);
 
-  it("is its own page in the main navigation", async () => {
+  it("is a chat app of its own, reached from the main navigation", async () => {
     mockServer({ chat: () => streamed("") });
     const router = renderAt("/about");
     const [link] = screen.getAllByRole("link", { name: "Ask" });
     await userEvent.click(link!);
     expect(router.state.location.pathname).toBe("/ask");
-    expect(screen.getByRole("heading", { level: 1, name: "Ask about the sky" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "SPHEREx Assistant" })).toBeInTheDocument();
     expect(await screen.findByText("qwen3:4b")).toBeInTheDocument();
+    // Its own window: a chat list and links back to the site, not the site's header and footer.
+    expect(screen.getAllByRole("button", { name: "New chat" }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("link", { name: /Explore the sky/ })[0]).toHaveAttribute("href", "/explore");
+    expect(screen.queryByText(/Not affiliated with or endorsed by NASA/)).not.toBeInTheDocument();
   });
 
-  it("streams an answer with its sources, links and checks", async () => {
+  it("streams an answer with its sources, links and checks, and files the chat", async () => {
     mockServer({
       chat: () => streamed(answer("SPHEREx is a NASA telescope [K1]. It is 3.2 au away [E1].", { checked: 2, unverified: ["3.2"], unknownTags: [] })),
     });
-    renderAt("/ask");
-    await userEvent.click(await screen.findByRole("button", { name: "What is SPHEREx?" }));
+    const router = renderAt("/ask");
+    await userEvent.click(await screen.findByRole("button", { name: /What is SPHEREx\?/ }));
     expect(await screen.findByText(/It is 3.2 au away/)).toBeInTheDocument();
     expect(chatBodies[0]).toEqual({ messages: [{ role: "user", content: "What is SPHEREx?" }], view: { page: "ask" } });
+    expect(router.state.location.pathname).toMatch(/^\/ask\/[\w-]+$/);
+    expect(within(sidebar()).getByRole("link", { name: "What is SPHEREx?" })).toBeInTheDocument();
 
     expect(screen.getByRole("link", { name: /Explore M 31/ })).toHaveAttribute("href", "/explore?q=M31");
     expect(screen.queryByRole("link", { name: /Elsewhere/ })).not.toBeInTheDocument();
@@ -196,30 +212,79 @@ describe("Ask page", () => {
     expect(screen.getByText(/Phrased by/)).toHaveTextContent("qwen3:4b");
 
     await userEvent.click(screen.getByRole("button", { name: "Source K1: What SPHEREx is" }));
-    const sources = screen.getByText("Sources (2)").closest("details")!;
-    expect(sources).toHaveAttribute("open");
-    expect(within(sources).getByText("A NASA space telescope launched on 12 March 2025.")).toBeVisible();
+    expect(screen.getByRole("button", { name: /Sources \(2\)/ })).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByText("A NASA space telescope launched on 12 March 2025.")).toBeVisible();
+  });
+
+  it("keeps chats in this browser, across a reload, until they are deleted", async () => {
+    mockServer({ chat: () => streamed(answer("A NASA telescope [K1].")) });
+    renderAt("/ask");
+    await userEvent.type(question(), "What is SPHEREx?{Enter}");
+    expect(await screen.findByText(/A NASA telescope/)).toBeInTheDocument();
+    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY)!) as Chat[];
+    expect(stored).toHaveLength(1);
+    expect(stored[0]).toMatchObject({ title: "What is SPHEREx?", turns: [{ question: "What is SPHEREx?", status: "done" }] });
+
+    reloadChats();
+    expect(within(sidebar()).getByRole("link", { name: "What is SPHEREx?" })).toBeInTheDocument();
+
+    await userEvent.click(within(sidebar()).getByRole("button", { name: "Delete “What is SPHEREx?”" }));
+    await userEvent.click(within(sidebar()).getByRole("button", { name: "Delete" }));
+    expect(within(sidebar()).queryByRole("link", { name: "What is SPHEREx?" })).not.toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)!)).toEqual([]);
+    expect(await screen.findByRole("heading", { name: "What would you like to know?" })).toBeInTheDocument();
+  });
+
+  it("starts new chats and keeps the old ones", async () => {
+    mockServer({ chat: () => streamed(answer("An answer [K1].")) });
+    renderAt("/ask");
+    await userEvent.type(question(), "First question{Enter}");
+    expect(await screen.findByText(/An answer/)).toBeInTheDocument();
+    await userEvent.click(screen.getAllByRole("button", { name: "New chat" })[0]!);
+    expect(screen.getByRole("heading", { name: "What would you like to know?" })).toBeInTheDocument();
+    await userEvent.type(question(), "Second question{Enter}");
+    await waitFor(() => expect(within(sidebar()).getAllByRole("link")).toHaveLength(2));
+    // A new chat does not carry the old one's history.
+    expect(chatBodies[1]).toEqual({ messages: [{ role: "user", content: "Second question" }], view: { page: "ask" } });
+    await userEvent.click(within(sidebar()).getByRole("link", { name: "First question" }));
+    expect(screen.getByText("First question", { selector: "p" })).toBeInTheDocument();
   });
 
   it("asks about the view the visitor had open, until they set it aside", async () => {
     mockServer({ chat: () => streamed(answer("Iris moved [E1].")) });
     publishView(IRIS);
     renderAt("/ask");
-    const card = screen.getByRole("region", { name: "The view you had open" });
-    expect(card).toHaveTextContent("Asteroid (7) Iris near 36 Sextantis");
-    expect(card).toHaveTextContent("frame 10 of 19 · detector 2 · blinking A and B · demo snapshot");
-    expect(within(card).getByRole("link", { name: "Back to the view" })).toHaveAttribute("href", IRIS.href);
+    expect(screen.getByRole("heading", { name: "Ask about the view you had open" })).toBeInTheDocument();
+    expect(screen.getByText(/frame 10 of 19 · detector 2 · blinking A and B · demo snapshot/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Open" })).toHaveAttribute("href", IRIS.href);
 
-    await userEvent.click(screen.getByRole("button", { name: "Can I compare these two frames?" }));
+    await userEvent.click(screen.getByRole("button", { name: /Can I compare these two frames\?/ }));
     expect(await screen.findByText(/Iris moved/)).toBeInTheDocument();
     expect(chatBodies[0]).toMatchObject({ view: { page: "explore", frameKey: IRIS.frameKey, compare: "blink" } });
     expect(screen.getByText("About the view of Asteroid (7) Iris near 36 Sextantis")).toBeInTheDocument();
-    expect(screen.getByText("Asking about the view of Asteroid (7) Iris near 36 Sextantis")).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole("button", { name: "Don't ask about this view" }));
     await userEvent.type(question(), "What is SPHEREx?{Enter}");
     await waitFor(() => expect(chatBodies).toHaveLength(2));
     expect(chatBodies[1]).toMatchObject({ view: { page: "ask" } });
+  });
+
+  it("asks the last question again, and copies an answer", async () => {
+    let n = 0;
+    mockServer({ chat: () => streamed(answer(n++ === 0 ? "First try [K1]." : "Second try [K1].")) });
+    const writeText = vi.fn(async () => undefined);
+    Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
+    renderAt("/ask");
+    await userEvent.type(question(), "What is SPHEREx?{Enter}");
+    expect(await screen.findByText(/First try/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Copy the answer" }));
+    expect(writeText).toHaveBeenCalledWith("First try [K1].");
+    expect(screen.getByRole("button", { name: "Copied" })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Ask again" }));
+    expect(await screen.findByText(/Second try/)).toBeInTheDocument();
+    expect(screen.queryByText(/First try/)).not.toBeInTheDocument();
+    expect(chatBodies[1]).toEqual(chatBodies[0]);
   });
 
   it("keeps the conversation while the visitor looks elsewhere", async () => {
@@ -229,8 +294,9 @@ describe("Ask page", () => {
     expect(await screen.findByText(/A NASA telescope/)).toBeInTheDocument();
     await userEvent.click(screen.getByRole("link", { name: /Explore M 31/ }));
     expect(screen.queryByText(/A NASA telescope/)).not.toBeInTheDocument();
-    const [ask] = screen.getAllByRole("link", { name: "Ask" });
-    await userEvent.click(ask!);
+    const [link] = screen.getAllByRole("link", { name: "Ask" });
+    await userEvent.click(link!);
+    await userEvent.click(within(sidebar()).getByRole("link", { name: "What is SPHEREx?" }));
     expect(screen.getByText(/A NASA telescope/)).toBeInTheDocument();
   });
 
@@ -249,7 +315,7 @@ describe("Ask page", () => {
     renderAt("/ask");
     expect(await screen.findByText(/Built-in answers/)).toBeInTheDocument();
     await userEvent.type(question(), "What is SPHEREx?{Enter}");
-    expect(await screen.findByText(/Built-in answer, put together/)).toBeInTheDocument();
+    expect(await screen.findByText("Built-in answer")).toBeInTheDocument();
     expect(screen.getByText(/no language model is running/)).toBeInTheDocument();
   });
 
@@ -279,12 +345,11 @@ describe("Ask page", () => {
     renderAt("/ask");
     expect(await screen.findByText("Not available on this server")).toBeInTheDocument();
     expect(screen.getByText(/restart its API server/)).toBeInTheDocument();
-    expect(screen.queryByText("Checking the assistant…")).not.toBeInTheDocument();
     expect(question()).toBeDisabled();
-    expect(screen.getByRole("button", { name: "What is SPHEREx?" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /What is SPHEREx\?/ })).toBeDisabled();
   });
 
-  it("shows the server's message when a question is refused, and starts over", async () => {
+  it("shows the server's message when a question is refused", async () => {
     mockServer({
       chat: () => ({
         ok: false,
@@ -295,9 +360,6 @@ describe("Ask page", () => {
     renderAt("/ask");
     await userEvent.type(question(), "hello{Enter}");
     expect(await screen.findByText("Too many requests in a short time.")).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByRole("button", { name: "New conversation" })).toBeEnabled());
-    await userEvent.click(screen.getByRole("button", { name: "New conversation" }));
-    expect(screen.getByRole("button", { name: "What is SPHEREx?" })).toBeInTheDocument();
   });
 });
 

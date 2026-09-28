@@ -1,3 +1,5 @@
+import { useId } from "react";
+
 import { usePrefersReducedMotion } from "./space/motion";
 
 /** The six filter bands stacked like SPHEREx's linear variable filters. */
@@ -20,6 +22,11 @@ const ORBIT = "M30.5 16A14.5 5.2 0 1 1 1.5 16A14.5 5.2 0 1 1 30.5 16";
  */
 export function OrbitMark({ size = 30 }: { size?: number }) {
   const reduced = usePrefersReducedMotion();
+  // Gradient ids must be unique on the page: a mark inside a hidden element (the chat sidebar on a
+  // phone) would otherwise take the others' planet with it.
+  const id = useId().replace(/:/g, "");
+  const bands = `mark-bands-${id}`;
+  const shade = `mark-shade-${id}`;
   return (
     <svg
       width={size}
@@ -30,11 +37,11 @@ export function OrbitMark({ size = 30 }: { size?: number }) {
       className="overflow-visible"
     >
       <defs>
-        <linearGradient id="mark-bands" x1="0" y1="0" x2="0" y2="1">
+        <linearGradient id={bands} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor="var(--band-1)" />
           <stop offset="1" stopColor="var(--band-6)" />
         </linearGradient>
-        <radialGradient id="mark-shade" cx="0.32" cy="0.3" r="0.8">
+        <radialGradient id={shade} cx="0.32" cy="0.3" r="0.8">
           <stop offset="0" stopColor="#ffffff" stopOpacity="0.55" />
           <stop offset="0.55" stopColor="#ffffff" stopOpacity="0" />
           <stop offset="1" stopColor="#0b1437" stopOpacity="0.45" />
@@ -52,8 +59,8 @@ export function OrbitMark({ size = 30 }: { size?: number }) {
           strokeWidth="1"
         />
       </g>
-      <circle cx="16" cy="16" r="8" fill="url(#mark-bands)" />
-      <circle cx="16" cy="16" r="8" fill="url(#mark-shade)" />
+      <circle cx="16" cy="16" r="8" fill={`url(#${bands})`} />
+      <circle cx="16" cy="16" r="8" fill={`url(#${shade})`} />
       <g transform="rotate(-24 16 16)">
         {/* The near half of the orbit passes in front of the planet. */}
         <path d="M1.5 16A14.5 5.2 0 0 0 30.5 16" fill="none" stroke="var(--text)" strokeWidth="1.1" />
