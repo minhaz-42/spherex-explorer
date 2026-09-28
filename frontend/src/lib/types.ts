@@ -150,6 +150,8 @@ export interface KnownObjects {
   source: string;
   method: string;
   retrievedAt: string;
+  /** Present when JPL Horizons did not answer for some bodies: the list may be incomplete (never cached). */
+  incomplete?: { horizonsFailed: string[]; message: string };
 }
 
 export interface CandidateSighting {

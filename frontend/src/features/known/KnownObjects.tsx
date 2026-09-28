@@ -40,6 +40,18 @@ export function KnownObjectsPanel({ sequence, current, target, fov, source, enab
     onResult(data);
   }, [data, onResult]);
 
+  // JPL Horizons failed for some bodies: say so (the server does not cache such an answer), offer a
+  // fresh lookup, and never present the partial list as the whole story.
+  const incomplete = data?.incomplete;
+  const warning = incomplete ? (
+    <div className="note note-warn space-y-2" role="status">
+      <p>{lang === "bn" ? t("incomplete", { n: incomplete.horizonsFailed.length }) : incomplete.message}</p>
+      <button type="button" className="btn btn-ghost btn-sm" onClick={() => query.refetch()} disabled={query.isFetching}>
+        {t("tryAgain")}
+      </button>
+    </div>
+  ) : null;
+
   const inCurrent = (name: string) =>
     data?.objects.find((o) => o.name === name)?.positions.find((p) => p.key === current?.key)?.inField ?? false;
 
@@ -75,11 +87,14 @@ export function KnownObjectsPanel({ sequence, current, target, fov, source, enab
           </button>
         </div>
       ) : data && data.objects.length === 0 ? (
-        <p className="text-sm text-muted">
-          {t("knownNone", { vmag: data.searched.vmagLimit })}
-        </p>
+        (warning ?? (
+          <p className="text-sm text-muted">
+            {t("knownNone", { vmag: data.searched.vmagLimit })}
+          </p>
+        ))
       ) : data ? (
         <>
+          {warning}
           <label className="flex items-center gap-2 text-sm text-muted">
             <input type="checkbox" checked={show} onChange={(e) => onShow(e.target.checked)} className="accent-[var(--accent)]" />
             {t("showPredicted")}

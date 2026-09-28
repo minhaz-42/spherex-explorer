@@ -16,6 +16,8 @@ export const KNOWN = defineMessages({
     knownPending: "Asking JPL… it integrates each orbit, so the first answer for a field takes 30 seconds to 2 minutes.",
     knownFailed: "JPL could not be reached.",
     tryAgain: "Try again",
+    incomplete:
+      "JPL Horizons did not answer for {n} catalogued bodies near this field, so this list may be incomplete. Try again in a moment.",
     knownNone:
       "JPL knows no asteroid or comet brighter than V = {vmag} in this field during this pass. Anything that moves here is not in its catalogue, or is fainter, or is an artefact.",
     showPredicted: "Show predicted positions on the image",
@@ -68,6 +70,8 @@ export const KNOWN = defineMessages({
       "JPL-কে জিজ্ঞেস করা হচ্ছে… এটি প্রতিটি কক্ষপথ ধাপে ধাপে হিসাব করে, তাই কোনো দৃষ্টিক্ষেত্রের প্রথম উত্তর আসতে 30 সেকেন্ড থেকে 2 মিনিট লাগে।",
     knownFailed: "JPL-এর সঙ্গে যোগাযোগ করা যায়নি।",
     tryAgain: "আবার চেষ্টা করুন",
+    incomplete:
+      "JPL Horizons এই ক্ষেত্রের কাছের {n}টি পরিচিত বস্তুর অবস্থান জানায়নি, তাই তালিকাটি অসম্পূর্ণ হতে পারে। একটু পরে আবার চেষ্টা করুন।",
     knownNone:
       "এই জরিপ-পর্বের সময় এই দৃষ্টিক্ষেত্রে V = {vmag}-এর চেয়ে উজ্জ্বল কোনো গ্রহাণু বা ধূমকেতু JPL-এর জানা নেই। এখানে যা কিছু সরে, তা হয় এর ক্যাটালগে নেই, নয়তো আরও ম্লান, নয়তো ছবির কোনো ত্রুটি।",
     showPredicted: "ছবিতে পূর্বাভাসিত অবস্থান দেখান",
