@@ -3,10 +3,10 @@
 An interactive web explorer for visualizing how the infrared sky changes across SPHEREx observations
 over time and wavelength.
 
-> **Status: early development.** The data-access layer is being prototyped and the app has not been
-> scaffolded yet. The [Getting started](#getting-started) section gets its install and run commands
-> in the same commit that adds them. If something here doesn't match the code, the README is out of
-> date: please fix it in your next commit.
+> **Status: in development.** The backend and frontend skeletons run; data access, the viewer and
+> the change tools are being built phase by phase (see [docs/architecture.md](docs/architecture.md)).
+> If something here doesn't match the code, the README is out of date: please fix it in your next
+> commit.
 
 ## What the project does
 
@@ -80,14 +80,59 @@ The columns the app relies on are `access_url` (on-prem file URL), `cloud_access
 
 ## Getting started
 
-Prerequisites: `git` and a GitHub account with access to this repository (SSH key added).
+Prerequisites:
+
+- `git` and an SSH key with access to this repository
+- Python 3.12 or newer and [uv](https://docs.astral.sh/uv/) 0.5 or newer
+- Node.js 20.19 or newer with npm
+- `make` (preinstalled on macOS and most Linux distributions)
+
+No accounts, API keys or AWS credentials are needed. Every setting is optional; see
+[.env.example](.env.example).
 
 ```bash
 git clone git@github.com:minhaz-42/spherex-explorer.git
 cd spherex-explorer
+make setup     # backend virtualenv (uv sync), frontend packages (npm ci), Playwright's Chromium
+make dev       # API on http://127.0.0.1:8000, web app with hot reload on http://localhost:5173
 ```
 
-_Install and run commands are added here when the app is scaffolded._
+Open <http://localhost:5173>. The web app proxies `/api` to the API server.
+
+| Command | What it does |
+|---|---|
+| `make check` | Lint (ruff, ESLint), type-check (mypy, tsc) and unit tests (pytest, Vitest) |
+| `make test-live` | Backend tests that call the real IRSA and JPL services |
+| `make test-e2e` | Browser tests with Playwright |
+| `make build` | Production build of the web app into `frontend/dist` |
+| `make serve` | Build, then serve the API and the app from one process on <http://127.0.0.1:8000> |
+
+## Project structure
+
+```text
+backend/                   Python data service (FastAPI)
+  src/spherex_explorer/
+    main.py                app factory: /api routes, security headers, serves frontend/dist
+    config.py              settings from SPHEREX_* environment variables
+    cache.py               memory + disk cache, demo snapshot store
+    http.py                pooled upstream HTTP client
+    api/                   HTTP routes
+    archive/               IRSA SIA, FITS byte-range reader, frame normalisation
+    science/               alignment, background, photometry, change tools
+    solar_system/          JPL SBIdent and Horizons, parallax
+    resolve/               coordinate parsing, CDS Sesame
+  tests/                   pytest suite with fixtures recorded from real responses
+frontend/                  Web app (Vite, React, TypeScript, Tailwind CSS)
+  src/app/                 router, layout, error boundary
+  src/pages/               Landing, Explore, Discover, About
+  src/features/            search, viewer, timeline, wavelength, compare, discover
+  src/lib/                 API client and helpers
+  src/styles/index.css     design tokens and base styles
+  tests/, e2e/             Vitest and Playwright tests
+data/                      curated Discover cases and the demo snapshot
+docs/                      research, architecture, requirements, methods, limitations, demo guide
+Makefile                   setup, dev, check, build, serve
+```
 
 ## Working on the project
 
