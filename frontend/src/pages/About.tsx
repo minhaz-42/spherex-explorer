@@ -135,8 +135,10 @@ export function About() {
           </p>
           <p>
             <strong>The Ask assistant.</strong> Questions are answered from evidence the server gathers itself: its own
-            measurements of the frames on screen, the comparison rules, JPL’s predictions, the moving-source search, the
-            Discover cases and short method notes. Your browser only says which target and frames are on screen, never
+            measurements of the frames on screen, the comparison rules, JPL’s predictions, the moving-source search,
+            SIMBAD’s facts about the object at the target or any object you name, SPHEREx coverage, the Discover cases
+            and short method notes. Whatever a question needs and the server does not have yet is fetched live first,
+            and the chat says what it is fetching. Your browser only says which target and frames are on screen, never
             any values. A language model running on the same machine as the server (by default Qwen3 4B, through
             Ollama) phrases that evidence and cites it by number; it never sees the images. Every number and date in an
             answer is then looked for in its sources, and anything not found is flagged under the answer. Links in
@@ -203,8 +205,31 @@ export function About() {
             queries SIMBAD, NED and VizieR.
           </p>
           <p>
-            SPHEREx Explorer is not affiliated with or endorsed by NASA, JPL, Caltech or IPAC, and uses none of their
-            logos.
+            This research has made use of the <Ext href="https://simbad.cds.unistra.fr/simbad/">SIMBAD database</Ext>,
+            operated at CDS, Strasbourg, France, for the facts about each object and the objects in each field. Images
+            of the same field in other light come through the CDS{" "}
+            <Ext href="https://alasky.cds.unistra.fr/hips-image-services/hips2fits">hips2fits</Ext> service.
+          </p>
+          <p>
+            The Digitized Sky Surveys were produced at the Space Telescope Science Institute under U.S. Government grant
+            NAG W-2166. The images of these surveys are based on photographic data obtained using the Oschin Schmidt
+            Telescope on Palomar Mountain (POSS-I and POSS-II, Caltech) and the UK Schmidt Telescope.
+          </p>
+          <p>
+            This publication makes use of data products from the Two Micron All Sky Survey, which is a joint project of
+            the University of Massachusetts and the Infrared Processing and Analysis Center/California Institute of
+            Technology, funded by the National Aeronautics and Space Administration and the National Science Foundation;
+            and from the Wide-field Infrared Survey Explorer (AllWISE), which is a joint project of the University of
+            California, Los Angeles, and the Jet Propulsion Laboratory/California Institute of Technology, funded by
+            the National Aeronautics and Space Administration.
+          </p>
+          <p>
+            Coastlines on the globe are from <Ext href="https://www.naturalearthdata.com/">Natural Earth</Ext>, in the
+            public domain.
+          </p>
+          <p>
+            SPHEREx Explorer is not affiliated with or endorsed by NASA, JPL, Caltech, IPAC or CDS, and uses none of
+            their logos.
           </p>
         </Section>
 
