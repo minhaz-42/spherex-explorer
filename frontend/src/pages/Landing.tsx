@@ -10,6 +10,7 @@ import { SkyGlobe } from "../components/space/SkyGlobe";
 import { SpectrumExplorer } from "../components/space/SpectrumExplorer";
 import { type Stat, StatRow } from "../components/space/Stats";
 import { BlinkPreview } from "../features/discover/BlinkPreview";
+import { AtlasTeaser } from "../features/objects/AtlasTeaser";
 import { getJson } from "../lib/api";
 import { caseLink, casesQuery } from "../lib/queries";
 
@@ -228,7 +229,7 @@ export function Landing() {
                 <Figure />
               </div>
               <div className="p-6">
-                <p className="num text-xs tracking-[0.14em] text-accent">{n}</p>
+                <p className="num text-xs font-semibold text-accent">{n}</p>
                 <h3 className="mt-1 text-[2rem]">{title}</h3>
                 <p className="mt-2 text-muted">{text}</p>
               </div>
@@ -315,6 +316,32 @@ export function Landing() {
         </div>
       </section>
 
+      {/* Objects to start with, from the Explore atlas. */}
+      <section className="page py-20 sm:py-24">
+        <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+          <SectionHead
+            n="04"
+            kicker="The atlas"
+            title={
+              <>
+                Galaxies, nebulae and clusters, <span className="shine">ready to explore</span>.
+              </>
+            }
+          >
+            Each one opens with what the catalogues know about it, the same patch in other light, and every SPHEREx
+            image of it.
+          </SectionHead>
+          <Reveal delay={1}>
+            <Link to="/explore" className="btn btn-secondary">
+              See the whole atlas <ArrowRight size={16} aria-hidden />
+            </Link>
+          </Reveal>
+        </div>
+        <Reveal className="mt-10">
+          <AtlasTeaser />
+        </Reveal>
+      </section>
+
       {/* A real case from the archive. */}
       <section className="page py-20 sm:py-28">
         <Reveal className="card relative isolate grid items-center gap-10 overflow-hidden p-6 sm:p-10 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
@@ -342,7 +369,7 @@ export function Landing() {
             </figcaption>
           </figure>
           <div className="flex flex-col gap-6">
-            <SectionHead n="04" kicker="Discover" title="An asteroid, caught in the act.">
+            <SectionHead n="05" kicker="Discover" title="An asteroid, caught in the act.">
               <p>
                 On 2 December 2025 SPHEREx looked twice at the same patch of sky near the star 36 Sextantis, 9 hours and
                 42 minutes apart. In between, the asteroid <strong>(7) Iris</strong> moved against the background stars.

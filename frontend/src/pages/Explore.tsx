@@ -8,11 +8,14 @@ import { formatDate, formatRange, plural } from "../lib/format";
 import { observationsQuery, resolveQuery } from "../lib/queries";
 import type { SequenceSpec } from "../lib/sequence";
 import type { Observations, Target } from "../lib/types";
+import { ObjectAtlas } from "../features/objects/ObjectAtlas";
+import { DecadesSection } from "../features/decades/DecadesSection";
+import { FieldObjects } from "../features/objects/FieldObjects";
+import { ObjectProfile, type SkyContext } from "../features/objects/ObjectProfile";
 import { SearchForm } from "../features/search/SearchForm";
 import { type CompareMode, FIELDS, type ViewerState } from "../features/viewer/state";
 import { Viewer } from "../features/viewer/Viewer";
 import { EXAMPLES } from "../lib/examples";
-
 
 function num(v: string | null): number | null {
   if (v === null || v.trim() === "") return null;
@@ -124,12 +127,25 @@ export function Explore() {
       <SearchStart
         onSearch={search}
         initial={q}
-        error={resolveError.isUpstream || resolveError.code === "network_error" ? `${resolveError.message} Try again in a moment.` : resolveError.message}
+        error={
+          resolveError.isUpstream || resolveError.code === "network_error"
+            ? `${resolveError.message} Try again in a moment.`
+            : resolveError.message
+        }
       />
     );
   }
 
-  const label = name ?? (posRa !== undefined ? `RA ${posRa.toFixed(4)}°, Dec ${posDec!.toFixed(4)}°` : q ?? "");
+  const label = name ?? (posRa !== undefined ? `RA ${posRa.toFixed(4)}°, Dec ${posDec!.toFixed(4)}°` : (q ?? ""));
+  const where = observations.data?.target ?? target;
+  const sky: SkyContext | undefined = where
+    ? {
+        constellation: where.constellation,
+        galactic: where.galactic,
+        ecliptic: where.ecliptic,
+        deepField: observations.data?.deepField?.name ?? target?.deepField ?? null,
+      }
+    : undefined;
 
   return (
     <div className="mx-auto w-full max-w-[96rem] px-[var(--gutter)] pb-16 pt-6">
@@ -140,13 +156,31 @@ export function Explore() {
         </div>
       </div>
 
+      {posRa !== undefined && posDec !== undefined ? (
+        <div className="pt-6">
+          <ObjectProfile key={`${posRa}:${posDec}`} ra={posRa} dec={posDec} label={label} source={source} sky={sky} />
+        </div>
+      ) : null}
+
+      {posRa !== undefined && posDec !== undefined ? (
+        <div className="pt-4">
+          <DecadesSection key={`${posRa}:${posDec}`} ra={posRa} dec={posDec} label={label} source={source} />
+        </div>
+      ) : null}
+
       <div className="pt-6">
         {resolved.isPending && !!q && !hasPosition ? (
           <Working text={`Looking up “${q}”…`} />
         ) : observations.isPending ? (
           <Working text={`Searching the SPHEREx archive for images of ${label}…`} detail="Usually 3–10 seconds." />
         ) : observations.error ? (
-          <ObservationsError error={observations.error} onRetry={() => observations.refetch()} source={source} onSnapshot={() => setSource("snapshot")} onLive={() => setSource("live")} />
+          <ObservationsError
+            error={observations.error}
+            onRetry={() => observations.refetch()}
+            source={source}
+            onSnapshot={() => setSource("snapshot")}
+            onLive={() => setSource("live")}
+          />
         ) : observations.data && observations.data.frames.length === 0 ? (
           <Empty label={label} />
         ) : observations.data ? (
@@ -160,6 +194,12 @@ export function Explore() {
           />
         ) : null}
       </div>
+
+      {posRa !== undefined && posDec !== undefined ? (
+        <div className="pt-8">
+          <FieldObjects key={`${posRa}:${posDec}`} ra={posRa} dec={posDec} source={source} />
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -205,7 +245,8 @@ function TargetHeading({
 export function DataModeBadge({ source, retrievedAt }: { source: DataSource; retrievedAt?: string }) {
   return source === "snapshot" ? (
     <span className="inline-flex items-center gap-1.5 rounded-sm border border-snapshot/50 px-2 py-0.5 text-xs text-snapshot">
-      <Database size={12} aria-hidden /> Demo snapshot · real SPHEREx data{retrievedAt ? `, retrieved ${formatDate(retrievedAt)}` : ""}
+      <Database size={12} aria-hidden /> Demo snapshot · real SPHEREx data
+      {retrievedAt ? `, retrieved ${formatDate(retrievedAt)}` : ""}
     </span>
   ) : (
     <span className="inline-flex items-center gap-1.5 rounded-sm border border-live/50 px-2 py-0.5 text-xs text-live">
@@ -285,8 +326,8 @@ function Empty({ label }: { label: string }) {
     <div className="max-w-2xl space-y-3 py-10">
       <p className="text-lg">No SPHEREx images cover {label} yet.</p>
       <p className="text-muted">
-        SPHEREx maps the whole sky every six months, and new images reach the archive within about 60 days. A few regions
-        have gaps in the public Quick Release data so far. Try a nearby position or one of the examples.
+        SPHEREx maps the whole sky every six months, and new images reach the archive within about 60 days. A few
+        regions have gaps in the public Quick Release data so far. Try a nearby position or one of the examples.
       </p>
       <Link to="/explore" className="btn btn-secondary">
         New search
@@ -295,33 +336,76 @@ function Empty({ label }: { label: string }) {
   );
 }
 
-function SearchStart({ onSearch, initial, error }: { onSearch: (q: string) => void; initial?: string; error?: string | null }) {
+function SearchStart({
+  onSearch,
+  initial,
+  error,
+}: {
+  onSearch: (q: string) => void;
+  initial?: string;
+  error?: string | null;
+}) {
   return (
-    <div className="page grid gap-12 py-12 md:py-20 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:gap-16">
-      <div className="space-y-6">
-        <p className="kicker">Explore</p>
-        <h1 className="text-[length:var(--fs-h1)]">Where in the sky?</h1>
-        <p className="prose-body">
-          Name an object or paste coordinates. SPHEREx Explorer finds every SPHEREx image that covers that spot, lines
-          them up, and lets you step through time.
-        </p>
-        <SearchForm initial={initial} error={error} onSearch={onSearch} />
-      </div>
-      <div>
-        <h2 className="panel-title">Start with one of these</h2>
-        <ul className="mt-3 divide-y divide-rule border-y border-rule">
-          {EXAMPLES.map((ex) => (
-            <li key={ex.to}>
-              <Link to={ex.to} className="group flex items-center justify-between gap-4 py-4 no-underline">
-                <span>
-                  <span className="block text-text group-hover:text-accent-strong">{ex.label}</span>
-                  <span className="block text-sm text-faint">{ex.detail}</span>
-                </span>
-                <ArrowRight size={18} className="shrink-0 text-faint transition-transform group-hover:translate-x-0.5 group-hover:text-text" aria-hidden />
-              </Link>
-            </li>
-          ))}
-        </ul>
+    <div className="flex flex-col">
+      <section className="relative isolate overflow-x-clip">
+        <div className="nebula" aria-hidden="true">
+          <span
+            style={{
+              left: "55%",
+              top: "-20%",
+              width: "40rem",
+              height: "40rem",
+              background: "radial-gradient(closest-side, rgb(141 116 255 / 0.4), transparent)",
+            }}
+          />
+          <span
+            style={{
+              left: "-5%",
+              top: "10%",
+              width: "32rem",
+              height: "32rem",
+              background: "radial-gradient(closest-side, rgb(255 196 102 / 0.45), transparent)",
+              animationDelay: "-10s",
+            }}
+          />
+        </div>
+        <div className="page grid gap-12 py-12 md:py-16 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:gap-16">
+          <div className="space-y-6">
+            <p className="kicker">Explore</p>
+            <h1 className="text-[length:var(--fs-h1)]">Where in the sky?</h1>
+            <p className="prose-body">
+              Name an object or paste coordinates. SPHEREx Explorer finds every SPHEREx image that covers that spot,
+              lines them up, and lets you step through time, with what the catalogues know about the object beside it.
+            </p>
+            <SearchForm initial={initial} error={error} onSearch={onSearch} />
+          </div>
+          <div>
+            <h2 className="panel-title">Start with one of these</h2>
+            <ul className="mt-3 grid gap-2">
+              {EXAMPLES.map((ex) => (
+                <li key={ex.to}>
+                  <Link
+                    to={ex.to}
+                    className="glass group flex items-center justify-between gap-4 rounded-[14px] px-4 py-3.5 no-underline transition-[translate] hover:-translate-y-0.5"
+                  >
+                    <span>
+                      <span className="block text-text group-hover:text-accent-strong">{ex.label}</span>
+                      <span className="block text-sm text-faint">{ex.detail}</span>
+                    </span>
+                    <ArrowRight
+                      size={18}
+                      className="shrink-0 text-faint transition-transform group-hover:translate-x-0.5 group-hover:text-text"
+                      aria-hidden
+                    />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </section>
+      <div className="page pb-24 pt-4">
+        <ObjectAtlas />
       </div>
     </div>
   );
