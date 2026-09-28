@@ -43,7 +43,8 @@ OTYPES = {
     "SBG": "Starburst galaxy",
     "Sy1": "Seyfert galaxy",
     "Sy2": "Seyfert galaxy",
-    "AGN": "Active galaxy",
+    # SIMBAD gives M31 this class for its faint active nucleus; "Active galaxy" would mislead.
+    "AGN": "Galaxy with an active nucleus",
     "QSO": "Quasar",
     "ClG": "Galaxy cluster",
     "GlC": "Globular star cluster",

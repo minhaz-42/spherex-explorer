@@ -64,7 +64,7 @@ async def test_resolve_name_through_sesame(
         second = await api.get("/api/resolve", params={"q": "m31"})
     assert first.status_code == 200
     assert first.json()["name"] == "M 31"
-    assert first.json()["kind"] == "Active galaxy"
+    assert first.json()["kind"] == "Galaxy with an active nucleus"
     assert second.json() == first.json()
     assert route.call_count == 1  # the second lookup came from the cache
 
