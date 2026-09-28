@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Link } from "react-router";
 
 import type { DataSource } from "../../lib/api";
-import { formatMag } from "./format";
+import { displayId, formatMag } from "./format";
 import { fieldObjectsQuery } from "./queries";
 import type { FieldObject, ObjectCategory } from "./types";
 
@@ -20,7 +20,7 @@ function exploreLink(o: FieldObject, source: DataSource): string {
   const p = new URLSearchParams({
     ra: o.ra.toFixed(6),
     dec: o.dec.toFixed(6),
-    name: o.name ?? o.id.replace(/\s+/g, " "),
+    name: o.name ?? displayId(o.id),
   });
   if (source === "snapshot") p.set("source", "snapshot");
   return `/explore?${p.toString()}`;
@@ -100,7 +100,7 @@ export function FieldObjects({
                     <td className="py-2 pr-3">
                       <Link to={exploreLink(o, source)} className="link inline-flex items-center gap-2">
                         <span aria-hidden="true" className="swatch" style={{ background: DOT[o.category] }} />
-                        {o.name ?? o.id.replace(/\s+/g, " ")}
+                        {o.name ?? displayId(o.id)}
                       </Link>
                     </td>
                     <td className="py-2 pr-3 text-muted">{o.typeLabel}</td>

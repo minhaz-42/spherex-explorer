@@ -8,7 +8,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { ObjectAtlas } from "../src/features/objects/ObjectAtlas";
 import { ATLAS } from "../src/features/objects/atlas";
 import { FieldObjects } from "../src/features/objects/FieldObjects";
-import { formatLightYears, formatSize, frameFov } from "../src/features/objects/format";
+import { displayId, formatLightYears, formatSize, frameFov, morphologyWords } from "../src/features/objects/format";
 import { ObjectProfile } from "../src/features/objects/ObjectProfile";
 import { eclipticToEquatorial, galacticToEquatorial, hammer } from "../src/features/objects/sky";
 import type { FieldObjects as FieldObjectsAnswer, ObjectInfo } from "../src/features/objects/types";
@@ -128,12 +128,51 @@ describe("sky maths", () => {
   });
 });
 
+describe("galaxy shapes", () => {
+  it("reads the morphology codes SIMBAD actually returns", () => {
+    // Real SIMBAD values (2026-09-28): M31, NGC 1300, M33, M51, LMC, M87, M110, Centaurus A, NGC 6822, M104.
+    const cases: Array<[string, string | null]> = [
+      ["SA(s)b", "Spiral galaxy"],
+      ["SB(rs)bc", "Barred spiral galaxy"],
+      ["SA(s)cd", "Spiral galaxy"],
+      ["SA", "Spiral galaxy"],
+      ["SB(s)m", "Barred Magellanic spiral galaxy"],
+      ["E-E/S0", "Elliptical galaxy"],
+      ["E5pec", "Elliptical galaxy"],
+      ["S0pec", "Lenticular galaxy"],
+      ["IBm", "Barred irregular galaxy"],
+      ["1", null],
+      ["SAB(rs)c", "Weakly barred spiral galaxy"],
+      ["dE2", "Dwarf elliptical galaxy"],
+      ["Irr", "Irregular galaxy"],
+    ];
+    for (const [code, words] of cases) expect(morphologyWords(code), code).toBe(words);
+    expect(morphologyWords(null)).toBeNull();
+  });
+
+  it("writes SIMBAD identifiers as people do", () => {
+    expect(displayId("M  31")).toBe("M 31");
+    expect(displayId("NAME Centaurus A")).toBe("Centaurus A");
+    expect(displayId("*  36 Sex")).toBe("36 Sex");
+    expect(displayId("V* RR Lyr")).toBe("RR Lyr");
+    expect(displayId("** STF 2272")).toBe("STF 2272");
+    expect(displayId("* alf CMa")).toBe("α CMa");
+    expect(displayId("* mu. Cep")).toBe("μ Cep");
+    expect(displayId("* ome02 Sco")).toBe("ω² Sco");
+    expect(displayId("* 9 CMa")).toBe("9 CMa");
+    expect(displayId("NAME Barnard's star")).toBe("Barnard's star");
+  });
+});
+
 describe("object profile", () => {
   it("shows what the catalogue knows about the object", async () => {
     mockFetch({ "/api/object": { status: 200, body: M31 } });
     wrap(<ObjectProfile ra={10.684708} dec={41.26875} label="M 31" source="live" />);
     expect(await screen.findByRole("heading", { name: "Andromeda Galaxy" })).toBeInTheDocument();
-    expect(screen.getByText("Active Galaxy Nucleus")).toBeInTheDocument();
+    // Named by its shape, with SIMBAD's own class (by its nucleus) kept underneath.
+    expect(screen.getByText("Spiral galaxy")).toBeInTheDocument();
+    expect(screen.getByText("SIMBAD class: Active Galaxy Nucleus")).toBeInTheDocument();
+    expect(screen.getByText("SA(s)b")).toBeInTheDocument();
     expect(screen.getByText(/2\.5 million light-years/)).toBeInTheDocument();
     expect(screen.getByText(/NGC 224/)).toBeInTheDocument();
     expect(screen.getAllByRole("img", { name: /image of this field/ })).toHaveLength(3);

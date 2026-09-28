@@ -6,7 +6,7 @@ import type { DataSource } from "../../lib/api";
 import { magnitudesToSpectrum } from "../share/sonify";
 import { SonifyButton } from "../share/SonifyButton";
 import { ContextImages } from "./ContextImages";
-import { formatDistance, formatMag, formatSize, frameFov, INFRARED_NOTE } from "./format";
+import { displayId, formatDistance, formatMag, formatSize, frameFov, INFRARED_NOTE, morphologyWords } from "./format";
 import { objectQuery, SURVEYS } from "./queries";
 import { SkyLocator } from "./SkyLocator";
 import type { ObjectInfo } from "./types";
@@ -30,9 +30,18 @@ function Fact({ label, children }: { label: string; children: ReactNode }) {
 function Facts({ info }: { info: ObjectInfo }) {
   const v = formatMag(info.magnitudes.V);
   const k = formatMag(info.magnitudes.K);
+  // SIMBAD classes many famous galaxies by their nuclei ("Active Galaxy Nucleus" for Andromeda), so
+  // a galaxy is named by its shape, with SIMBAD's class kept underneath.
+  const shape = info.category === "galaxy" ? morphologyWords(info.morphology) : null;
+  const type = info.category === "galaxy" ? (shape ?? "Galaxy") : info.typeLabel;
   return (
     <dl className="grid grid-cols-2 gap-x-6 gap-y-4">
-      <Fact label="Type">{info.typeLabel}</Fact>
+      <Fact label="Type">
+        {type}
+        {type !== info.typeLabel ? (
+          <span className="block text-xs text-faint">SIMBAD class: {info.typeLabel}</span>
+        ) : null}
+      </Fact>
       <Fact label="Distance">
         {info.distance ? (
           <>
@@ -57,7 +66,7 @@ function Facts({ info }: { info: ObjectInfo }) {
         </Fact>
       ) : null}
       {info.spectralType ? <Fact label="Spectral type">{info.spectralType}</Fact> : null}
-      {info.morphology ? <Fact label="Shape">{info.morphology}</Fact> : null}
+      {shape ? <Fact label="Hubble type">{info.morphology}</Fact> : null}
     </dl>
   );
 }
@@ -114,8 +123,8 @@ export function ObjectProfile({
             <h2 id="object-profile-title" className="mt-2 text-[2rem] leading-tight">
               {title}
             </h2>
-            {info && info.name && info.id !== info.name ? (
-              <p className="num mt-1 text-xs text-faint">{info.id.replace(/\s+/g, " ")}</p>
+            {info && info.name && displayId(info.id) !== info.name ? (
+              <p className="num mt-1 text-xs text-faint">{displayId(info.id)}</p>
             ) : null}
           </div>
 
@@ -131,7 +140,7 @@ export function ObjectProfile({
               {info.aliases.length ? (
                 <div>
                   <p className="text-xs font-semibold text-faint">Also known as</p>
-                  <p className="mt-1 text-sm text-muted">{info.aliases.slice(0, 6).join(" · ")}</p>
+                  <p className="mt-1 text-sm text-muted">{info.aliases.slice(0, 6).map(displayId).join(" · ")}</p>
                 </div>
               ) : null}
               <p className="note">{INFRARED_NOTE[info.category]}</p>
