@@ -60,6 +60,8 @@ evidence the service has assembled.
 | `solar_system/jpl.py` | SBIdent and Horizons adapters |
 | `solar_system/parallax.py` | Geocentric → SPHEREx-centric direction using the header state vector |
 | `api/*.py` | HTTP routes and response schemas; `api/cachekeys.py` builds the cache keys the routes and the assistant share |
+| `api/compute.py` | The data the routes serve, computed without a request, so the assistant shares their cache keys, lifetimes and costs |
+| `assistant/live.py` | Fetches, live, what a question needs and the cache lacks (frames, SIMBAD facts, coverage, JPL, the search) |
 | `assistant/evidence.py` | The numbered evidence for one question, read from the server's own cached results |
 | `assistant/knowledge.py` | Core facts and short method notes, with keyword retrieval |
 | `assistant/prompts.py` | The system prompt and the reminder after each question |
@@ -103,7 +105,7 @@ their parameters. POST bodies are capped at 64 KB.
 | `POST /api/candidates` | The moving-source search over a pass | Needs the pass's cutouts |
 | `GET /api/cases` | Curated Discover cases | From `data/cases.json` |
 | `GET /api/assistant/status` | Whether answers come from a local model or are built in | Model health cached 20 s |
-| `POST /api/assistant/chat` | One answer, as server-sent events `meta`, `notice`, `delta`, then `done` or `error` | Up to 16 messages of 2,000 characters; one answer at a time; costs 3 rate-limit tokens |
+| `POST /api/assistant/chat` | One answer, as server-sent events: `progress` while live data is fetched, then `meta`, `notice`, `delta`, and `done` or `error` | Up to 16 messages of 2,000 characters; one answer at a time; costs 3 rate-limit tokens |
 
 Every data route accepts `source=live|snapshot`. In snapshot mode only recorded answers are served,
 and anything else is a `404 not_in_snapshot`. Errors are JSON `{"error": {"code", "message",
@@ -152,10 +154,20 @@ numbered evidence → a local model phrases it → checks**, never images → mo
      caused by an asteroid entering the aperture is explained by its motion rather than by colour;
    - the moving-source search and which candidates match JPL.
 
-   It computes or fetches nothing for the assistant, except a name lookup the question asks for. It
-   adds matching Discover cases and up to three method notes (`assistant/knowledge.py`). Items are
-   tagged E (the app's data and cases) or K (method notes). What has not been loaded or run yet is
-   listed as such, never guessed.
+   Before that, `assistant/live.py` fetches, live, whatever the question needs and the cache lacks.
+   It uses the routes' own computations (`api/compute.py`), so it shares their cache keys,
+   lifetimes and rate-limit costs:
+   - the frames on screen;
+   - SIMBAD's facts about the object at the target, or about an object or position named in the
+     question ("tell me about the Orion Nebula");
+   - that object's SPHEREx coverage;
+   - for a question about motion in a one-pass view, JPL's check and the moving-source search.
+
+   The chat streams each step as a `progress` event ("Asking JPL which catalogued asteroids and
+   comets crossed this field…"), because a first JPL check takes up to two minutes. In the demo
+   snapshot nothing is fetched. The builder then adds matching Discover cases and up to three method
+   notes (`assistant/knowledge.py`). Items are tagged E (the app's data and cases) or K (method
+   notes). What could not be fetched is listed as such, never guessed.
 2. **A local model phrases it** (`assistant/local_model.py`). The default is Ollama with Qwen3 4B
    Instruct (`qwen3:4b-instruct-2507-q4_K_M`); any OpenAI-compatible server on the machine also
    works. The system prompt (`assistant/prompts.py`):

@@ -31,8 +31,10 @@ it, and lets you browse those images by **observation time** and by **wavelength
 - **Discover:** curated cases built from live data by a script, each with its evidence and cautions,
   such as asteroid (7) Iris caught moving past 36 Sextantis.
 - **Ask:** a chat app of its own at `/ask`, with a list of chats, the conversation and a message
-  box. It answers questions about the view you had open, SPHEREx and the app's methods, from the
-  server's own measurements, JPL's predictions and method notes. A language model running on the
+  box. It answers questions about the view you had open, about any named object or position, about
+  SPHEREx and about the app's methods. It works from the server's own measurements, JPL's
+  predictions, SIMBAD's catalogue facts and method notes, and fetches live whatever a question needs
+  and the cache lacks. A language model running on the
   same machine phrases each answer and cites numbered sources, and every number and date in it is
   checked against them. Without a model, it answers from the same evidence directly. Chats are kept
   only in the visitor's browser.

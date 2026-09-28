@@ -2,6 +2,36 @@
 
 Newest entries first. Each entry says what changed, why, and what was verified.
 
+## 2026-09-28 · Ask fetches live data; a fuller chat sidebar
+
+**Why.** The user asked whether the chat could use live data, and whether that would be better, for
+every object in the atlas's galaxies, nebulae and clusters. It is better. Before, the chat read only
+what the viewer had already loaded, so it answered "the JPL check has not been run".
+
+**What.**
+- `assistant/live.py` fetches, before each answer, what the question needs and the cache lacks:
+  - the frames on screen;
+  - SIMBAD facts for the target or a named object;
+  - that object's SPHEREx coverage;
+  - for motion questions in a one-pass view, JPL's check and the moving-source search.
+- Each step streams as a `progress` event.
+- `api/compute.py` holds the routes' computations, so the chat and the routes share cache keys,
+  lifetimes and rate-limit costs.
+- Questions about live data get a data-mode source and a knowledge note: the archive is live, but
+  images reach IRSA within 60 days, so the data is never real time.
+- SIMBAD's AGN class now reads "Galaxy with an active nucleus", not "Active galaxy", for M31.
+- The chat sidebar gained search and a per-chat menu with rename and delete. About credits SIMBAD,
+  hips2fits, the DSS, 2MASS, AllWISE and Natural Earth.
+
+**Verified on live services.**
+- "Tell me about the Orion Nebula" answered in 10.7 s, from Sesame, SIMBAD and the archive:
+  - an H II region, NGC 1976, 66′ across, about 1,540 light-years (SIMBAD's median distance);
+  - 237 SPHEREx frames;
+  - all 15 numbers checked.
+- On a never-checked M31 pass, "Did any asteroid move through this field?" answered in 80 s:
+  - the chat loaded two frames, asked SIMBAD, ran JPL's check (27 s) and the search over 18 frames;
+  - it answered correctly that JPL knows no asteroid brighter than V 20 there.
+
 ## 2026-09-28 · Ask becomes a chat app; new fonts
 
 **Why.** Asked for by the user: the chat as a proper chat window, like the big chat apps, and
