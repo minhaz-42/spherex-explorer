@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, Database } from "lucide-react";
+import { ArrowRight, Crosshair, Database } from "lucide-react";
 import { Link } from "react-router";
 
 import { BlinkPreview } from "../features/discover/BlinkPreview";
@@ -171,9 +171,14 @@ export function Discover() {
               artefact.
             </li>
           </ol>
-          <Link to="/explore?q=10.6847+41.2690" className="link text-sm">
-            Or start from any object name or coordinates
-          </Link>
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+            <Link to="/play" className="btn btn-secondary btn-sm">
+              <Crosshair size={14} aria-hidden /> Practise on Spot the mover
+            </Link>
+            <Link to="/explore?q=10.6847+41.2690" className="link text-sm">
+              Or start from any object name or coordinates
+            </Link>
+          </div>
         </div>
         <div className="space-y-4" id="planet-x">
           <h2 className="section-title">What about Planet X?</h2>

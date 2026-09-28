@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Crosshair, PlayCircle } from "lucide-react";
 import { type CSSProperties, type FormEvent, type ReactNode, useState } from "react";
 import { Link, useNavigate } from "react-router";
 
@@ -195,6 +195,14 @@ export function Landing() {
                     {ex.label}
                   </Link>
                 ))}
+              </div>
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+                <Link to="/tour" className="link inline-flex items-center gap-1.5">
+                  <PlayCircle size={15} aria-hidden /> Take the 90-second tour
+                </Link>
+                <Link to="/play" className="link inline-flex items-center gap-1.5">
+                  <Crosshair size={15} aria-hidden /> Play Spot the mover
+                </Link>
               </div>
             </div>
           </div>
