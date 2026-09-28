@@ -41,6 +41,12 @@ class Settings(BaseSettings):
     # Extra browser origins allowed to call the API (the bundled frontend needs none).
     cors_origins: list[str] = Field(default=[])
 
+    # The Explore page's object facts (CDS SIMBAD), survey images (CDS hips2fits) and photographic
+    # plates (STScI Digitized Sky Survey).
+    simbad_tap_url: str = "https://simbad.cds.unistra.fr/simbad/sim-tap/sync"
+    hips2fits_url: str = "https://alasky.cds.unistra.fr/hips-image-services/hips2fits"
+    dss_url: str = "https://archive.stsci.edu/cgi-bin/dss_search"
+
     # The assistant's language model, running on this machine. "ollama" uses Ollama's own API;
     # "openai" is any OpenAI-compatible local server (LM Studio, llama.cpp, MLX); "off" answers
     # from the app's data only. A 4B model keeps answers to a few seconds on a 16 GB laptop.

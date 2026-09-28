@@ -7,6 +7,7 @@ routes use. Defining them once here keeps the two from drifting apart.
 from __future__ import annotations
 
 from ..cache import cache_key
+from ..objects import images, plates, simbad
 from ..science.cutout import PIPELINE_VERSION
 from ..science.grid import Grid
 from ..science.sources import ALGORITHM_VERSION
@@ -36,3 +37,24 @@ def known_key(ra: float, dec: float, size: float, keys: list[str], vmag_limit: f
 
 def candidates_key(ra: float, dec: float, size_px: int, keys: list[str]) -> str:
     return cache_key(ra, dec, size_px, sorted(keys), PIPELINE_VERSION, ALGORITHM_VERSION)
+
+
+def object_key(ra: float, dec: float, radius: float = simbad.DEFAULT_RADIUS_DEG) -> str:
+    return cache_key(ra, dec, radius, simbad.FORMAT_VERSION)
+
+
+def field_objects_key(ra: float, dec: float, radius: float, limit: int) -> str:
+    return cache_key(ra, dec, radius, limit, simbad.FORMAT_VERSION)
+
+
+def object_image_key(
+    ra: float, dec: float, fov: float, survey: images.SurveyName, size: int
+) -> str:
+    """Built from the snapped request, so nearly identical views share one image."""
+    q = images.quantise(ra, dec, fov, survey, size)
+    return cache_key(q.ra, q.dec, q.fov, q.survey, q.size)
+
+
+def plate_key(ra: float, dec: float, fov: float, survey: plates.PlateSurvey, size: int) -> str:
+    q = plates.quantise(ra, dec, fov, survey, size)
+    return cache_key(q.ra, q.dec, q.fov, q.survey, q.size, plates.RENDER_VERSION)

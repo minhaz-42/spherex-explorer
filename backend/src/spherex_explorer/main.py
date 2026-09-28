@@ -13,7 +13,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from . import __version__
-from .api import assistant_routes, routes
+from .api import assistant_routes, object_routes, routes
 from .cache import Store
 from .config import Settings, get_settings
 from .errors import ExplorerError, UpstreamError
@@ -133,6 +133,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     app.include_router(routes.router, prefix="/api")
     app.include_router(assistant_routes.router, prefix="/api")
+    app.include_router(object_routes.router, prefix="/api")
     _mount_frontend(app, settings.frontend_dist)
     return app
 
