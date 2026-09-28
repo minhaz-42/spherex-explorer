@@ -35,7 +35,7 @@ export function SearchForm({ initial = "", error, busy, onSearch, size = "large"
             className={`field !pl-10 ${size === "large" ? "!min-h-12 text-[1.0625rem]" : ""}`}
             value={value}
             onChange={(e) => setValue(e.target.value)}
-            placeholder={size === "large" ? "M31, Orion Nebula or 10.6847 41.2690" : "Name or coordinates"}
+            placeholder={size === "large" ? "M31 or 10.6847 41.2690" : "Name or coordinates"}
             aria-invalid={message ? true : undefined}
             aria-describedby={message ? `${id}-error` : `${id}-hint`}
             autoComplete="off"
