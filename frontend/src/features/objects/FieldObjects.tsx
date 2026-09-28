@@ -3,7 +3,10 @@ import { useState } from "react";
 import { Link } from "react-router";
 
 import type { DataSource } from "../../lib/api";
+import { useLang, useT } from "../../lib/i18n";
+import { localName } from "./atlas";
 import { displayId, formatMag } from "./format";
+import { FIELD } from "./messages";
 import { fieldObjectsQuery } from "./queries";
 import type { FieldObject, ObjectCategory } from "./types";
 
@@ -38,6 +41,8 @@ export function FieldObjects({
   radiusDeg?: number;
   source: DataSource;
 }) {
+  const t = useT(FIELD);
+  const lang = useLang();
   const field = useQuery(fieldObjectsQuery(ra, dec, radiusDeg, source));
   const [all, setAll] = useState(false);
   const objects = field.data?.objects ?? [];
@@ -48,13 +53,11 @@ export function FieldObjects({
     <section aria-labelledby="field-objects-title" className="card p-5 sm:p-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="kicker">In this field</p>
+          <p className="kicker">{t("kicker")}</p>
           <h2 id="field-objects-title" className="mt-2 text-[1.75rem] leading-tight">
-            Catalogued objects in view
+            {t("title")}
           </h2>
-          <p className="mt-1 text-sm text-muted">
-            The most-studied objects SIMBAD lists within {radiusArcmin}′ of the target. Pick one to explore it.
-          </p>
+          <p className="mt-1 text-sm text-muted">{t("intro", { r: radiusArcmin })}</p>
         </div>
         {field.data ? <p className="num text-xs text-faint">{field.data.credit}</p> : null}
       </div>
@@ -66,11 +69,9 @@ export function FieldObjects({
           ))}
         </div>
       ) : field.error ? (
-        <p className="mt-5 text-sm text-muted">
-          The catalogue could not be searched right now{source === "snapshot" ? " in the demo snapshot" : ""}.
-        </p>
+        <p className="mt-5 text-sm text-muted">{t(source === "snapshot" ? "errorSnapshot" : "error")}</p>
       ) : objects.length === 0 ? (
-        <p className="mt-5 text-sm text-muted">SIMBAD lists no objects within {radiusArcmin}′ of this position.</p>
+        <p className="mt-5 text-sm text-muted">{t("empty", { r: radiusArcmin })}</p>
       ) : (
         <>
           <div className="mt-5 overflow-x-auto">
@@ -78,10 +79,10 @@ export function FieldObjects({
               <thead>
                 <tr className="border-b border-rule text-xs text-faint">
                   <th scope="col" className="py-2 pr-3 font-semibold">
-                    Object
+                    {t("object")}
                   </th>
                   <th scope="col" className="py-2 pr-3 font-semibold">
-                    Type
+                    {t("type")}
                   </th>
                   <th scope="col" className="py-2 pr-3 text-right font-semibold">
                     V
@@ -90,7 +91,7 @@ export function FieldObjects({
                     K
                   </th>
                   <th scope="col" className="py-2 text-right font-semibold">
-                    From target
+                    {t("fromTarget")}
                   </th>
                 </tr>
               </thead>
@@ -100,7 +101,7 @@ export function FieldObjects({
                     <td className="py-2 pr-3">
                       <Link to={exploreLink(o, source)} className="link inline-flex items-center gap-2">
                         <span aria-hidden="true" className="swatch" style={{ background: DOT[o.category] }} />
-                        {o.name ?? displayId(o.id)}
+                        {localName(o, lang) ?? o.name ?? displayId(o.id)}
                       </Link>
                     </td>
                     <td className="py-2 pr-3 text-muted">{o.typeLabel}</td>
@@ -119,7 +120,7 @@ export function FieldObjects({
               onClick={() => setAll((v) => !v)}
               aria-expanded={all}
             >
-              {all ? "Show fewer" : `Show all ${objects.length}`}
+              {all ? t("fewer") : t("all", { n: objects.length })}
             </button>
           ) : null}
         </>

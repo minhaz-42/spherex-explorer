@@ -1,6 +1,8 @@
 import { ImageOff } from "lucide-react";
 import { useState } from "react";
 
+import { useLang, useT } from "../../lib/i18n";
+import { IMAGES } from "./messages";
 import { imageUrl, SURVEYS } from "./queries";
 import type { Survey } from "./types";
 
@@ -10,6 +12,7 @@ function Tile({
   fov,
   survey,
   label,
+  alt,
   band,
 }: {
   ra: number;
@@ -17,8 +20,10 @@ function Tile({
   fov: number;
   survey: Survey;
   label: string;
+  alt: string;
   band: string;
 }) {
+  const t = useT(IMAGES);
   const [failed, setFailed] = useState(false);
   const [loaded, setLoaded] = useState(false);
   return (
@@ -27,12 +32,12 @@ function Tile({
         {failed ? (
           <div className="flex h-full flex-col items-center justify-center gap-1 text-on-image/70">
             <ImageOff size={18} aria-hidden />
-            <span className="text-xs">Not available</span>
+            <span className="text-xs">{t("notAvailable")}</span>
           </div>
         ) : (
           <img
             src={imageUrl(ra, dec, fov, survey, 256)}
-            alt={`${label} image of this field (${band})`}
+            alt={alt}
             loading="lazy"
             decoding="async"
             onLoad={() => setLoaded(true)}
@@ -50,7 +55,7 @@ function Tile({
           />
         </svg>
         <span className="absolute bottom-1.5 right-1.5 rounded-full bg-black/55 px-1.5 py-0.5 text-xs text-on-image">
-          {fov >= 1 ? `${fov.toFixed(1)}°` : `${Math.round(fov * 60)}′`} across
+          {t("across", { size: fov >= 1 ? `${fov.toFixed(1)}°` : `${Math.round(fov * 60)}′` })}
         </span>
       </div>
       <figcaption className="mt-2 leading-tight">
@@ -63,11 +68,25 @@ function Tile({
 
 /** The same patch of sky in visible, near-infrared and mid-infrared light from other surveys. */
 export function ContextImages({ ra, dec, fov }: { ra: number; dec: number; fov: number }) {
+  const t = useT(IMAGES);
+  const lang = useLang();
   return (
     <div className="grid grid-cols-3 gap-3">
-      {SURVEYS.map((s) => (
-        <Tile key={s.id} ra={ra} dec={dec} fov={fov} survey={s.id} label={s.label} band={s.band} />
-      ))}
+      {SURVEYS.map((s) => {
+        const label = lang === "bn" ? s.bn.label : s.label;
+        return (
+          <Tile
+            key={s.id}
+            ra={ra}
+            dec={dec}
+            fov={fov}
+            survey={s.id}
+            label={label}
+            alt={t("alt", { label, seen: s.bn.seen, band: s.band })}
+            band={s.band}
+          />
+        );
+      })}
     </div>
   );
 }

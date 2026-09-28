@@ -56,9 +56,31 @@ export function imageUrl(ra: number, dec: number, fovDeg: number, survey: Survey
   return `/api/object-image?${p.toString()}`;
 }
 
-/** Surveys shown beside SPHEREx, with the light each one records. */
-export const SURVEYS: Array<{ id: Survey; label: string; band: string; credit: string }> = [
-  { id: "dss", label: "Visible light", band: "0.4–0.7 µm · DSS2", credit: "DSS2 (STScI/AURA)" },
-  { id: "2mass", label: "Near-infrared", band: "1.2–2.2 µm · 2MASS", credit: "2MASS (UMass/IPAC-Caltech)" },
-  { id: "wise", label: "Mid-infrared", band: "3.4–22 µm · AllWISE", credit: "AllWISE (NASA/JPL-Caltech)" },
+/**
+ * Surveys shown beside SPHEREx, with the light each one records. `bn` holds the label in Bangla and the
+ * same light as Bangla says "in visible light" (আলোয়, -রেডে), for the image descriptions; band and
+ * credit are names and numbers, the same in both languages.
+ */
+export const SURVEYS: Array<{ id: Survey; label: string; band: string; credit: string; bn: { label: string; seen: string } }> = [
+  {
+    id: "dss",
+    label: "Visible light",
+    band: "0.4–0.7 µm · DSS2",
+    credit: "DSS2 (STScI/AURA)",
+    bn: { label: "দৃশ্যমান আলো", seen: "দৃশ্যমান আলোয়" },
+  },
+  {
+    id: "2mass",
+    label: "Near-infrared",
+    band: "1.2–2.2 µm · 2MASS",
+    credit: "2MASS (UMass/IPAC-Caltech)",
+    bn: { label: "নিকট-ইনফ্রারেড", seen: "নিকট-ইনফ্রারেডে" },
+  },
+  {
+    id: "wise",
+    label: "Mid-infrared",
+    band: "3.4–22 µm · AllWISE",
+    credit: "AllWISE (NASA/JPL-Caltech)",
+    bn: { label: "মধ্য-ইনফ্রারেড", seen: "মধ্য-ইনফ্রারেডে" },
+  },
 ];

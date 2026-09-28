@@ -2,7 +2,9 @@ import { ArrowRight } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
 
-import { ATLAS, type AtlasCategory, type AtlasObject } from "./atlas";
+import { useLang, useT } from "../../lib/i18n";
+import { ATLAS, type AtlasCategory, type AtlasObject, atlasText } from "./atlas";
+import { ATLAS_UI } from "./messages";
 import { imageUrl } from "./queries";
 
 // One of each kind, so the row shows the range of the atlas.
@@ -13,6 +15,9 @@ function pick(): AtlasObject[] {
 }
 
 function Thumb({ o }: { o: AtlasObject }) {
+  const t = useT(ATLAS_UI);
+  const lang = useLang();
+  const text = atlasText(o, lang);
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
   return (
@@ -37,10 +42,10 @@ function Thumb({ o }: { o: AtlasObject }) {
           aria-hidden="true"
         />
         <span className="absolute inset-x-0 bottom-0 flex flex-col gap-1 p-4 text-on-image">
-          <span className="text-xs font-medium opacity-90">{o.kind}</span>
-          <span className="font-display text-2xl leading-tight">{o.name}</span>
+          <span className="text-xs font-medium opacity-90">{text.kind}</span>
+          <span className="font-display text-2xl leading-tight">{text.name}</span>
           <span className="flex items-center gap-1.5 text-xs opacity-80">
-            Explore <ArrowRight size={13} className="transition-transform group-hover:translate-x-1" aria-hidden />
+            {t("explore")} <ArrowRight size={13} className="transition-transform group-hover:translate-x-1" aria-hidden />
           </span>
         </span>
       </Link>

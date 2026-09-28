@@ -1,5 +1,8 @@
 import { useId } from "react";
 
+import { useLang, useT } from "../../lib/i18n";
+import { mapLabel } from "./format";
+import { LOCATOR } from "./messages";
 import { eclipticToEquatorial, galacticToEquatorial, hammer } from "./sky";
 
 const W = 320;
@@ -49,6 +52,8 @@ const GAL_CENTRE = galacticToEquatorial(0, 0);
  */
 export function SkyLocator({ ra, dec, label }: { ra: number; dec: number; label: string }) {
   const id = useId().replace(/:/g, "");
+  const say = useT(LOCATOR);
+  const lang = useLang();
   const t = toXY(ra, dec);
   const gc = toXY(GAL_CENTRE[0], GAL_CENTRE[1]);
   const labelLeft = t.x > W * 0.62;
@@ -57,7 +62,7 @@ export function SkyLocator({ ra, dec, label }: { ra: number; dec: number; label:
       viewBox={`0 0 ${W} ${H}`}
       className="block h-auto w-full"
       role="img"
-      aria-label={`All-sky map: ${label} is at right ascension ${ra.toFixed(1)}°, declination ${dec.toFixed(1)}°. The band shows the plane of the Milky Way; the dashed line is the ecliptic.`}
+      aria-label={say("label", { label, ra: ra.toFixed(1), dec: dec.toFixed(1) })}
     >
       <defs>
         <clipPath id={`${id}-sky`}>
@@ -105,7 +110,7 @@ export function SkyLocator({ ra, dec, label }: { ra: number; dec: number; label:
         strokeWidth="3"
         strokeLinejoin="round"
       >
-        {label.length > 22 ? `${label.slice(0, 21)}…` : label}
+        {mapLabel(label, lang)}
       </text>
     </svg>
   );
