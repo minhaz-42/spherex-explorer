@@ -797,6 +797,17 @@
     white-space: nowrap;
     border: 0;
   }
+
+  /* Bangla: vowel signs sit above and below the letters, and joined letters must not be squeezed,
+     so headings keep their natural spacing and a little more line height. */
+  :lang(bn) :is(h1, h2, h3, .section-title) {
+    line-height: 1.3;
+    letter-spacing: 0;
+  }
+  :lang(bn) .display {
+    line-height: 1.2;
+    letter-spacing: 0;
+  }
 }
 
 @keyframes shimmer {

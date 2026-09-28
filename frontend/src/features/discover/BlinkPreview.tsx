@@ -4,10 +4,36 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { DataSource } from "../../lib/api";
 import { formatDate, formatTime, formatWavelength } from "../../lib/format";
+import { defineMessages, useT } from "../../lib/i18n";
 import { autoStretch, renderGray } from "../../lib/pixels";
 import { cutoutQuery } from "../../lib/queries";
 import { tokenRgb } from "../../lib/theme";
 import type { CasePreviewFrame, DecodedCutout } from "../../lib/types";
+
+const M = defineMessages({
+  en: {
+    alt: "{label}: frame {frame}, {when}",
+    failed: "These frames could not be loaded right now.",
+    loading: "Loading two SPHEREx frames…",
+    showOther: "Show the other frame",
+    resume: "Resume blinking",
+    pause: "Pause blinking",
+    show: "Show {frame}",
+    blink: "Blink",
+    paused: "Pause",
+  },
+  bn: {
+    alt: "{label}: ফ্রেম {frame}, {when}",
+    failed: "ফ্রেমগুলো এই মুহূর্তে আনা যায়নি।",
+    loading: "দুটি SPHEREx ফ্রেম আনা হচ্ছে…",
+    showOther: "অন্য ফ্রেমটি দেখুন",
+    resume: "আবার ব্লিংক শুরু করুন",
+    pause: "ব্লিংক থামান",
+    show: "{frame} দেখুন",
+    blink: "ব্লিংক",
+    paused: "থামান",
+  },
+});
 
 interface Props {
   ra: number;
@@ -52,6 +78,7 @@ function Thumb({ image, alt }: { image: { rgba: Uint8ClampedArray; width: number
  */
 export function BlinkPreview({ ra, dec, fov, a, b, source = "live", label, interval = 900 }: Props) {
   // A case file from an older build may lack keys: then there is nothing to load.
+  const t = useT(M);
   const hasKeys = typeof a?.key === "string" && typeof b?.key === "string";
   const qa = useQuery({ ...cutoutQuery(a?.key ?? "", ra, dec, fov, source), enabled: hasKeys });
   const qb = useQuery({ ...cutoutQuery(b?.key ?? "", ra, dec, fov, source), enabled: hasKeys });
@@ -87,10 +114,13 @@ export function BlinkPreview({ ra, dec, fov, a, b, source = "live", label, inter
       onBlur={() => setPaused(false)}
     >
       {images ? (
-        <Thumb image={showB ? images.b : images.a} alt={`${label}: frame ${showB ? "B" : "A"}, ${formatDate(shown.isoMid)} ${formatTime(shown.isoMid)}`} />
+        <Thumb
+          image={showB ? images.b : images.a}
+          alt={t("alt", { label, frame: showB ? "B" : "A", when: `${formatDate(shown.isoMid)} ${formatTime(shown.isoMid)}` })}
+        />
       ) : (
         <div className="flex h-full items-center justify-center p-4 text-center text-sm text-on-image/80" role="status">
-          {failed ? "These frames could not be loaded right now." : "Loading two SPHEREx frames…"}
+          {failed ? t("failed") : t("loading")}
         </div>
       )}
       {images && (
@@ -107,17 +137,17 @@ export function BlinkPreview({ ra, dec, fov, a, b, source = "live", label, inter
           type="button"
           className="absolute bottom-2 right-2 inline-flex h-9 items-center gap-1.5 rounded-sm bg-black/60 px-2.5 text-xs text-on-image hover:bg-black/75"
           onClick={() => (reduced ? setShowB((v) => !v) : setPaused((p) => !p))}
-          aria-label={reduced ? "Show the other frame" : paused ? "Resume blinking" : "Pause blinking"}
+          aria-label={reduced ? t("showOther") : paused ? t("resume") : t("pause")}
         >
           {reduced ? (
-            `Show ${showB ? "A" : "B"}`
+            t("show", { frame: showB ? "A" : "B" })
           ) : paused ? (
             <>
-              <Play size={13} aria-hidden /> Blink
+              <Play size={13} aria-hidden /> {t("blink")}
             </>
           ) : (
             <>
-              <Pause size={13} aria-hidden /> Pause
+              <Pause size={13} aria-hidden /> {t("paused")}
             </>
           )}
         </button>

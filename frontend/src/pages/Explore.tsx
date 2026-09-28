@@ -4,18 +4,24 @@ import { useCallback, useMemo, useRef } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 
 import { ApiError, type DataSource, getJson } from "../lib/api";
-import { formatDate, formatRange, plural } from "../lib/format";
+import { formatDate, formatRange } from "../lib/format";
+import { useLang, useT } from "../lib/i18n";
 import { observationsQuery, resolveQuery } from "../lib/queries";
 import type { SequenceSpec } from "../lib/sequence";
 import type { Observations, Target } from "../lib/types";
 import { ObjectAtlas } from "../features/objects/ObjectAtlas";
 import { DecadesSection } from "../features/decades/DecadesSection";
 import { FieldObjects } from "../features/objects/FieldObjects";
+import { localName } from "../features/objects/atlas";
+import { constellationName } from "../features/objects/constellations";
+import { morphologyWords } from "../features/objects/format";
 import { ObjectProfile, type SkyContext } from "../features/objects/ObjectProfile";
+import { objectQuery } from "../features/objects/queries";
 import { SearchForm } from "../features/search/SearchForm";
 import { type CompareMode, FIELDS, type ViewerState } from "../features/viewer/state";
 import { Viewer } from "../features/viewer/Viewer";
 import { EXAMPLES } from "../lib/examples";
+import { EXPLORE, framesSummary } from "./explore.messages";
 
 function num(v: string | null): number | null {
   if (v === null || v.trim() === "") return null;
@@ -32,6 +38,7 @@ function useHealth() {
 }
 
 export function Explore() {
+  const t = useT(EXPLORE);
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
   const q = params.get("q");
@@ -129,14 +136,15 @@ export function Explore() {
         initial={q}
         error={
           resolveError.isUpstream || resolveError.code === "network_error"
-            ? `${resolveError.message} Try again in a moment.`
+            ? t("tryAgainSoon", { message: resolveError.message })
             : resolveError.message
         }
       />
     );
   }
 
-  const label = name ?? (posRa !== undefined ? `RA ${posRa.toFixed(4)}°, Dec ${posDec!.toFixed(4)}°` : (q ?? ""));
+  const label =
+    name ?? (posRa !== undefined ? t("position", { ra: posRa.toFixed(4), dec: posDec!.toFixed(4) }) : (q ?? ""));
   const where = observations.data?.target ?? target;
   const sky: SkyContext | undefined = where
     ? {
@@ -150,7 +158,13 @@ export function Explore() {
   return (
     <div className="mx-auto w-full max-w-[96rem] px-[var(--gutter)] pb-16 pt-6">
       <div className="flex flex-col gap-4 border-b border-rule pb-5 md:flex-row md:items-end md:justify-between">
-        <TargetHeading label={label} target={target} observations={observations.data} source={source} />
+        <TargetHeading
+          label={label}
+          target={target}
+          observations={observations.data}
+          source={source}
+          position={posRa !== undefined && posDec !== undefined ? { ra: posRa, dec: posDec } : null}
+        />
         <div className="w-full md:max-w-sm">
           <SearchForm size="compact" initial={q ?? ""} onSearch={search} />
         </div>
@@ -170,9 +184,9 @@ export function Explore() {
 
       <div className="pt-6">
         {resolved.isPending && !!q && !hasPosition ? (
-          <Working text={`Looking up “${q}”…`} />
+          <Working text={t("lookingUp", { q })} />
         ) : observations.isPending ? (
-          <Working text={`Searching the SPHEREx archive for images of ${label}…`} detail="Usually 3–10 seconds." />
+          <Working text={t("searching", { label })} detail={t("usually")} />
         ) : observations.error ? (
           <ObservationsError
             error={observations.error}
@@ -209,32 +223,40 @@ function TargetHeading({
   target,
   observations,
   source,
+  position,
 }: {
   label: string;
   target: Target | undefined;
   observations: Observations | undefined;
   source: DataSource;
+  position: { ra: number; dec: number } | null;
 }) {
-  const t = observations?.target ?? target;
+  const t = useT(EXPLORE);
+  const lang = useLang();
+  const where = observations?.target ?? target;
   const summary = observations?.summary;
+  // The same SIMBAD answer the profile below uses (so no extra request). SIMBAD classes many famous
+  // galaxies by their nuclei, so a galaxy is named by its shape, as the profile does.
+  const info = useQuery({
+    ...objectQuery(position?.ra ?? 0, position?.dec ?? 0, source),
+    enabled: position !== null,
+  }).data;
+  const kind = (info?.category === "galaxy" ? morphologyWords(info.morphology, lang) : null) ?? target?.kind;
+  // Famous objects have Bangla names (the atlas's); anything else keeps the name it was searched by.
+  const heading = (info ? localName(info, lang) : null) ?? label;
   return (
     <div className="min-w-0 space-y-1.5">
       <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
         <DataModeBadge source={source} retrievedAt={observations?.retrievedAt} />
-        {target?.kind && <span className="text-muted">{target.kind}</span>}
+        {kind && <span className="text-muted">{kind}</span>}
       </p>
-      <h1 className="text-[length:var(--fs-h1)]">{label}</h1>
-      {t && (
+      <h1 className="text-[length:var(--fs-h1)]">{heading}</h1>
+      {where && (
         <p className="num flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted">
-          <span>
-            RA {t.raHms} · Dec {t.decDms}
-          </span>
-          <span>in {t.constellation}</span>
+          <span>{t("raDec", { ra: where.raHms, dec: where.decDms })}</span>
+          <span>{t("inConstellation", { name: constellationName(where.constellation, lang) })}</span>
           {summary && summary.first && summary.last && (
-            <span>
-              {plural(summary.frames, "frame")} in {plural(summary.passes, "pass", "passes")},{" "}
-              {formatRange(summary.first, summary.last)}
-            </span>
+            <span>{framesSummary(lang, summary.frames, summary.passes, formatRange(summary.first, summary.last))}</span>
           )}
         </p>
       )}
@@ -243,14 +265,15 @@ function TargetHeading({
 }
 
 export function DataModeBadge({ source, retrievedAt }: { source: DataSource; retrievedAt?: string }) {
+  const t = useT(EXPLORE);
   return source === "snapshot" ? (
     <span className="inline-flex items-center gap-1.5 rounded-sm border border-snapshot/50 px-2 py-0.5 text-xs text-snapshot">
-      <Database size={12} aria-hidden /> Demo snapshot · real SPHEREx data
-      {retrievedAt ? `, retrieved ${formatDate(retrievedAt)}` : ""}
+      <Database size={12} aria-hidden /> {t("snapshot")}
+      {retrievedAt ? t("retrieved", { date: formatDate(retrievedAt) }) : ""}
     </span>
   ) : (
     <span className="inline-flex items-center gap-1.5 rounded-sm border border-live/50 px-2 py-0.5 text-xs text-live">
-      <span className="h-1.5 w-1.5 rounded-full bg-live" aria-hidden /> Live · IRSA archive
+      <span className="h-1.5 w-1.5 rounded-full bg-live" aria-hidden /> {t("live")}
     </span>
   );
 }
@@ -283,6 +306,7 @@ function ObservationsError({
   onSnapshot: () => void;
   onLive: () => void;
 }) {
+  const t = useT(EXPLORE);
   const health = useHealth();
   const api = error instanceof ApiError ? error : null;
   const notInSnapshot = api?.code === "not_in_snapshot";
@@ -290,31 +314,29 @@ function ObservationsError({
     <div className="max-w-2xl space-y-4 py-10">
       <p className="flex items-center gap-2 text-lg">
         <AlertTriangle size={20} className="text-warn" aria-hidden />
-        {notInSnapshot ? "This position is not in the demo snapshot." : "The SPHEREx archive could not be searched."}
+        {notInSnapshot ? t("notInSnapshot") : t("archiveFailed")}
       </p>
       <p className="text-muted">{api?.message ?? error.message}</p>
       {!notInSnapshot && (
-        <p className="text-sm text-faint">
-          Nothing has been substituted: no data is shown rather than data that did not come from this search.
-        </p>
+        <p className="text-sm text-faint">{t("nothingSubstituted")}</p>
       )}
       <div className="flex flex-wrap gap-3">
         {notInSnapshot ? (
           <button type="button" className="btn btn-primary" onClick={onLive}>
-            Use live data
+            {t("useLive")}
           </button>
         ) : (
           <button type="button" className="btn btn-primary" onClick={onRetry}>
-            <RefreshCw size={16} aria-hidden /> Try again
+            <RefreshCw size={16} aria-hidden /> {t("tryAgain")}
           </button>
         )}
         {source === "live" && health.data?.snapshotAvailable && (
           <button type="button" className="btn btn-secondary" onClick={onSnapshot}>
-            <Database size={16} aria-hidden /> Use the demo snapshot instead
+            <Database size={16} aria-hidden /> {t("useSnapshot")}
           </button>
         )}
         <Link to="/discover" className="btn btn-ghost">
-          Browse Discover
+          {t("browseDiscover")}
         </Link>
       </div>
     </div>
@@ -322,15 +344,13 @@ function ObservationsError({
 }
 
 function Empty({ label }: { label: string }) {
+  const t = useT(EXPLORE);
   return (
     <div className="max-w-2xl space-y-3 py-10">
-      <p className="text-lg">No SPHEREx images cover {label} yet.</p>
-      <p className="text-muted">
-        SPHEREx maps the whole sky every six months, and new images reach the archive within about 60 days. A few
-        regions have gaps in the public Quick Release data so far. Try a nearby position or one of the examples.
-      </p>
+      <p className="text-lg">{t("emptyTitle", { label })}</p>
+      <p className="text-muted">{t("emptyBody")}</p>
       <Link to="/explore" className="btn btn-secondary">
-        New search
+        {t("newSearch")}
       </Link>
     </div>
   );
@@ -345,6 +365,8 @@ function SearchStart({
   initial?: string;
   error?: string | null;
 }) {
+  const t = useT(EXPLORE);
+  const lang = useLang();
   return (
     <div className="flex flex-col">
       <section className="relative isolate overflow-x-clip">
@@ -371,16 +393,13 @@ function SearchStart({
         </div>
         <div className="page grid gap-12 py-12 md:py-16 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:gap-16">
           <div className="space-y-6">
-            <p className="kicker">Explore</p>
-            <h1 className="text-[length:var(--fs-h1)]">Where in the sky?</h1>
-            <p className="prose-body">
-              Name an object or paste coordinates. SPHEREx Explorer finds every SPHEREx image that covers that spot,
-              lines them up, and lets you step through time, with what the catalogues know about the object beside it.
-            </p>
+            <p className="kicker">{t("kicker")}</p>
+            <h1 className="text-[length:var(--fs-h1)]">{t("title")}</h1>
+            <p className="prose-body">{t("intro")}</p>
             <SearchForm initial={initial} error={error} onSearch={onSearch} />
           </div>
           <div>
-            <h2 className="panel-title">Start with one of these</h2>
+            <h2 className="panel-title">{t("startWith")}</h2>
             <ul className="mt-3 grid gap-2">
               {EXAMPLES.map((ex) => (
                 <li key={ex.to}>
@@ -389,8 +408,8 @@ function SearchStart({
                     className="glass group flex items-center justify-between gap-4 rounded-[14px] px-4 py-3.5 no-underline transition-[translate] hover:-translate-y-0.5"
                   >
                     <span>
-                      <span className="block text-text group-hover:text-accent-strong">{ex.label}</span>
-                      <span className="block text-sm text-faint">{ex.detail}</span>
+                      <span className="block text-text group-hover:text-accent-strong">{ex[lang].label}</span>
+                      <span className="block text-sm text-faint">{ex[lang].detail}</span>
                     </span>
                     <ArrowRight
                       size={18}
