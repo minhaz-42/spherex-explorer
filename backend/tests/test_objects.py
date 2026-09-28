@@ -16,8 +16,10 @@ import numpy as np
 import pytest
 import respx
 from astropy.io import fits
+from fastapi import FastAPI
 from numpy.typing import NDArray
 
+from spherex_explorer.api import compute
 from spherex_explorer.api.cachekeys import (
     field_objects_key,
     object_image_key,
@@ -26,7 +28,7 @@ from spherex_explorer.api.cachekeys import (
 )
 from spherex_explorer.cache import DiskStore
 from spherex_explorer.config import Settings
-from spherex_explorer.errors import UpstreamError
+from spherex_explorer.errors import NotFound, UpstreamError
 from spherex_explorer.objects import images, plates, simbad
 from spherex_explorer.objects.categories import category
 
@@ -308,18 +310,40 @@ async def test_object_route_needs_no_distance_query_for_a_parallax(
     assert route.call_count == 1
 
 
-async def test_nothing_within_the_radius_is_404(
+async def test_nothing_within_the_radius_is_an_answer_and_is_cached(
     api: httpx.AsyncClient, settings: Settings, fixtures: Path
 ) -> None:
     with respx.mock:
-        respx.post(settings.simbad_tap_url).mock(
+        route = respx.post(settings.simbad_tap_url).mock(
             return_value=httpx.Response(200, text=(fixtures / "simbad_empty.json").read_text())
         )
-        response = await api.get("/api/object", params=IRIS_FIELD)
-    assert response.status_code == 404
-    error = response.json()["error"]
-    assert error["code"] == "not_found"
-    assert "36″" in error["message"]
+        first = await api.get("/api/object", params=IRIS_FIELD)
+        again = await api.get("/api/object", params=IRIS_FIELD)
+    assert first.status_code == 200, first.text
+    body = first.json()
+    assert body["object"] is None
+    assert "36″" in body["message"]
+    assert body["credit"] == simbad.CREDIT
+    # An empty spot is not asked about again while the answer is cached.
+    assert again.json() == body
+    assert route.call_count == 1
+
+
+async def test_compute_object_at_still_raises_not_found_for_the_assistant(
+    api: httpx.AsyncClient, app: FastAPI, settings: Settings, fixtures: Path
+) -> None:
+    svc = app.state.services
+    with respx.mock:
+        route = respx.post(settings.simbad_tap_url).mock(
+            return_value=httpx.Response(200, text=(fixtures / "simbad_empty.json").read_text())
+        )
+        # A miss asks SIMBAD, caches the empty answer and raises; a hit raises from the cache.
+        for _ in range(2):
+            with pytest.raises(NotFound, match="36″"):
+                await compute.object_at(svc, IRIS_FIELD["ra"], IRIS_FIELD["dec"], "live", "test")
+    assert route.call_count == 1
+    cached = svc.store.peek("object", object_key(IRIS_FIELD["ra"], IRIS_FIELD["dec"]), "live")
+    assert cached is not None and compute.no_object(cached)
 
 
 async def test_field_objects_route(

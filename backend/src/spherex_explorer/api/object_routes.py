@@ -15,7 +15,8 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Query, Request, Response
 
 from ..objects import images, plates, simbad
-from .cachekeys import field_objects_key, object_image_key, object_key, plate_key
+from . import compute
+from .cachekeys import field_objects_key, object_image_key, plate_key
 from .routes import DAY, DEC, RA, Source, services
 
 router = APIRouter()
@@ -42,17 +43,10 @@ async def object_at(
     """The most-studied SIMBAD object within ``radius`` of the position, with its main facts.
 
     Most-studied (most references) means a position resolved from "M31" gives M 31 itself rather
-    than a faint star beside it. Answers 404 when nothing is catalogued within the radius.
+    than a faint star beside it. When nothing is catalogued within the radius the answer is
+    ``{"object": null, "message": ...}``, an ordinary answer that is cached like the rest.
     """
-    svc = services(request)
-
-    async def compute() -> dict[str, Any]:
-        svc.limiter.check(_client(request))
-        return await simbad.object_at(svc.client, svc.settings.simbad_tap_url, ra, dec, radius)
-
-    return await svc.store.get_or_compute(
-        "object", object_key(ra, dec, radius), compute, ttl_s=7 * DAY, source=source
-    )
+    return await compute.object_entry(services(request), ra, dec, radius, source, _client(request))
 
 
 @router.get("/field-objects")

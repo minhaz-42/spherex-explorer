@@ -15,6 +15,7 @@ from ..archive import sia
 from ..archive.frames import group_passes, normalise
 from ..archive.keys import FrameKey
 from ..archive.meta import META_TTL_S, meta_from_header
+from ..errors import NotFound
 from ..objects import simbad
 from ..resolve import sesame
 from ..resolve.target import deep_field_at, describe
@@ -182,16 +183,36 @@ async def candidates(
     return await svc.store.get_or_compute("candidates", ck, compute, ttl_s=30 * DAY, source=source)
 
 
-async def object_at(
-    svc: Services, ra: float, dec: float, source: Source, client: str
+def no_object(entry: dict[str, Any]) -> bool:
+    """Whether a cached /api/object entry records that nothing is catalogued there."""
+    return entry.get("object", ...) is None and "id" not in entry
+
+
+async def object_entry(
+    svc: Services, ra: float, dec: float, radius: float, source: Source, client: str
 ) -> dict[str, Any]:
-    """The most-studied SIMBAD object at a position: the same entry /api/object caches."""
-    radius = simbad.DEFAULT_RADIUS_DEG
+    """The cached SIMBAD answer at a position: the object, or ``{"object": None, ...}`` when
+    nothing is catalogued within ``radius``. Empty answers are kept as long as the rest, so an
+    empty spot is not asked about again on every visit."""
 
     async def compute() -> dict[str, Any]:
         svc.limiter.check(client)
-        return await simbad.object_at(svc.client, svc.settings.simbad_tap_url, ra, dec, radius)
+        try:
+            return await simbad.object_at(svc.client, svc.settings.simbad_tap_url, ra, dec, radius)
+        except NotFound as nothing:
+            return {"object": None, "message": nothing.message, "credit": simbad.CREDIT}
 
     return await svc.store.get_or_compute(
         "object", object_key(ra, dec, radius), compute, ttl_s=7 * DAY, source=source
     )
+
+
+async def object_at(
+    svc: Services, ra: float, dec: float, source: Source, client: str
+) -> dict[str, Any]:
+    """The most-studied SIMBAD object at a position: the same entry /api/object caches. Raises
+    ``NotFound`` when nothing is catalogued there, whether that was just asked or cached."""
+    entry = await object_entry(svc, ra, dec, simbad.DEFAULT_RADIUS_DEG, source, client)
+    if no_object(entry):
+        raise NotFound(str(entry.get("message") or "SIMBAD lists no object at this position."))
+    return entry

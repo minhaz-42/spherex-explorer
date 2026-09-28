@@ -12,7 +12,14 @@ export function objectQuery(ra: number, dec: number, source: DataSource = "live"
     queryKey: ["object", round(ra), round(dec), source],
     queryFn: async ({ signal }) => {
       try {
-        return await getJson<ObjectInfo>("/object", { ra: round(ra, 6), dec: round(dec, 6), source }, signal);
+        // Nothing catalogued there is an ordinary answer, `{ object: null }`; a 404 is a spot the
+        // demo snapshot did not record.
+        const info = await getJson<ObjectInfo | { object: null }>(
+          "/object",
+          { ra: round(ra, 6), dec: round(dec, 6), source },
+          signal,
+        );
+        return "id" in info ? info : null;
       } catch (err) {
         if (err instanceof ApiError && err.status === 404) return null;
         throw err;
