@@ -2,6 +2,7 @@
 
 from functools import lru_cache
 from pathlib import Path
+from typing import Literal
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -39,6 +40,18 @@ class Settings(BaseSettings):
     rate_limit_per_minute: int = 240
     # Extra browser origins allowed to call the API (the bundled frontend needs none).
     cors_origins: list[str] = Field(default=[])
+
+    # The assistant's language model, running on this machine. "ollama" uses Ollama's own API;
+    # "openai" is any OpenAI-compatible local server (LM Studio, llama.cpp, MLX); "off" answers
+    # from the app's data only. A 4B model keeps answers to a few seconds on a 16 GB laptop.
+    assistant_provider: Literal["ollama", "openai", "off"] = "ollama"
+    assistant_url: str = "http://127.0.0.1:11434"
+    assistant_model: str = "qwen3:4b-instruct-2507-q4_K_M"
+    assistant_max_tokens: int = 600
+    assistant_context_tokens: int = 8192
+    assistant_temperature: float = 0.2
+    assistant_keep_alive: str = "10m"
+    assistant_timeout_s: float = 120.0
 
 
 @lru_cache

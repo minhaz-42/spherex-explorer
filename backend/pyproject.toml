@@ -65,6 +65,9 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S", "B011"]
+# The assistant's knowledge base is prose; whole sentences are easier to review than wrapped ones.
+"src/spherex_explorer/assistant/knowledge.py" = ["E501"]
+"src/spherex_explorer/assistant/prompts.py" = ["E501"]
 
 [tool.mypy]
 python_version = "3.12"

@@ -27,6 +27,8 @@ def settings(tmp_path: Path) -> Settings:
         rate_limit_per_minute=10_000,
         upstream_timeout_s=5,
         jpl_timeout_s=5,
+        # Tests never talk to a real local model; the ones that need one mock it.
+        assistant_provider="off",
     )
 
 

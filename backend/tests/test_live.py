@@ -67,3 +67,40 @@ async def test_api_end_to_end_against_the_archive(api: httpx.AsyncClient) -> Non
     assert cut.status_code == 200, cut.text
     payload = cut.json()
     assert payload["wavelength"]["atTargetUm"] == pytest.approx(frame["wavelengthUm"], abs=0.01)
+
+
+async def test_the_local_model_answers_from_the_evidence(tmp_path) -> None:
+    """One real question to the configured local model (Ollama must be running)."""
+    import json
+
+    from spherex_explorer.assistant import chat
+    from spherex_explorer.assistant.chat import ChatMessage, ChatRequest
+    from spherex_explorer.cache import Store
+    from spherex_explorer.config import Settings
+    from spherex_explorer.ratelimit import RateLimiter
+    from spherex_explorer.services import Services, make_assistant
+
+    settings = Settings(cache_dir=tmp_path / "c", snapshot_dir=tmp_path / "s")
+    async with httpx.AsyncClient() as client:
+        svc = Services(
+            settings=settings,
+            client=client,
+            store=Store(settings.cache_dir, settings.snapshot_dir),
+            limiter=RateLimiter(1000),
+            assistant=make_assistant(settings, client),
+        )
+        health = await chat.model_health(svc)
+        if not (health and health.model_installed):
+            pytest.skip(health.detail if health else "no local model configured")
+        req = ChatRequest(
+            messages=[ChatMessage(role="user", content="What is a linear variable filter?")]
+        )
+        body = "".join([chunk async for chunk in chat.run(svc, req, "live")])
+    events = [
+        (b.splitlines()[0][7:], json.loads(b.splitlines()[1][6:]))
+        for b in body.strip().split("\n\n")
+    ]
+    assert events[0][1]["mode"] == "local-model"
+    assert events[-1][0] == "done"
+    text = "".join(d["text"] for e, d in events if e == "delta")
+    assert "<think>" not in text and len(text) > 40

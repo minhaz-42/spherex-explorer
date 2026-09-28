@@ -13,13 +13,13 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from . import __version__
-from .api import routes
+from .api import assistant_routes, routes
 from .cache import Store
 from .config import Settings, get_settings
 from .errors import ExplorerError, UpstreamError
 from .http import make_client
 from .ratelimit import RateLimiter
-from .services import Services
+from .services import Services, make_assistant
 
 log = logging.getLogger("spherex_explorer")
 
@@ -52,6 +52,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             client=client,
             store=Store(settings.cache_dir, settings.snapshot_dir),
             limiter=RateLimiter(settings.rate_limit_per_minute),
+            assistant=make_assistant(settings, client),
         )
         try:
             yield
@@ -126,6 +127,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         )
 
     app.include_router(routes.router, prefix="/api")
+    app.include_router(assistant_routes.router, prefix="/api")
     _mount_frontend(app, settings.frontend_dist)
     return app
 

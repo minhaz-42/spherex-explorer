@@ -99,6 +99,12 @@ class Store:
         self.snapshot = DiskStore(snapshot_dir, read_only=True)
         self._inflight: dict[str, asyncio.Future[JSON]] = {}
 
+    def peek(self, namespace: str, key: str, source: Source = "live") -> JSON | None:
+        """What is already stored, without computing anything (the assistant's evidence)."""
+        if source == "snapshot":
+            return self.snapshot.get(namespace, key)
+        return self.memory.get(f"{namespace}:{key}") or self.disk.get(namespace, key)
+
     def put(self, namespace: str, key: str, value: JSON, ttl_s: float) -> None:
         """Store a value computed elsewhere (for example, header facts found while cutting out)."""
         self.memory.put(f"{namespace}:{key}", value, ttl_s)
