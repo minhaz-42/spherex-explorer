@@ -8,16 +8,20 @@
  Search ───── /api/resolve ─────────────────► Sesame adapter ──────────────────────► CDS Sesame
  Timeline ─── /api/observations ────────────► SIA adapter → Frame normaliser ──────► IRSA SIA v2
                                               footprint → wavelength estimate
- Viewer ───── /api/frames/{id}/cutout ──────► FITS range reader ───────────────────► AWS S3 nasa-irsa-spherex
+ Viewer ───── /api/cutout ──────────────────► FITS range reader ───────────────────► AWS S3 nasa-irsa-spherex
    canvas render, shared stretch,             (IBE cutout fallback) ───────────────► IRSA IBE cutout
    blink, diff, pixel readout                 align to common grid, mask flags,
                                               background, aperture photometry
  Known objects /api/known-objects ──────────► JPL adapters + parallax ─────────────► JPL SBIdent, Horizons
  Discover ─── /api/cases ───────────────────► curated JSON (built by a script from real data)
+ Ask ──────── /api/assistant/chat ──────────► evidence from the cache → local model ► Ollama on the same
+   (server-sent events)                       → checks (or built-in answers)          machine, not upstream
 ```
 
 The browser never talks to NASA, JPL or CDS directly. The Python service owns every upstream call,
-so it can validate input, cap sizes, time out, cache, and hide protocol details from the UI.
+so it can validate input, cap sizes, time out, cache, and hide protocol details from the UI. The
+assistant's language model runs next to the service, on the same machine, and receives only text
+evidence the service has assembled.
 
 ### Why this split
 
@@ -55,7 +59,14 @@ so it can validate input, cap sizes, time out, cache, and hide protocol details 
 | `science/sources.py` | Point-source detection and candidate moving-source tracks |
 | `solar_system/jpl.py` | SBIdent and Horizons adapters |
 | `solar_system/parallax.py` | Geocentric → SPHEREx-centric direction using the header state vector |
-| `api/*.py` | HTTP routes and response schemas |
+| `api/*.py` | HTTP routes and response schemas; `api/cachekeys.py` builds the cache keys the routes and the assistant share |
+| `assistant/evidence.py` | The numbered evidence for one question, read from the server's own cached results |
+| `assistant/knowledge.py` | Core facts and short method notes, with keyword retrieval |
+| `assistant/prompts.py` | The system prompt and the reminder after each question |
+| `assistant/local_model.py` | Ollama and OpenAI-compatible adapters; strips think tags |
+| `assistant/grounding.py` | Checks an answer's numbers, dates and citations against its evidence |
+| `assistant/builtin.py` | Answers from the evidence without a model |
+| `assistant/chat.py` | One turn: evidence, then the model or the built-in answer, streamed as events |
 | `ratelimit.py` | Per-client token bucket for expensive routes |
 
 ## Internal data model
@@ -78,7 +89,8 @@ KnownObject   designation, V mag, per-frame predicted position, rate, source
 
 ## API
 
-All routes are `GET` under `/api`, return JSON, and validate their parameters.
+All routes are under `/api`, return JSON (the chat route streams server-sent events), and validate
+their parameters. POST bodies are capped at 64 KB.
 
 | Route | Purpose | Notes |
 |---|---|---|
@@ -90,6 +102,8 @@ All routes are `GET` under `/api`, return JSON, and validate their parameters.
 | `POST /api/known-objects` | Catalogued bodies crossing the field, with per-frame predicted positions | JPL SBIdent + Horizons; 30 s–2 min the first time |
 | `POST /api/candidates` | The moving-source search over a pass | Needs the pass's cutouts |
 | `GET /api/cases` | Curated Discover cases | From `data/cases.json` |
+| `GET /api/assistant/status` | Whether answers come from a local model or are built in | Model health cached 20 s |
+| `POST /api/assistant/chat` | One answer, as server-sent events `meta`, `notice`, `delta`, then `done` or `error` | Up to 16 messages of 2,000 characters; one answer at a time; costs 3 rate-limit tokens |
 
 Every data route accepts `source=live|snapshot`. In snapshot mode only recorded answers are served,
 and anything else is a `404 not_in_snapshot`. Errors are JSON `{"error": {"code", "message",
@@ -118,14 +132,53 @@ checked (`EXTNAME`, header length) before its bytes are used. If a check fails t
 to walking the headers, and if S3 fails it falls back to the IRSA cutout service. The pixels match
 the IRSA cutout service bit for bit (verified; see the research notes).
 
-## Explanations and AI
+## Explanations and the assistant
 
 Every explanation in the app is written from the measured values: the wavelength gap between two
-frames, why a difference is refused, what JPL predicts and how far a candidate lies from it. There is
-no language-model feature. The brief makes AI optional, and here it would add a way to state things
-that were not measured, without adding anything that is not already stated plainly. If one is
-added later, it should receive the structured evidence (`ChangeResult`, candidate and known-object
-JSON) and phrase it, never the images.
+frames, why a difference is refused, what JPL predicts and how far a candidate lies from it.
+
+The assistant (the **Ask** panel) keeps to the same rule: **real data → the app's measurements →
+numbered evidence → a local model phrases it → checks**, never images → model → conclusion.
+
+1. **Evidence, gathered by the server for each question** (`assistant/evidence.py`). The browser
+   says only what is on screen: the target, the archive keys of frames B and A, the comparison mode,
+   the field of view and the sequence's frame keys. It never sends values. The server reads its own
+   cached results for exactly that view (`Store.peek`, with the routes' keys from `api/cachekeys.py`):
+   - each frame's time, wavelength at the target, brightness and caveats;
+   - whether A and B may be differenced, and why not;
+   - JPL's predictions, with each body's distance from the target in A and B, so a brightness jump
+     caused by an asteroid entering the aperture is explained by its motion rather than by colour;
+   - the moving-source search and which candidates match JPL.
+
+   It computes or fetches nothing for the assistant, except a name lookup the question asks for. It
+   adds matching Discover cases and up to three method notes (`assistant/knowledge.py`). Items are
+   tagged E (the app's data and cases) or K (method notes). What has not been loaded or run yet is
+   listed as such, never guessed.
+2. **A local model phrases it** (`assistant/local_model.py`). The default is Ollama with Qwen3 4B
+   Instruct (`qwen3:4b-instruct-2507-q4_K_M`); any OpenAI-compatible server on the machine also
+   works. The system prompt (`assistant/prompts.py`):
+   - limits the model to the evidence and a few core facts, and asks it to cite tags;
+   - forbids discovery and Planet X claims, and forbids speaking for NASA;
+   - carries the wavelength caution.
+
+   The model never sees images. Think tags are stripped from the stream, and one answer is generated
+   at a time. Qwen3 4B was chosen after trying Qwen3 14B, which needed about 10 GB of memory and took
+   about 30 seconds an answer on a 16 GB laptop, against 3–8 seconds for the 4B model.
+3. **Links are made by the server**, not by the model: Discover cases, and views for a named object
+   or coordinates in the question.
+4. **Checks** (`assistant/grounding.py`). Each answer is checked against its evidence and the core
+   facts:
+   - every number, allowing for rounding and for restatement in µJy, mJy or Jy;
+   - every month-and-year, as a pair;
+   - every cited tag, which must be one of its sources.
+
+   Anything not found is shown under the answer; nothing is silently corrected. The checks cover
+   facts, not reasoning: a small model can still link two true facts wrongly.
+5. **Without a model** (none configured, Ollama not running, or a failure before the first word),
+   the assistant answers from the same evidence directly (`assistant/builtin.py`) and says so.
+
+Questions go to this server only; the status route reports whether the model URL is local. The
+conversation lives in the browser tab and is never stored.
 
 ## Caching and limits
 
@@ -146,19 +199,20 @@ JSON) and phrase it, never the images.
 ## Frontend structure (`frontend/src`)
 
 ```text
-app/            router, layout, error boundary
-design/         tokens.css, base styles, primitives (Button, Field, Tabs, Disclosure, Status)
+app/            router, layout (header with Ask and the theme toggle), error boundary
+components/     ThemeToggle, Wordmark; space/: landing-page figures and the sky background
 features/
-  search/       SearchForm, parse + resolve, examples
-  observations/ useObservations, grouping helpers
-  viewer/       SkyCanvas (WebGL-free 2D canvas), overlays, stretch, pixel readout
-  timeline/     Timeline, pass track, frame ticks, playback
-  wavelength/   band filter, spectrum and light-curve plots (SVG)
-  compare/      blink, side by side, difference, compatibility messages
-  known/        known-object overlay and list
-  discover/     case list and detail
+  search/       SearchForm
+  viewer/       Viewer, SkyCanvas (2D canvas), overlays, frame panel, sequence loading
+  timeline/     frame strip, pass track, transport and speeds
+  wavelength/   band picker, brightness against wavelength or time
+  plots/        ScatterPlot (SVG)
+  known/        JPL known objects and the moving-source search
+  discover/     blink preview for the cases
+  assistant/    Ask panel, streaming client, safe answer rendering, the view on screen
 pages/          Landing, Explore, Discover, About, NotFound
-lib/            api client, time and coordinate formatting, colour scales
+lib/            API client, queries, types, sequence and matching rules, formatting, WCS, pixels
+styles/         index.css: design tokens for the light and dark themes, and components
 ```
 
 ## Risk register

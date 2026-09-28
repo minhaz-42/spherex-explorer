@@ -84,12 +84,28 @@ The whole interface is organised around three questions, in this order:
 - R22. What SPHEREx is, how the app works, the methods, the limitations, data credits, and a clear
   statement that the project is not affiliated with or endorsed by NASA.
 
+### Ask (the assistant)
+
+- R23. A chat panel, reachable from every page, answers questions about the view on screen, about
+  SPHEREx and about the app's methods, and offers links to views (Discover cases, named objects,
+  coordinates).
+- R24. Answers come from evidence the server gathers from its own data for the view on screen; the
+  browser sends identifiers only. A language model running on the same machine phrases the evidence
+  and cites it by number. It never sees images, and links are built by the server, never by the
+  model.
+- R25. Numbers, dates and citations in each answer are checked against its evidence, and anything
+  unverified is shown. The language rules below apply to answers.
+- R26. The app works fully without a model: the assistant then answers from the same evidence and
+  says that no model is running.
+
 ## Non-functional requirements
 
 - Works on a consumer laptop and a phone; no GPU; no account; no tracking.
 - Downloads only small cutouts, never whole 72 MB files, and caches what it fetched.
 - The server validates every input, caps cutout size and frame counts, and times out upstream calls.
 - No secrets are needed. Optional configuration lives in `.env` (see `.env.example`).
+- The assistant uses local models only (Ollama, or another server on the same machine): questions
+  never go to a hosted AI service, and conversations are not stored.
 - Accessible: keyboard operable, visible focus, 4.5:1 text contrast, reduced-motion respected.
 
 ## Language rules

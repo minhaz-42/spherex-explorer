@@ -2,6 +2,44 @@
 
 Newest entries first. Each entry says what changed, why, and what was verified.
 
+## 2026-09-28 · The Ask assistant, on a local model
+
+**What and why.** The brief makes AI optional; the project owner asked for a chat assistant that
+uses local models. It is built the way the brief allows: real data → the app's measurements → numbered evidence → a local model phrases it →
+checks. Details are in [architecture.md](architecture.md#explanations-and-the-assistant).
+- Backend `assistant/`: evidence from the server's own cache for the view on screen (identifiers
+  from the browser, never values), a small knowledge base, Ollama and OpenAI-compatible adapters,
+  answer checks and built-in answers. Routes `GET /api/assistant/status` and
+  `POST /api/assistant/chat` (server-sent events).
+- Frontend: the Ask panel beside the theme toggle in the header, with streamed answers, citation
+  chips that open the sources, server-built links, check warnings, Stop and Escape.
+
+**Choosing the model.** Qwen3 14B needed about 10 GB and about 30 s an answer on the 16 GB
+development laptop. Qwen3 4B Instruct 2507 (Q4_K_M, 2.5 GB) answers in 3–8 s and keeps to the
+evidence, so it is the default.
+
+**Found by reading real answers, and fixed.**
+- The model misquoted "25 Apr 2025 – 26 May 2026" as "April to May 2025", and the number check
+  passed it. Month-and-year pairs are now checked as pairs.
+- It gave the wavelength gap as the reason Iris's frame was about 1,200 times brighter at the
+  target. The real reason is that Iris moved into the aperture. The evidence now gives each JPL
+  body's distance from the target in frames A and B, and states the motion as the reason when it
+  applies. The colour caveat is then left out of that comparison, because the model took it as the
+  reason.
+- It cited a source that did not exist ([E8]). Citations are now checked against the sources.
+- Discover cases were tagged C1, C2, the same as search candidates. Cases are now tagged E.
+- Answers ran long and uncited. After a one-line reminder at the end of each question, every
+  replayed answer was short and cited.
+- Keyword retrieval matched inside words ("au" in "because"). It now matches whole words, with
+  stems for longer keywords, and a longer match wins ("MJy/sr" is about units, not photometry).
+
+**Verified.**
+- Backend: 36 assistant tests, including mocked Ollama and OpenAI-compatible streams, fallback,
+  busy and rate-limit cases. The live test against the real model passes.
+- Frontend: 10 component and unit tests. Playwright: 3 assistant tests on the demo snapshot with
+  the model off, among 12 passing.
+- Totals: 140 backend and 56 frontend tests passing.
+
 ## 2026-09-28 · Phases 8–9: polish and validation
 
 **Automated checks (all passing).**

@@ -4,7 +4,8 @@ An interactive web explorer for visualizing how the infrared sky changes across 
 over time and wavelength.
 
 > **Status:** working end to end on live data. Search, the timeline viewer, comparisons, brightness
-> plots, JPL known objects, the moving-source search and the Discover cases are built and tested;
+> plots, JPL known objects, the moving-source search, the Discover cases and the Ask assistant are
+> built and tested;
 > see [docs/development-log.md](docs/development-log.md). If something here doesn't match the code,
 > the README is out of date: please fix it in your next commit.
 
@@ -29,6 +30,10 @@ it, and lets you browse those images by **observation time** and by **wavelength
   - the app's own moving-source search, whose candidates are matched against those predictions.
 - **Discover:** curated cases built from live data by a script, each with its evidence and cautions,
   such as asteroid (7) Iris caught moving past 36 Sextantis.
+- **Ask:** a chat panel that answers questions about the view on screen, SPHEREx and the app's
+  methods, from the server's own measurements, JPL's predictions and method notes. A language model
+  running on the same machine phrases the answer and cites numbered sources, and every number and
+  date in it is checked against them. Without a model, it answers from the same evidence directly.
 
 Everything shown is real SPHEREx data. The demo snapshot is a labelled recording of real data, used
 only when the visitor chooses it. The app never claims a discovery; see
@@ -118,6 +123,24 @@ make dev       # API on http://127.0.0.1:8000, web app with hot reload on http:/
 
 Open <http://localhost:5173>. The web app proxies `/api` to the API server.
 
+### The assistant's local model (optional)
+
+The Ask panel works without a model, with answers put together from the app's own data. For answers
+in plain language, run a model on the same machine with [Ollama](https://ollama.com):
+
+```bash
+brew install ollama        # or the installer from https://ollama.com/download
+ollama serve               # skip if the Ollama app is already running
+ollama pull qwen3:4b-instruct-2507-q4_K_M
+```
+
+The model is a 2.5 GB download and uses about 3.6 GB of memory while loaded. On an Apple M-series
+laptop answers take 3–8 seconds, and about 15 for the first one, which loads the model. The API notices the model within 20 seconds, with no
+restart. To use LM Studio, llama.cpp's `llama-server` or `mlx_lm.server` instead, set
+`SPHEREX_ASSISTANT_PROVIDER=openai` and point `SPHEREX_ASSISTANT_URL` and `SPHEREX_ASSISTANT_MODEL`
+at it (see [.env.example](.env.example)). On a 16 GB machine keep to one loaded model: a 14B model
+needs about 10 GB and answers several times slower.
+
 | Command | What it does |
 |---|---|
 | `make check` | Lint (ruff, ESLint), type-check (mypy, tsc) and unit tests (pytest, Vitest) |
@@ -127,8 +150,9 @@ Open <http://localhost:5173>. The web app proxies `/api` to the API server.
 | `make serve` | Build, then serve the API and the app from one process on <http://127.0.0.1:8000> |
 | `make snapshot` | Rebuild the Discover cases (`data/cases.json`) and the demo snapshot (`data/snapshot/`) from live data; takes several minutes |
 
-`make test-e2e` runs Playwright against the committed demo snapshot, so it needs no network. It
-starts its own API server on port 8010 and web server on port 5183.
+`make test-e2e` runs Playwright against the committed demo snapshot, so it needs no network, and
+with the assistant's built-in answers, so it needs no model. It starts its own API server on port
+8010 and web server on port 5183; set `E2E_API_PORT` and `E2E_WEB_PORT` to use others.
 
 ### Live data and demo mode
 
@@ -147,6 +171,9 @@ with the API under `/api`. To deploy:
 2. Add `--proxy-headers --forwarded-allow-ips=<proxy address>` so the per-visitor rate limit sees
    visitors' addresses rather than the proxy's.
 3. Give it a writable `SPHEREX_CACHE_DIR`.
+4. For the assistant, run Ollama (or another local model server) on the same machine. Keep
+   `SPHEREX_ASSISTANT_URL` on localhost: questions then never leave the server. Without a model the
+   Ask panel says so and gives built-in answers.
 
 It needs outbound HTTPS to irsa.ipac.caltech.edu, nasa-irsa-spherex.s3.us-east-1.amazonaws.com,
 ssd-api.jpl.nasa.gov, ssd.jpl.nasa.gov and cds.unistra.fr. A server in a US region reads frames many
@@ -161,7 +188,8 @@ backend/                   Python data service (FastAPI)
     config.py              settings from SPHEREX_* environment variables
     cache.py               memory + disk cache, demo snapshot store
     http.py                pooled upstream HTTP client
-    api/                   HTTP routes
+    api/                   HTTP routes; cachekeys.py shares cache keys with the assistant
+    assistant/             the Ask panel's backend: evidence, local-model adapters, answer checks
     archive/               IRSA SIA, FITS byte-range reader, frame normalisation
     science/               alignment, background, photometry, change tools
     solar_system/          JPL SBIdent and Horizons, parallax
@@ -171,10 +199,11 @@ backend/                   Python data service (FastAPI)
 frontend/                  Web app (Vite, React, TypeScript, Tailwind CSS)
   src/app/                 router, layout, error boundary
   src/pages/               Landing, Explore, Discover, About
-  src/features/            search, viewer, timeline, wavelength, known objects, discover
+  src/features/            search, viewer, timeline, wavelength, known objects, discover, assistant
   src/lib/                 API client and helpers
-  src/components/space/    lit solar system, sky globe, spectrum and figures (landing page)
-  src/styles/index.css     design tokens (observatory-atlas light theme) and base styles
+  src/components/          theme toggle, wordmark; space/: lit solar system, sky globe and
+                           figures for the landing page
+  src/styles/index.css     design tokens (observatory-atlas light and dark themes), base styles
   tests/, e2e/             Vitest and Playwright tests
 data/cases.json            curated Discover cases (built by backend/scripts/build_cases.py)
 data/snapshot/             demo snapshot: recorded API answers for those cases

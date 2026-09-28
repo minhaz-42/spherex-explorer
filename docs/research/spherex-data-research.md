@@ -44,7 +44,7 @@ No service needs an account, API key or AWS credentials.
 | Pixels | 6.15″, 2040 × 2040 active pixels per detector | ES Table 2 |
 | Field | about 3.5° × 3.5° per detector | spherex.caltech.edu/page/survey |
 | Exposure | 113.58 s (`XPOSURE`), 118.19 s elapsed | ES App. A |
-| Orbit | Sun-synchronous polar, 98 min, semi-major axis 7,037 km | ES Table 1 |
+| Orbit | Sun-synchronous polar, 98 min, semi-major axis 7,037 km. Altitude about 659 km (7,037 − 6,378 km, derived); JPL Horizons' object data for SPHEREx (-163182) says "~650 km above the terminator line", the figure the app quotes | ES Table 1; Horizons -163182 |
 
 | Band | Detector | Wavelength (µm) | R |
 |---|---|---|---|

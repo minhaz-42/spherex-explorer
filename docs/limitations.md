@@ -49,6 +49,24 @@ caveat next to each result; this page collects them.
   Published brightness estimates put it near or beyond the single-exposure depth. The app cannot
   find or rule out such a planet.
 
+## About the assistant
+
+- **A small model can be wrong.** Answers are phrased by a 4-billion-parameter model running
+  locally. It keeps to the evidence well but sometimes links two true facts wrongly (for example,
+  giving the wavelength gap as the reason for a motion) or repeats a caveat that does not apply.
+  The numbered sources under each answer are the facts; the phrasing is not.
+- **What is checked.** Every number and month-and-year in an answer is looked for in its sources,
+  and every cited tag must be one of them; anything else is flagged. Names, words and reasoning are
+  not checked.
+- **It knows only what the app has.** It answers from the frames already loaded, the JPL check and
+  the moving-source search if they have been run for the pass on screen, the Discover cases and a
+  few method notes. It does not search the archive or the literature, and it does not look at
+  images. Asked about something outside that, it should say the evidence does not cover it.
+- **One answer at a time.** A laptop runs one model, so a second visitor waits up to 30 seconds
+  for the first answer to finish, then gets a "busy" message.
+- **Without a model** the answers are the evidence itself, put together by rules: accurate but long
+  and plain.
+
 ## About the service
 
 - **Speed.** Search takes seconds. Each new frame takes seconds to tens of seconds, depending on the
