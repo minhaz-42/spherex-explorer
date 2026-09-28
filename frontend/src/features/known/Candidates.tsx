@@ -80,7 +80,7 @@ export function CandidatesPanel({ sequence, target, fov, source, enabled, known,
                 return (
                   <li key={c.id} className="space-y-1 py-2.5">
                     <p className="flex items-baseline justify-between gap-3">
-                      <span className="font-mono text-text">{c.id}</span>
+                      <span className="font-semibold text-text">{c.id}</span>
                       <span className="num text-xs text-faint">
                         {c.rateArcsecPerHour.toFixed(0)}″/h toward the {direction(c.positionAngleDeg)}
                       </span>

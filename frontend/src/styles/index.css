@@ -1,8 +1,5 @@
-@import "@fontsource/instrument-serif/400.css";
-@import "@fontsource/instrument-serif/400-italic.css";
-@import "@fontsource/ibm-plex-sans/400.css";
-@import "@fontsource/ibm-plex-sans/500.css";
-@import "@fontsource/ibm-plex-sans/600.css";
+@import "@fontsource-variable/inter/opsz.css";
+@import "@fontsource-variable/inter/opsz-italic.css";
 @import "@fontsource/ibm-plex-mono/400.css";
 @import "@fontsource/ibm-plex-mono/500.css";
 @import "tailwindcss";
@@ -18,6 +15,11 @@
  *
  * Sky images are never filtered or tinted: they sit in an image well (--bg-image) and marks drawn on
  * top of them use the *-on-image colours.
+ *
+ * Type: one family, Inter, for headings, text and numbers, with its optical sizes (the display cut
+ * at headline sizes) and tabular figures wherever numbers line up. IBM Plex Mono is kept for
+ * identifiers only: observation IDs, archive keys, model names. Text is never set in capitals with
+ * wide tracking, and nothing smaller than 11 px.
  */
 :root {
   color-scheme: light;
@@ -74,13 +76,13 @@
   --band-5: #1a4f98;
   --band-6: #113e7a;
 
-  --font-display: "Instrument Serif", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
-  --font-sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-sans: "Inter Variable", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: var(--font-sans);
   --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
 
-  --fs-display: clamp(3rem, 1.7rem + 5vw, 6.4rem);
-  --fs-h1: clamp(2.3rem, 1.6rem + 2.6vw, 3.8rem);
-  --fs-h2: clamp(2rem, 1.4rem + 2.1vw, 3.3rem);
+  --fs-display: clamp(2.6rem, 1.55rem + 4.2vw, 4.9rem);
+  --fs-h1: clamp(2rem, 1.5rem + 1.9vw, 3.1rem);
+  --fs-h2: clamp(1.6rem, 1.3rem + 1.2vw, 2.3rem);
 
   --radius: 10px;
   --radius-lg: 18px;
@@ -92,8 +94,6 @@
   --shadow: 0 1px 2px rgb(11 20 55 / 0.05), 0 10px 30px -14px rgb(11 20 55 / 0.2);
   --shadow-lg: 0 2px 6px rgb(11 20 55 / 0.04), 0 32px 80px -32px rgb(33 30 100 / 0.38);
 
-  /* Headlines that catch the light: ember through magenta to violet (every stop above 4.5:1). */
-  --gradient-text: linear-gradient(100deg, #b5381b 0%, #a3317a 48%, #5b3fd0 100%);
 
   /* Surfaces that let the sky show through. */
   --glass-bg: rgb(255 255 255 / 0.66);
@@ -188,7 +188,6 @@
   --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 12px 32px -14px rgb(0 0 0 / 0.6);
   --shadow-lg: 0 2px 6px rgb(0 0 0 / 0.3), 0 32px 80px -30px rgb(0 0 0 / 0.75);
 
-  --gradient-text: linear-gradient(100deg, #ff9a6e 0%, #f07ab8 48%, #b3a4ff 100%);
 
   --glass-bg: rgb(23 30 63 / 0.62);
   --glass-border: rgb(255 255 255 / 0.08);
@@ -207,6 +206,12 @@
   --fig-sphere-lo: #161d44;
   --fig-plate-a: #1f2750;
   --fig-plate-b: #171e3f;
+}
+
+/* Small text is 13 px, not 12. */
+@theme {
+  --text-xs: 0.8125rem;
+  --text-xs--line-height: 1.4;
 }
 
 @theme inline {
@@ -257,7 +262,7 @@
     color: var(--text);
     font-family: var(--font-sans);
     font-size: 100%;
-    line-height: 1.55;
+    line-height: 1.6;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
     scrollbar-color: var(--rule-strong) transparent;
@@ -277,10 +282,16 @@
   h2,
   h3 {
     font-family: var(--font-display);
-    font-weight: 400;
-    line-height: 1.04;
-    letter-spacing: -0.012em;
+    font-weight: 650;
+    line-height: 1.12;
+    letter-spacing: -0.016em;
     text-wrap: balance;
+  }
+
+  h1 {
+    font-weight: 700;
+    line-height: 1.06;
+    letter-spacing: -0.022em;
   }
 
   p {
@@ -310,37 +321,34 @@
     padding-inline: var(--gutter);
   }
 
+  /* A short label above a heading, in sentence case. */
   .kicker {
-    font-family: var(--font-mono);
-    font-size: 0.72rem;
-    font-weight: 500;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--text-muted);
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.35;
+    letter-spacing: 0;
+    color: var(--accent-strong);
   }
 
   .display {
     font-family: var(--font-display);
     font-size: var(--fs-display);
-    font-weight: 400;
-    line-height: 0.98;
-    letter-spacing: -0.02em;
+    font-weight: 700;
+    line-height: 1.02;
+    letter-spacing: -0.03em;
   }
 
-  /* An italic phrase that catches the light. */
+  /* The phrase of a headline that carries the accent. */
   .shine {
-    font-style: italic;
-    background: var(--gradient-text);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    padding-inline-end: 0.06em;
+    color: var(--accent);
   }
 
   .prose-body {
     max-width: 38rem;
     color: var(--text-muted);
     font-size: 1.0625rem;
+    line-height: 1.65;
   }
 
   .prose-body strong {
@@ -363,13 +371,15 @@
     text-decoration-color: var(--accent);
   }
 
+  /* Identifiers: observation IDs, archive keys, model names. */
   .mono {
     font-family: var(--font-mono);
     font-feature-settings: "zero" 1;
   }
 
+  /* Numbers that line up: times, coordinates, wavelengths, counts. */
   .num {
-    font-family: var(--font-mono);
+    font-family: var(--font-sans);
     font-variant-numeric: tabular-nums;
   }
 
@@ -457,7 +467,7 @@
     padding: 0 1.1rem;
     border: 1px solid transparent;
     border-radius: 999px;
-    font: 500 0.9375rem/1 var(--font-sans);
+    font: 550 0.9375rem/1 var(--font-sans);
     white-space: nowrap;
     cursor: pointer;
     text-decoration: none;
@@ -548,7 +558,7 @@
     border-radius: 999px;
     background: var(--bg-raised);
     color: var(--text-muted);
-    font: 500 0.8125rem/1 var(--font-sans);
+    font: 500 0.875rem/1 var(--font-sans);
     text-decoration: none;
     cursor: pointer;
     transition:
@@ -587,10 +597,10 @@
   }
 
   .segmented > button {
-    min-height: 1.85rem;
-    padding: 0 0.8rem;
+    min-height: 2rem;
+    padding: 0 0.85rem;
     white-space: nowrap;
-    font: 500 0.8125rem/1 var(--font-sans);
+    font: 500 0.875rem/1 var(--font-sans);
     color: var(--text-muted);
     background: transparent;
     border: 0;
@@ -661,8 +671,8 @@
     display: grid;
     grid-template-columns: minmax(7rem, auto) 1fr;
     column-gap: 1rem;
-    row-gap: 0.375rem;
-    font-size: 0.8125rem;
+    row-gap: 0.4rem;
+    font-size: 0.875rem;
   }
 
   .meta-list dt {
@@ -671,7 +681,6 @@
 
   .meta-list dd {
     color: var(--text);
-    font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;
     overflow-wrap: anywhere;
   }
@@ -679,13 +688,15 @@
   .section-title {
     font-family: var(--font-display);
     font-size: var(--fs-h2);
+    font-weight: 650;
+    letter-spacing: -0.02em;
   }
 
+  /* The heading of a panel or a group of controls. */
   .panel-title {
-    font: 600 0.72rem/1.2 var(--font-sans);
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--text-muted);
+    font: 600 0.875rem/1.3 var(--font-sans);
+    letter-spacing: 0;
+    color: var(--text);
   }
 
   .disclosure > summary {
@@ -696,6 +707,7 @@
     cursor: pointer;
     color: var(--text-muted);
     font-size: 0.875rem;
+    font-weight: 500;
   }
 
   .disclosure > summary::-webkit-details-marker {

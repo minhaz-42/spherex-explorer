@@ -104,7 +104,7 @@ function Header({
                 to={item.to}
                 onClick={() => setOpen(false)}
                 className={({ isActive }) =>
-                  `flex h-12 items-center gap-3 font-display text-2xl no-underline ${isActive ? "text-text" : "text-muted"}`
+                  `flex h-12 items-center gap-3 text-xl font-semibold no-underline ${isActive ? "text-text" : "text-muted"}`
                 }
               >
                 {({ isActive }) => (
@@ -182,7 +182,7 @@ function Footer() {
               </Link>
             </li>
           </ul>
-          <p className="font-display text-lg italic text-faint" aria-hidden="true">
+          <p className="text-base font-medium text-faint" aria-hidden="true">
             Clear skies.
           </p>
         </div>

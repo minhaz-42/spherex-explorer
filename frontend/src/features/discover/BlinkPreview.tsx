@@ -95,7 +95,7 @@ export function BlinkPreview({ ra, dec, fov, a, b, source = "live", label, inter
       )}
       {images && (
         <figcaption className="pointer-events-none absolute inset-x-2 top-2 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-sm bg-black/60 px-2 py-1 text-[0.75rem] text-on-image">
-          <span className="font-mono font-medium text-accent-on-image">{showB ? "B" : "A"}</span>
+          <span className="font-semibold text-accent-on-image">{showB ? "B" : "A"}</span>
           <span className="num">
             {formatDate(shown.isoMid)} {formatTime(shown.isoMid, false)}
           </span>

@@ -60,8 +60,8 @@ export function SpectrumExplorer() {
             </defs>
 
             {/* Visible light, squeezed into a stub on the left. */}
-            <text x="14" y={BAR_TOP - 12} className="num fill-muted text-[12px] tracking-[0.12em]">
-              VISIBLE
+            <text x="14" y={BAR_TOP - 12} className="num fill-muted text-[12px] font-medium">
+              Visible
             </text>
             <rect x="14" y={BAR_TOP + 10} width="80" height={BAR_H - 20} rx="6" fill={`url(#${id}-visible)`} />
             <text x="14" y={BAR_TOP + BAR_H + 30} className="num fill-faint text-[12px]">
@@ -149,7 +149,7 @@ export function SpectrumExplorer() {
                     strokeWidth="0.9"
                   />
                   <circle cx={fx} cy={BAR_TOP - 4} r="2.2" fill="var(--text)" />
-                  <text x={fx} y={top} textAnchor="middle" className="fill-text font-display text-[19px] italic">
+                  <text x={fx} y={top} textAnchor="middle" className="fill-text text-[17px] font-semibold">
                     {f.label}
                   </text>
                 </g>

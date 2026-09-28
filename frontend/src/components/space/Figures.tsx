@@ -95,7 +95,7 @@ export function WhereFigure() {
       <circle cx="136" cy="64" r="2.6" fill={EMBER} />
       <path d="M136 50v6M136 72v6M122 64h6M144 64h6" stroke={EMBER} strokeWidth="1.1" />
       <path d="M146 55l24-24h46" stroke={INK} strokeOpacity="0.55" strokeWidth="0.8" pathLength={1} style={order(5)} />
-      <text x="172" y="27" className="fill-text font-display text-[15px] italic">
+      <text x="172" y="27" className="fill-text text-[13.5px] font-semibold">
         Andromeda
       </text>
       <text x="172" y="43" className="num fill-muted text-[7.5px]">
@@ -141,8 +141,8 @@ export function WhenFigure() {
               fill={`var(--band-${b})`}
             />
           ))}
-          <text x={px} y="135" textAnchor="middle" className="num fill-muted text-[7.5px] tracking-[0.12em]">
-            PASS {p + 1}
+          <text x={px} y="135" textAnchor="middle" className="num fill-muted text-[7.5px] font-medium">
+            Pass {p + 1}
           </text>
         </g>
       ))}
@@ -154,15 +154,15 @@ export function WhenFigure() {
         pathLength={1}
         style={order(2)}
       />
-      <text x="86" y="46" textAnchor="middle" className="fill-text font-display text-[15px] italic">
+      <text x="86" y="46" textAnchor="middle" className="fill-text text-[13.5px] font-semibold">
         about six months
       </text>
       <g className="motion-safe:animate-[playhead_8s_ease-in-out_infinite]">
         <line x1="32" x2="32" y1="70" y2="124" stroke={EMBER} strokeWidth="1.2" />
         <circle cx="32" cy="70" r="3" fill={EMBER} />
       </g>
-      <text x="226" y="152" textAnchor="end" className="num fill-faint text-[7px] tracking-[0.1em]">
-        TIME →
+      <text x="226" y="152" textAnchor="end" className="num fill-faint text-[7px] font-medium">
+        Time →
       </text>
     </Figure>
   );
@@ -207,17 +207,17 @@ export function ChangeFigure() {
       <path d="M150 72l-7 1.6M150 72l-2.2 6.8" stroke={EMBER} strokeWidth="0.9" />
       <g className="motion-safe:animate-[blink-a_1.8s_steps(1)_infinite]">
         <circle cx="98" cy="118" r="4" fill={EMBER} />
-        <text x="70" y="161" className="num fill-muted text-[7.5px] tracking-[0.1em]">
-          VISIT 1
+        <text x="70" y="161" className="num fill-muted text-[7.5px] font-medium">
+          Visit 1
         </text>
       </g>
       <g className="opacity-0 motion-safe:animate-[blink-b_1.8s_steps(1)_infinite]">
         <circle cx="150" cy="72" r="4" fill={EMBER} />
-        <text x="70" y="161" className="num fill-muted text-[7.5px] tracking-[0.1em]">
-          VISIT 2
+        <text x="70" y="161" className="num fill-muted text-[7.5px] font-medium">
+          Visit 2
         </text>
       </g>
-      <text x="196" y="52" className="fill-accent font-display text-[16px] italic">
+      <text x="196" y="52" className="fill-accent text-[14.5px] font-semibold">
         moved
       </text>
       <path d="M194 55c-10 4-20 9-30 14" stroke={EMBER} strokeWidth="0.8" pathLength={1} style={order(3)} />
@@ -262,10 +262,10 @@ export function IrisPlate() {
         x="170"
         y="192"
         textAnchor="middle"
-        className="num fill-on-image text-[8px] tracking-[0.08em]"
+        className="num fill-on-image text-[8px] font-medium"
         opacity="0.8"
       >
-        36 SEXTANTIS
+        36 Sextantis
       </text>
       <path
         d="M64 150L124 92"
@@ -287,7 +287,7 @@ export function IrisPlate() {
           2 Dec 2025 · 21:49 UTC
         </text>
       </g>
-      <text x="132" y="80" className="fill-accent-on-image font-display text-[15px] italic">
+      <text x="132" y="80" className="fill-accent-on-image text-[13.5px] font-semibold">
         (7) Iris
       </text>
     </svg>

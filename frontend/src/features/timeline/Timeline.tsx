@@ -39,7 +39,7 @@ export function PassTrack({ passes, selected, onSelect, disabled }: PassTrackPro
           i % step === 0 ? (
             <span
               key={m.mjd}
-              className="absolute top-0 -translate-x-1/2 font-mono text-[0.6875rem] text-faint"
+              className="num absolute top-0 -translate-x-1/2 text-[0.75rem] text-faint"
               style={{ left: `${((m.mjd - t0) / span) * 100}%` }}
             >
               {m.label}
@@ -124,7 +124,7 @@ export function FrameStrip({ frames, current, reference, status, onSelect }: Fra
 
   return (
     <div className="flex gap-2">
-      <div className="flex h-14 shrink-0 flex-col justify-between py-1 text-right font-mono text-[0.625rem] leading-none text-faint" aria-hidden="true">
+      <div className="flex h-14 shrink-0 flex-col justify-between py-1 text-right num text-[0.6875rem] leading-none text-faint" aria-hidden="true">
         <span>{hi.toFixed(2)} µm</span>
         <span>{lo.toFixed(2)}</span>
       </div>
@@ -147,7 +147,7 @@ export function FrameStrip({ frames, current, reference, status, onSelect }: Fra
             <Fragment key={f.id}>
               {i > 0 && gap > BREAK_DAYS && (
                 <li aria-hidden="true" className="flex shrink-0 items-end px-1 pb-3">
-                  <span className="whitespace-nowrap font-mono text-[0.625rem] text-faint">+{formatGap(gap)}</span>
+                  <span className="num whitespace-nowrap text-[0.6875rem] text-faint">+{formatGap(gap)}</span>
                 </li>
               )}
               <li className="shrink-0">
@@ -161,7 +161,7 @@ export function FrameStrip({ frames, current, reference, status, onSelect }: Fra
                   className={`group relative block h-14 w-5 rounded-[2px] transition-colors ${active ? "bg-accent-wash" : "hover:bg-hover"}`}
                 >
                   {i === reference && (
-                    <span className="absolute left-1/2 top-0 -translate-x-1/2 font-mono text-[0.625rem] font-medium leading-none text-text">A</span>
+                    <span className="absolute left-1/2 top-0 -translate-x-1/2 text-[0.6875rem] font-semibold leading-none text-text">A</span>
                   )}
                   <span className="absolute inset-x-0 bottom-3 top-3" aria-hidden="true">
                     <span

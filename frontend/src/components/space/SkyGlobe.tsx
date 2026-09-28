@@ -227,10 +227,10 @@ export function SkyGlobe() {
       // The deep fields at the ecliptic poles, brighter with every visit.
       const visits = Math.min(MAPS, s.progress);
       const pulse = reduced ? 0.5 : 0.5 + 0.5 * Math.sin(now / 500);
-      ctx.font = '500 10px "IBM Plex Mono", ui-monospace, monospace';
+      ctx.font = '600 11px "Inter Variable", system-ui, sans-serif';
       for (const [lat, label] of [
-        [89.9, "NORTH DEEP FIELD"],
-        [-82, "SOUTH DEEP FIELD"],
+        [89.9, "North deep field"],
+        [-82, "South deep field"],
       ] as const) {
         const p = toScreen(-1.4, lat * DEG, R, cx, cy);
         if (p.depth <= 0.05) continue;

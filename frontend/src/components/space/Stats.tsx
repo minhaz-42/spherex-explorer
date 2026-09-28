@@ -48,7 +48,7 @@ function Counter({ stat, index }: { stat: Stat; index: number }) {
         <span ref={numRef} className="font-display text-[clamp(3rem,2.2rem+2.6vw,4.6rem)] leading-none text-text">
           {format(stat.value, decimals)}
         </span>
-        {stat.suffix ? <span className="font-display text-2xl italic text-muted">{stat.suffix}</span> : null}
+        {stat.suffix ? <span className="text-2xl font-semibold text-muted">{stat.suffix}</span> : null}
       </span>
       <span className="font-medium text-text">{stat.label}</span>
       <span className="text-sm text-faint">{stat.note}</span>

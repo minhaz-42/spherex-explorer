@@ -317,10 +317,10 @@ function drawLabel(
   placed: Box[],
   force: boolean,
 ): void {
-  const name = (item.id === "earth" ? "Earth · SPHEREx" : BODIES[item.id].name).toUpperCase();
+  // Sentence case keeps "SPHEREx" spelled as the mission spells it.
+  const name = item.id === "earth" ? "Earth · SPHEREx" : BODIES[item.id].name;
   ctx.save();
-  ctx.font = `600 ${Math.round(10 * unit + 0.5)}px "IBM Plex Sans", system-ui, sans-serif`;
-  if ("letterSpacing" in ctx) (ctx as CanvasRenderingContext2D & { letterSpacing: string }).letterSpacing = "1.2px";
+  ctx.font = `600 ${Math.round(11 * unit + 0.5)}px "Inter Variable", system-ui, sans-serif`;
   const w = ctx.measureText(name).width;
   const h = 13 * unit;
   const { x, y, r } = item;

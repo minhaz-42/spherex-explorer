@@ -45,11 +45,11 @@ export function ScaleAndCompass({ scale, arcsecPerPixel }: { scale: number; arcs
           <path d="M25 11 L28 7 L31 11" />
           <path d="M11 25 L7 28 L11 31" />
         </g>
-        <text x="24" y="6" fill="currentColor" fontSize="8" fontFamily="var(--font-mono)">N</text>
-        <text x="0" y="24" fill="currentColor" fontSize="8" fontFamily="var(--font-mono)">E</text>
+        <text x="24" y="6" fill="currentColor" fontSize="8.5" fontWeight="600" fontFamily="var(--font-sans)">N</text>
+        <text x="0" y="24" fill="currentColor" fontSize="8.5" fontWeight="600" fontFamily="var(--font-sans)">E</text>
       </svg>
       <div className="flex flex-col items-start gap-1">
-        <span className="font-mono leading-none">{arcsecLabel(arcsec)}</span>
+        <span className="num leading-none">{arcsecLabel(arcsec)}</span>
         <span className="block h-[3px] bg-on-image" style={{ width: `${px}px` }} />
       </div>
     </div>
@@ -133,7 +133,7 @@ export function CandidateTrack({ id, points, scale, weak }: { id: string; points
         stroke="rgb(0 0 0 / 0.6)"
         strokeWidth={3 / scale}
         paintOrder="stroke"
-        fontFamily="var(--font-mono)"
+        fontFamily="var(--font-sans)"
       >
         {id}
       </text>

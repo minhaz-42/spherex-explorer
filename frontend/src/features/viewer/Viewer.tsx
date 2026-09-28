@@ -277,7 +277,7 @@ export function Viewer({ observations, target, source, initial, onStateChange }:
   const caption = (f: Frame | undefined, tag: "A" | "B" | null, img: DecodedCutout | undefined) =>
     f ? (
       <div className="pointer-events-none absolute left-2 top-2 flex max-w-[calc(100%-1rem)] flex-wrap items-center gap-x-2 gap-y-1 rounded-sm bg-black/60 px-2 py-1 text-[0.75rem] text-on-image">
-        {tag && <span className="font-mono font-medium text-accent-on-image">{tag}</span>}
+        {tag && <span className="font-semibold text-accent-on-image">{tag}</span>}
         <span className="num">
           {formatDate(f.isoMid)} {formatTime(f.isoMid, false)}
         </span>
@@ -383,7 +383,7 @@ export function Viewer({ observations, target, source, initial, onStateChange }:
           >
             {compare === "diff" ? (
               <>
-                <div className="pointer-events-none absolute left-2 top-2 rounded-sm bg-black/60 px-2 py-1 font-mono text-[0.75rem] text-on-image">
+                <div className="pointer-events-none absolute left-2 top-2 rounded-sm bg-black/60 px-2 py-1 num text-xs text-on-image">
                   B − A
                 </div>
                 {renderedDiff && <DifferenceLegend limit={renderedDiff.limit} />}
@@ -647,11 +647,11 @@ function ComparisonNote({
   return (
     <section aria-label="Comparison" className="space-y-3 rounded-sm border border-rule p-4">
       <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-sm">
-        <dt className="font-mono text-accent">A</dt>
+        <dt className="font-semibold text-accent">A</dt>
         <dd className="num text-muted">
           {formatDate(a.isoMid)} {formatTime(a.isoMid)} · {formatWavelength(a.wavelengthUm)}
         </dd>
-        <dt className="font-mono text-accent">B</dt>
+        <dt className="font-semibold text-accent">B</dt>
         <dd className="num text-muted">
           {formatDate(b.isoMid)} {formatTime(b.isoMid)} · {formatWavelength(b.wavelengthUm)}
         </dd>

@@ -34,7 +34,7 @@ function inline(text: string, { sources, onCite }: InlineProps): ReactNode[] {
             <button
               key={`${i}-${j}`}
               type="button"
-              className="mx-0.5 inline-flex h-[1.2rem] items-center rounded-[5px] border border-rule-strong bg-sunk px-1 align-[0.08em] font-mono text-[0.68rem] leading-none text-muted transition-colors hover:border-rule-control hover:text-text"
+              className="num mx-0.5 inline-flex h-5 items-center rounded-[6px] border border-rule-strong bg-sunk px-1.5 align-[0.1em] text-[0.75rem] font-semibold leading-none text-muted transition-colors hover:border-rule-control hover:text-text"
               title={src.title}
               aria-label={`Source ${tag}: ${src.title}`}
               onClick={() => onCite(tag)}
@@ -42,7 +42,7 @@ function inline(text: string, { sources, onCite }: InlineProps): ReactNode[] {
               {tag}
             </button>
           ) : (
-            <span key={`${i}-${j}`} className="font-mono text-[0.68rem] text-faint" title="This source does not exist">
+            <span key={`${i}-${j}`} className="num text-[0.75rem] text-faint" title="This source does not exist">
               [{tag}?]
             </span>
           ),

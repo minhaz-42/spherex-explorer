@@ -142,7 +142,7 @@ export function ScatterPlot({ points, xLabel, yLabel, formatX, formatY, xHeading
             {yTicks.map((t) => (
               <g key={`y${t}`}>
                 <line x1={MARGIN.left} x2={width - MARGIN.right} y1={sy(t)} y2={sy(t)} stroke="var(--rule)" strokeWidth={1} />
-                <text x={MARGIN.left - 8} y={sy(t)} dy="0.32em" textAnchor="end" className="fill-[var(--text-faint)] font-mono text-[0.6875rem]">
+                <text x={MARGIN.left - 8} y={sy(t)} dy="0.32em" textAnchor="end" className="num fill-[var(--text-faint)] text-[0.75rem]">
                   {formatY(t)}
                 </text>
               </g>
@@ -151,7 +151,7 @@ export function ScatterPlot({ points, xLabel, yLabel, formatX, formatY, xHeading
               <line x1={MARGIN.left} x2={width - MARGIN.right} y1={sy(0)} y2={sy(0)} stroke="var(--rule-strong)" strokeWidth={1} />
             )}
             {xTicks.map((t) => (
-              <text key={`x${t}`} x={sx(t)} y={height - MARGIN.bottom + 16} textAnchor="middle" className="fill-[var(--text-faint)] font-mono text-[0.6875rem]">
+              <text key={`x${t}`} x={sx(t)} y={height - MARGIN.bottom + 16} textAnchor="middle" className="num fill-[var(--text-faint)] text-[0.75rem]">
                 {formatX(t)}
               </text>
             ))}
