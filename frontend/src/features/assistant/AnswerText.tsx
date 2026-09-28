@@ -1,6 +1,12 @@
 import type { ReactNode } from "react";
 
+import { defineMessages, format, useT } from "../../lib/i18n";
 import { toBlocks } from "./blocks";
+
+const M = defineMessages({
+  en: { source: "Source {tag}: {title}", missing: "This source does not exist" },
+  bn: { source: "উৎস {tag}: {title}", missing: "এই উৎসটি নেই" },
+});
 import type { EvidenceSource } from "./stream";
 
 /**
@@ -15,9 +21,10 @@ const INLINE = /(\*\*[^*\n]+\*\*|\[[EK]\d{1,2}(?:\s*,\s*[EK]\d{1,2})*\])/g;
 interface InlineProps {
   sources: Map<string, EvidenceSource>;
   onCite: (tag: string) => void;
+  labels: { source: string; missing: string };
 }
 
-function inline(text: string, { sources, onCite }: InlineProps): ReactNode[] {
+function inline(text: string, { sources, onCite, labels }: InlineProps): ReactNode[] {
   const out: ReactNode[] = [];
   text.split(INLINE).forEach((part, i) => {
     if (!part) return;
@@ -36,13 +43,13 @@ function inline(text: string, { sources, onCite }: InlineProps): ReactNode[] {
               type="button"
               className="num mx-0.5 inline-flex h-5 items-center rounded-[6px] border border-rule-strong bg-sunk px-1.5 align-[0.1em] text-[0.75rem] font-semibold leading-none text-muted transition-colors hover:border-rule-control hover:text-text"
               title={src.title}
-              aria-label={`Source ${tag}: ${src.title}`}
+              aria-label={format(labels.source, { tag, title: src.title })}
               onClick={() => onCite(tag)}
             >
               {tag}
             </button>
           ) : (
-            <span key={`${i}-${j}`} className="num text-[0.75rem] text-faint" title="This source does not exist">
+            <span key={`${i}-${j}`} className="num text-[0.75rem] text-faint" title={labels.missing}>
               [{tag}?]
             </span>
           ),
@@ -64,7 +71,13 @@ export function AnswerText({
   sources: EvidenceSource[];
   onCite: (tag: string) => void;
 }) {
-  const props: InlineProps = { sources: new Map(sources.map((s) => [s.tag, s])), onCite };
+  const t = useT(M);
+  const props: InlineProps = {
+    sources: new Map(sources.map((s) => [s.tag, s])),
+    onCite,
+    // Without variables the translator returns the template, which inline() fills per citation.
+    labels: { source: t("source"), missing: t("missing") },
+  };
   return (
     <div className="space-y-2.5">
       {toBlocks(text).map((block, i) => {

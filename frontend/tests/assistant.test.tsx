@@ -5,6 +5,7 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { routes } from "../src/app/router";
+import { setLang } from "../src/lib/i18n";
 import { AnswerText } from "../src/features/assistant/AnswerText";
 import { groupChats, reloadChats, resetChats, STORAGE_KEY, type Chat } from "../src/features/assistant/chats";
 import { toBlocks } from "../src/features/assistant/blocks";
@@ -357,6 +358,23 @@ describe("Ask, the chat app", () => {
     await userEvent.click(link!);
     await userEvent.click(within(sidebar()).getByRole("link", { name: "What is SPHEREx?" }));
     expect(screen.getByText(/A NASA telescope/)).toBeInTheDocument();
+  });
+
+  it("speaks Bangla when the site does, and keeps its questions in English", async () => {
+    mockServer({ chat: () => streamed("") });
+    setLang("bn");
+    try {
+      renderAt("/ask");
+      expect(screen.getAllByRole("button", { name: "নতুন চ্যাট" }).length).toBeGreaterThan(0);
+      expect(screen.getByRole("heading", { name: "আপনি কী জানতে চান?" })).toBeInTheDocument();
+      expect(screen.getByText(/উত্তর ইংরেজিতে দেওয়া হয়/)).toBeInTheDocument();
+      // The question is what the assistant understands best; only its hint is translated.
+      expect(screen.getByRole("button", { name: /What is SPHEREx\?/ })).toHaveTextContent("টেলিস্কোপ আর তার 102টি রং");
+      expect(screen.getByRole("textbox", { name: "আপনার প্রশ্ন" })).toBeInTheDocument();
+      expect(screen.getAllByRole("button", { name: "Show the site in English" }).length).toBeGreaterThan(0);
+    } finally {
+      setLang("en");
+    }
   });
 
   it("says when answers are built in", async () => {

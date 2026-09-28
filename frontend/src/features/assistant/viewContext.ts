@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from "react";
 
 import type { DataSource } from "../../lib/api";
+import { defineMessages, type Lang, translate } from "../../lib/i18n";
 
 /**
  * What the visitor has, or last had, on screen in the viewer, for the Ask page. Identifiers only
@@ -77,16 +78,31 @@ export function useViewStore(): Store {
   return useSyncExternalStore(subscribe, getStore, getStore);
 }
 
-const COMPARE: Record<ViewContext["compare"], string> = {
-  single: "one frame",
-  blink: "blinking A and B",
-  side: "A and B side by side",
-  diff: "difference of A and B",
-};
+const VIEW = defineMessages({
+  en: {
+    frame: "frame {i} of {n}",
+    detector: "detector {d}",
+    single: "one frame",
+    blink: "blinking A and B",
+    side: "A and B side by side",
+    diff: "difference of A and B",
+    snapshot: "demo snapshot",
+  },
+  bn: {
+    frame: "ফ্রেম {i} / {n}",
+    detector: "ডিটেক্টর {d}",
+    single: "একটি ফ্রেম",
+    blink: "A আর B পালাক্রমে",
+    side: "A আর B পাশাপাশি",
+    diff: "A আর B-এর পার্থক্য",
+    snapshot: "ডেমো স্ন্যাপশট",
+  },
+});
 
 /** "frame 10 of 19 · detector 2 · blinking A and B · demo snapshot" */
-export function describeView(view: ViewContext): string {
-  const parts = [`frame ${view.frameIndex + 1} of ${view.frameCount}`, `detector ${view.detector}`, COMPARE[view.compare]];
-  if (view.source === "snapshot") parts.push("demo snapshot");
+export function describeView(view: ViewContext, lang: Lang = "en"): string {
+  const t = (key: keyof (typeof VIEW)["en"], vars?: Record<string, string | number>) => translate(VIEW, lang, key, vars);
+  const parts = [t("frame", { i: view.frameIndex + 1, n: view.frameCount }), t("detector", { d: view.detector }), t(view.compare)];
+  if (view.source === "snapshot") parts.push(t("snapshot"));
   return parts.join(" · ");
 }

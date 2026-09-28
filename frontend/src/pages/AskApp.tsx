@@ -10,6 +10,7 @@ import { AssistantMessage, UserMessage } from "../features/assistant/Message";
 import { type AssistantStatus, fetchStatus, isAbort, MAX_QUESTION } from "../features/assistant/stream";
 import { forgetView, useViewStore, type ViewContext } from "../features/assistant/viewContext";
 import { ApiError, type DataSource } from "../lib/api";
+import { defineMessages, type Lang, translate, useLang, useT } from "../lib/i18n";
 
 const NO_TURNS: Turn[] = [];
 
@@ -18,28 +19,115 @@ function focusComposer(input: HTMLTextAreaElement | null): void {
   if (window.matchMedia?.("(pointer: fine)").matches) input?.focus();
 }
 
-const GENERAL = [
-  { q: "What is SPHEREx?", hint: "The telescope and its 102 colours" },
-  { q: "Show me something that moved", hint: "Asteroids caught by SPHEREx" },
-  { q: "Why can't I always subtract two frames?", hint: "Wavelength, not only time" },
-  { q: "Could SPHEREx find Planet Nine?", hint: "What it can and cannot do" },
-];
+const M = defineMessages({
+  en: {
+    checking: "Checking…",
+    unavailable: "Not available on this server",
+    localModel: "Local model",
+    modelServer: "Model server",
+    builtIn: "Built-in answers",
+    modelOff: " · local model not running",
+    openList: "Open the chat list",
+    showList: "Show the chat list",
+    hideList: "Hide the chat list",
+    newChat: "New chat",
+    newChatTitle: "New chat (Ctrl + Shift + O)",
+    emptyView: "Ask about the view you had open",
+    emptyGeneral: "What would you like to know?",
+    intro:
+      "Answers come from this app's own measurements, JPL's predictions and short method notes, and list their sources. They can still be wrong, so check them.",
+    english: "",
+    scroll: "Scroll to the latest message",
+    placeholderView: "Ask about this view, or anything else",
+    placeholder: "Message SPHEREx Assistant",
+    privacyLocal:
+      "Answered by a language model on this app's own server, from the app's data. It can make mistakes; check the sources.",
+    privacyRemote:
+      "Answered by the model server this app is set up with, from the app's data. It can make mistakes; check the sources.",
+    privacyBuiltIn: "Answers are put together from the app's own data; no language model is running.",
+    answering: "Answering…",
+    ready: "Answer ready.",
+    reach: "The assistant could not be reached.",
+    hintSpherex: "The telescope and its 102 colours",
+    hintMoved: "Asteroids caught by SPHEREx",
+    hintSubtract: "Wavelength, not only time",
+    hintPlanet: "What it can and cannot do",
+    hintLooking: "The view you had open",
+    hintMove: "JPL's predictions and the search",
+    hintBrightness: "Measured by this app",
+    hintCompare: "Whether a difference image is valid",
+    hintDifferent: "Time, wavelength and motion",
+  },
+  bn: {
+    checking: "যাচাই করা হচ্ছে…",
+    unavailable: "এই সার্ভারে পাওয়া যাচ্ছে না",
+    localModel: "লোকাল মডেল",
+    modelServer: "মডেল সার্ভার",
+    builtIn: "বিল্ট-ইন উত্তর",
+    modelOff: " · লোকাল মডেল চলছে না",
+    openList: "চ্যাটের তালিকা খুলুন",
+    showList: "চ্যাটের তালিকা দেখান",
+    hideList: "চ্যাটের তালিকা লুকান",
+    newChat: "নতুন চ্যাট",
+    newChatTitle: "নতুন চ্যাট (Ctrl + Shift + O)",
+    emptyView: "যে দৃশ্যটি খোলা ছিল, সেটি নিয়ে জিজ্ঞাসা করুন",
+    emptyGeneral: "আপনি কী জানতে চান?",
+    intro:
+      "উত্তর আসে এই অ্যাপের নিজস্ব পরিমাপ, JPL-এর পূর্বাভাস আর ছোট পদ্ধতি-নোট থেকে, সঙ্গে থাকে উৎসের তালিকা। তবু ভুল হতে পারে, তাই উৎসগুলো মিলিয়ে দেখুন।",
+    english: "উত্তর ইংরেজিতে দেওয়া হয়, আর প্রশ্নও ইংরেজিতে করলে সবচেয়ে ভালো কাজ করে।",
+    scroll: "সর্বশেষ বার্তায় যান",
+    placeholderView: "এই দৃশ্য বা অন্য যেকোনো বিষয়ে জিজ্ঞাসা করুন",
+    placeholder: "SPHEREx Assistant-কে বার্তা লিখুন",
+    privacyLocal:
+      "উত্তর দেয় এই অ্যাপের নিজস্ব সার্ভারে চলা একটি ভাষা মডেল, অ্যাপের ডেটা থেকে। ভুল হতে পারে; উৎসগুলো মিলিয়ে দেখুন।",
+    privacyRemote:
+      "উত্তর দেয় এই অ্যাপের জন্য ঠিক করা মডেল সার্ভার, অ্যাপের ডেটা থেকে। ভুল হতে পারে; উৎসগুলো মিলিয়ে দেখুন।",
+    privacyBuiltIn: "উত্তর সাজানো হয় অ্যাপের নিজস্ব ডেটা থেকে; কোনো ভাষা মডেল চলছে না।",
+    answering: "উত্তর তৈরি হচ্ছে…",
+    ready: "উত্তর তৈরি।",
+    reach: "সহকারীর সঙ্গে যোগাযোগ করা যায়নি।",
+    hintSpherex: "টেলিস্কোপ আর তার 102টি রং",
+    hintMoved: "SPHEREx-এর চোখে ধরা পড়া গ্রহাণু",
+    hintSubtract: "শুধু সময় নয়, তরঙ্গদৈর্ঘ্যও",
+    hintPlanet: "এটি কী পারে আর কী পারে না",
+    hintLooking: "যে দৃশ্যটি খোলা ছিল",
+    hintMove: "JPL-এর পূর্বাভাস আর অনুসন্ধান",
+    hintBrightness: "এই অ্যাপের মাপা উজ্জ্বলতা",
+    hintCompare: "পার্থক্যের ছবি বৈধ কি না",
+    hintDifferent: "সময়, তরঙ্গদৈর্ঘ্য আর গতি",
+  },
+});
 
-function viewSuggestions(view: ViewContext) {
+type Key = keyof (typeof M)["en"];
+
+// The questions stay in English, the language the assistant's evidence is matched in; their hints
+// follow the site's language.
+function generalSuggestions(lang: Lang) {
+  const t = (k: Key) => translate(M, lang, k);
   return [
-    { q: "What am I looking at?", hint: view.target.name ?? "The view you had open" },
-    { q: "Did anything move here?", hint: "JPL's predictions and the search" },
+    { q: "What is SPHEREx?", hint: t("hintSpherex") },
+    { q: "Show me something that moved", hint: t("hintMoved") },
+    { q: "Why can't I always subtract two frames?", hint: t("hintSubtract") },
+    { q: "Could SPHEREx find Planet Nine?", hint: t("hintPlanet") },
+  ];
+}
+
+function viewSuggestions(view: ViewContext, lang: Lang) {
+  const t = (k: Key) => translate(M, lang, k);
+  return [
+    { q: "What am I looking at?", hint: view.target.name ?? t("hintLooking") },
+    { q: "Did anything move here?", hint: t("hintMove") },
     view.compare === "single"
-      ? { q: "What is the brightness at the target?", hint: "Measured by this app" }
-      : { q: "Can I compare these two frames?", hint: "Whether a difference image is valid" },
-    { q: "Why do the frames look different?", hint: "Time, wavelength and motion" },
+      ? { q: "What is the brightness at the target?", hint: t("hintBrightness") }
+      : { q: "Can I compare these two frames?", hint: t("hintCompare") },
+    { q: "Why do the frames look different?", hint: t("hintDifferent") },
   ];
 }
 
 type Status =
   | { kind: "checking" }
   | { kind: "ready"; status: AssistantStatus }
-  | { kind: "unavailable"; message: string; missing: boolean };
+  | { kind: "unavailable"; message: string | null; missing: boolean };
 
 /**
  * The assistant as a chat app of its own: the chats on the left, the conversation in the middle,
@@ -48,6 +136,8 @@ type Status =
  */
 export function AskApp() {
   const { chatId } = useParams();
+  const t = useT(M);
+  const lang = useLang();
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const chats = useChats();
@@ -75,7 +165,7 @@ export function AskApp() {
         if (isAbort(err)) return;
         setStatus({
           kind: "unavailable",
-          message: err instanceof ApiError ? err.message : "The assistant could not be reached.",
+          message: err instanceof ApiError ? err.message : null,
           missing: err instanceof ApiError && err.status === 404,
         });
       },
@@ -161,8 +251,8 @@ export function AskApp() {
   };
 
   const last = turns.at(-1);
-  const liveText = busy ? "Answering…" : last?.status === "done" ? "Answer ready." : "";
-  const suggestions = view ? viewSuggestions(view) : GENERAL;
+  const liveText = busy ? t("answering") : last?.status === "done" ? t("ready") : "";
+  const suggestions = view ? viewSuggestions(view, lang) : generalSuggestions(lang);
 
   const sidebar = (close?: () => void) => (
     <ChatSidebar
@@ -201,7 +291,7 @@ export function AskApp() {
           <button
             type="button"
             className="btn btn-ghost btn-icon btn-sm lg:hidden"
-            aria-label="Open the chat list"
+            aria-label={t("openList")}
             onClick={() => setDrawer(true)}
           >
             <PanelLeft size={18} aria-hidden />
@@ -209,7 +299,7 @@ export function AskApp() {
           <button
             type="button"
             className="btn btn-ghost btn-icon btn-sm hidden lg:grid"
-            aria-label={collapsed ? "Show the chat list" : "Hide the chat list"}
+            aria-label={collapsed ? t("showList") : t("hideList")}
             aria-pressed={!collapsed}
             onClick={() => setCollapsed((v) => !v)}
           >
@@ -217,13 +307,13 @@ export function AskApp() {
           </button>
           <div className="flex min-w-0 items-baseline gap-2.5">
             <h1 className="shrink-0 font-display text-[1.0625rem] font-semibold tracking-[-0.02em]">SPHEREx Assistant</h1>
-            <ModeLine status={status} />
+            <ModeLine status={status} t={t} />
           </div>
           <button
             type="button"
             className="btn btn-ghost btn-icon btn-sm ml-auto"
-            aria-label="New chat"
-            title="New chat (Ctrl + Shift + O)"
+            aria-label={t("newChat")}
+            title={t("newChatTitle")}
             onClick={newChat}
           >
             <SquarePen size={17} aria-hidden />
@@ -232,19 +322,17 @@ export function AskApp() {
 
         <div ref={listRef} onScroll={onScroll} className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
           <div className="mx-auto flex min-h-full w-full max-w-[48rem] flex-col px-4 sm:px-6">
-            {status.kind === "unavailable" && <p className="note note-danger mt-6">{status.message}</p>}
+            {status.kind === "unavailable" && <p className="note note-danger mt-6">{status.message ?? t("reach")}</p>}
             {turns.length === 0 ? (
               <div className="flex flex-1 flex-col items-center justify-center py-12 text-center">
                 <div className="grid size-14 place-items-center rounded-full border border-rule bg-bg shadow-[var(--shadow-sm)]">
                   <OrbitMark size={34} />
                 </div>
                 <h2 className="mt-6 font-display text-[clamp(1.6rem,1.2rem+1.4vw,2.2rem)] font-semibold tracking-[-0.03em]">
-                  {view ? "Ask about the view you had open" : "What would you like to know?"}
+                  {view ? t("emptyView") : t("emptyGeneral")}
                 </h2>
-                <p className="mt-3 max-w-md text-[0.975rem] leading-relaxed text-muted">
-                  Answers come from this app&apos;s own measurements, JPL&apos;s predictions and short method notes, and list
-                  their sources. They can still be wrong, so check them.
-                </p>
+                <p className="mt-3 max-w-md text-[0.975rem] leading-relaxed text-muted">{t("intro")}</p>
+                {t("english") && <p className="mt-2 max-w-md text-sm text-faint">{t("english")}</p>}
                 <ul className="mt-9 grid w-full gap-3 text-left sm:grid-cols-2">
                   {suggestions.map((s) => (
                     <li key={s.q}>
@@ -286,7 +374,7 @@ export function AskApp() {
           <button
             type="button"
             onClick={scrollToBottom}
-            aria-label="Scroll to the latest message"
+            aria-label={t("scroll")}
             className="absolute bottom-40 left-1/2 grid size-9 -translate-x-1/2 place-items-center rounded-full border border-rule-strong bg-raised text-muted shadow-[var(--shadow)] hover:text-text"
           >
             <ArrowDown size={16} aria-hidden />
@@ -305,9 +393,9 @@ export function AskApp() {
               view={view}
               onForgetView={forgetView}
               inputRef={inputRef}
-              placeholder={view ? "Ask about this view, or anything else" : "Message SPHEREx Assistant"}
+              placeholder={view ? t("placeholderView") : t("placeholder")}
             />
-            <p className="mt-2 text-center text-xs text-faint">{privacyNote(status)}</p>
+            <p className="mt-2 text-center text-xs text-faint">{privacyNote(status, t)}</p>
           </div>
         </div>
         <p className="visually-hidden" role="status" aria-live="polite">
@@ -318,24 +406,22 @@ export function AskApp() {
   );
 }
 
-function privacyNote(status: Status): string {
+function privacyNote(status: Status, t: (k: Key) => string): string {
   if (status.kind === "ready" && status.status.mode === "local-model") {
-    return status.status.local
-      ? "Answered by a language model on this app's own server, from the app's data. It can make mistakes; check the sources."
-      : "Answered by the model server this app is set up with, from the app's data. It can make mistakes; check the sources.";
+    return status.status.local ? t("privacyLocal") : t("privacyRemote");
   }
-  return "Answers are put together from the app's own data; no language model is running.";
+  return t("privacyBuiltIn");
 }
 
-function ModeLine({ status }: { status: Status }) {
-  if (status.kind === "checking") return <span className="truncate text-sm text-faint">Checking…</span>;
-  if (status.kind === "unavailable") return <span className="truncate text-sm text-danger">Not available on this server</span>;
+function ModeLine({ status, t }: { status: Status; t: (k: Key) => string }) {
+  if (status.kind === "checking") return <span className="truncate text-sm text-faint">{t("checking")}</span>;
+  if (status.kind === "unavailable") return <span className="truncate text-sm text-danger">{t("unavailable")}</span>;
   const s = status.status;
   if (s.mode === "local-model") {
     return (
       <span className="flex min-w-0 items-center gap-1.5 text-sm text-muted">
         <span className="size-1.5 shrink-0 rounded-full bg-live" aria-hidden />
-        <span className="shrink-0">{s.local ? "Local model" : "Model server"}</span>
+        <span className="shrink-0">{s.local ? t("localModel") : t("modelServer")}</span>
         <span className="mono hidden truncate text-xs text-faint sm:inline" title={s.model ?? undefined}>
           {s.model}
         </span>
@@ -344,7 +430,8 @@ function ModeLine({ status }: { status: Status }) {
   }
   return (
     <span className="truncate text-sm text-muted" title={s.provider === "off" ? undefined : s.detail}>
-      Built-in answers{s.provider === "off" ? "" : " · local model not running"}
+      {t("builtIn")}
+      {s.provider === "off" ? "" : t("modelOff")}
     </span>
   );
 }

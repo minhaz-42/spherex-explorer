@@ -257,18 +257,20 @@ export function useChats(): Chat[] {
 const DAY = 24 * 60 * 60 * 1000;
 
 /** Chats grouped the way chat apps do: today, yesterday, this week, this month, earlier. */
-export function groupChats(chats: Chat[], now = Date.now()): { label: string; chats: Chat[] }[] {
+export type ChatGroup = "today" | "yesterday" | "week" | "month" | "earlier";
+
+export function groupChats(chats: Chat[], now = Date.now()): { key: ChatGroup; label: string; chats: Chat[] }[] {
   const start = new Date(now);
   start.setHours(0, 0, 0, 0);
   const today = start.getTime();
-  const groups: { label: string; test: (t: number) => boolean }[] = [
-    { label: "Today", test: (t) => t >= today },
-    { label: "Yesterday", test: (t) => t >= today - DAY },
-    { label: "Previous 7 days", test: (t) => t >= today - 7 * DAY },
-    { label: "Previous 30 days", test: (t) => t >= today - 30 * DAY },
-    { label: "Earlier", test: () => true },
+  const groups: { key: ChatGroup; label: string; test: (t: number) => boolean }[] = [
+    { key: "today", label: "Today", test: (t) => t >= today },
+    { key: "yesterday", label: "Yesterday", test: (t) => t >= today - DAY },
+    { key: "week", label: "Previous 7 days", test: (t) => t >= today - 7 * DAY },
+    { key: "month", label: "Previous 30 days", test: (t) => t >= today - 30 * DAY },
+    { key: "earlier", label: "Earlier", test: () => true },
   ];
-  const out = groups.map((g) => ({ label: g.label, chats: [] as Chat[] }));
+  const out = groups.map((g) => ({ key: g.key, label: g.label, chats: [] as Chat[] }));
   for (const chat of chats) {
     const i = groups.findIndex((g) => g.test(chat.updatedAt));
     out[i]!.chats.push(chat);
