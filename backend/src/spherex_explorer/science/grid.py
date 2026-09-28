@@ -162,18 +162,27 @@ def resample(
 
 
 def fill_for_display(image: NDArray[np.float32], holes: NDArray[np.bool_]) -> NDArray[np.float32]:
-    """Fill small holes (all four neighbours flagged) from nearby values, for display only.
+    """Fill holes (flagged pixels with no clean neighbour) from nearby values, for display only.
 
-    Measurements never use filled pixels; the mask sent with the image marks them.
+    A normalised Gaussian average of the valid pixels, widened until every hole is covered: a
+    single hot pixel takes its neighbours' level, and the flagged core of a saturated star fills
+    from its rim. Measurements never use filled pixels, and the mask sent with the image marks
+    them.
     """
     if not holes.any():
         return image
-    valid = np.isfinite(image) & ~holes
-    values = np.where(valid, image, 0.0)
-    num = ndimage.gaussian_filter(values, 1.2, mode="nearest")
-    den = ndimage.gaussian_filter(valid.astype(np.float64), 1.2, mode="nearest")
-    with np.errstate(invalid="ignore", divide="ignore"):
-        smooth = np.where(den > 0.05, num / den, np.nan)
     out = image.copy()
-    out[holes] = smooth[holes]
+    valid = np.isfinite(image) & ~holes
+    remaining = holes.copy()
+    for sigma in (1.2, 2.5, 5.0, 10.0):
+        values = np.where(valid, image, 0.0)
+        num = ndimage.gaussian_filter(values, sigma, mode="nearest")
+        den = ndimage.gaussian_filter(valid.astype(np.float64), sigma, mode="nearest")
+        with np.errstate(invalid="ignore", divide="ignore"):
+            smooth = np.where(den > 0.02, num / den, np.nan)
+        fill = remaining & np.isfinite(smooth)
+        out[fill] = smooth[fill]
+        remaining &= ~fill
+        if not remaining.any():
+            break
     return out.astype(np.float32)

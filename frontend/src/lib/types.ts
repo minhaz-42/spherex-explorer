@@ -151,3 +151,30 @@ export interface KnownObjects {
   method: string;
   retrievedAt: string;
 }
+
+export interface CandidateSighting {
+  mjd: number;
+  ra: number;
+  dec: number;
+  snr: number;
+  keys: string[];
+}
+
+export interface MovingCandidate {
+  id: string;
+  strength: "candidate" | "weak candidate";
+  sightings: CandidateSighting[];
+  rateArcsecPerHour: number;
+  positionAngleDeg: number;
+  residualArcsec: number;
+}
+
+export interface Candidates {
+  field: { ra: number; dec: number; sizePx: number; scaleArcsec: number };
+  candidates: MovingCandidate[];
+  stats: { frames: number; detections: number; transient: number; sightings: number; candidates: number };
+  limits: { minRateArcsecPerHour: number; maxRateArcsecPerHour: number };
+  method: string;
+  caution: string;
+  retrievedAt: string;
+}

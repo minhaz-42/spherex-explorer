@@ -14,15 +14,16 @@ import {
   type SequenceSpec,
 } from "../../lib/sequence";
 import { tokenRgb } from "../../lib/theme";
-import type { DecodedCutout, Frame, KnownObjects, Observations } from "../../lib/types";
+import type { Candidates, DecodedCutout, Frame, KnownObjects, Observations } from "../../lib/types";
 import { formatDec, formatRa, gridToSky, skyToGrid } from "../../lib/wcs";
 import { SPEEDS } from "../timeline/speeds";
 import { FrameStrip, PassTrack, Transport } from "../timeline/Timeline";
 import { BandPicker } from "../wavelength/BandPicker";
 import { Measurements } from "../wavelength/Measurements";
 import { FramePanel } from "./FramePanel";
+import { CandidatesPanel } from "../known/Candidates";
 import { KnownObjectsPanel } from "../known/KnownObjects";
-import { PredictedTrack, ScaleAndCompass, TargetMarker } from "./overlays";
+import { CandidateTrack, PredictedTrack, ScaleAndCompass, TargetMarker } from "./overlays";
 import { SkyCanvas } from "./SkyCanvas";
 import { type CompareMode, FIELDS, type ViewerState } from "./state";
 import { useSequence } from "./useSequence";
@@ -59,6 +60,8 @@ export function Viewer({ observations, target, source, initial, onStateChange }:
   const [hover, setHover] = useState<{ x: number; y: number } | null>(null);
   const [known, setKnown] = useState<KnownObjects | undefined>(undefined);
   const [showKnown, setShowKnown] = useState(true);
+  const [moving, setMoving] = useState<Candidates | undefined>(undefined);
+  const [showWeak, setShowWeak] = useState(false);
 
   const sequence = useMemo(() => buildSequence(frames, spec), [frames, spec]);
   const count = sequence.length;
@@ -217,11 +220,26 @@ export function Viewer({ observations, target, source, initial, onStateChange }:
         .filter((p) => Number.isFinite(p.x)),
     }));
   };
+  const candidatesFor = (shownFrame: Frame | undefined) => {
+    if (!moving || !shownFrame || moving.field.sizePx !== size) return [];
+    return moving.candidates
+      .filter((c) => showWeak || c.strength === "candidate")
+      .map((c) => ({
+        id: c.id,
+        weak: c.strength !== "candidate",
+        points: c.sightings
+          .map((s) => ({ ...skyToGrid(grid, s.ra, s.dec)!, current: s.keys.includes(shownFrame.key) }))
+          .filter((p) => Number.isFinite(p.x)),
+      }));
+  };
   const overlayFor = (shownFrame: Frame | undefined) => (scale: number) => (
     <>
       <TargetMarker x={centre} y={centre} scale={scale} label={target.label} />
       {knownFor(shownFrame).map((t) => (
         <PredictedTrack key={t.name} name={t.name} points={t.points} scale={scale} />
+      ))}
+      {candidatesFor(shownFrame).map((c) => (
+        <CandidateTrack key={c.id} id={c.id} points={c.points} scale={scale} weak={c.weak} />
       ))}
     </>
   );
@@ -230,8 +248,8 @@ export function Viewer({ observations, target, source, initial, onStateChange }:
 
   const caption = (f: Frame | undefined, tag: "A" | "B" | null, img: DecodedCutout | undefined) =>
     f ? (
-      <div className="pointer-events-none absolute left-2 top-2 flex max-w-[calc(100%-1rem)] flex-wrap items-center gap-x-2 gap-y-1 rounded-sm bg-black/55 px-2 py-1 text-[0.75rem] text-white">
-        {tag && <span className="font-mono font-medium text-accent">{tag}</span>}
+      <div className="pointer-events-none absolute left-2 top-2 flex max-w-[calc(100%-1rem)] flex-wrap items-center gap-x-2 gap-y-1 rounded-sm bg-black/60 px-2 py-1 text-[0.75rem] text-on-image">
+        {tag && <span className="font-mono font-medium text-accent-on-image">{tag}</span>}
         <span className="num">
           {formatDate(f.isoMid)} {formatTime(f.isoMid, false)}
         </span>
@@ -243,20 +261,20 @@ export function Viewer({ observations, target, source, initial, onStateChange }:
     state === "ready" ? null : (
       <div className="absolute inset-0 flex items-center justify-center p-6 text-center">
         {state === "error" ? (
-          <div className="max-w-xs space-y-3 rounded-sm bg-black/60 p-4 text-sm text-white">
+          <div className="max-w-xs space-y-3 rounded-sm bg-black/70 p-4 text-sm text-on-image">
             <p>
-              <AlertTriangle size={16} className="mr-1.5 inline text-warn" aria-hidden />
+              <AlertTriangle size={16} className="mr-1.5 inline text-accent-on-image" aria-hidden />
               {error instanceof ApiError ? error.message : "This frame could not be loaded."}
             </p>
             {retry && (
-              <button type="button" className="btn btn-secondary btn-sm !text-white" onClick={retry}>
+              <button type="button" className="btn btn-secondary btn-sm !border-on-image !text-on-image" onClick={retry}>
                 <RefreshCw size={14} aria-hidden /> Try again
               </button>
             )}
           </div>
         ) : (
-          <div className="space-y-3 text-sm text-white/80" role="status">
-            <div className="mx-auto h-6 w-6 animate-spin rounded-full border-2 border-white/25 border-t-white/90 motion-reduce:animate-none" />
+          <div className="space-y-3 text-sm text-on-image" role="status">
+            <div className="mx-auto h-6 w-6 animate-spin rounded-full border-2 border-on-image/25 border-t-on-image motion-reduce:animate-none" />
             <p>Reading this frame from the SPHEREx archive…</p>
           </div>
         )}
@@ -337,7 +355,7 @@ export function Viewer({ observations, target, source, initial, onStateChange }:
           >
             {compare === "diff" ? (
               <>
-                <div className="pointer-events-none absolute left-2 top-2 rounded-sm bg-black/55 px-2 py-1 font-mono text-[0.75rem] text-white">
+                <div className="pointer-events-none absolute left-2 top-2 rounded-sm bg-black/60 px-2 py-1 font-mono text-[0.75rem] text-on-image">
                   B − A
                 </div>
                 {renderedDiff && <DifferenceLegend limit={renderedDiff.limit} />}
@@ -347,14 +365,14 @@ export function Viewer({ observations, target, source, initial, onStateChange }:
             )}
             {compare === "diff" && compat && !compat.ok ? (
               <div className="absolute inset-0 flex items-center justify-center p-6">
-                <div className="max-w-sm space-y-2 rounded-sm bg-black/70 p-4 text-sm text-white">
+                <div className="max-w-sm space-y-2 rounded-sm bg-black/75 p-4 text-sm text-on-image">
                   <p className="font-medium">A difference image would be misleading here.</p>
                   {compat.reasons.map((r) => (
-                    <p key={r} className="text-white/80">
+                    <p key={r} className="text-on-image/85">
                       {r}
                     </p>
                   ))}
-                  <p className="text-white/80">Use Blink to compare positions, or pick a matched-wavelength sequence.</p>
+                  <p className="text-on-image/85">Use Blink to compare positions, or pick a matched-wavelength sequence.</p>
                 </div>
               </div>
             ) : (
@@ -486,6 +504,19 @@ export function Viewer({ observations, target, source, initial, onStateChange }:
           onResult={setKnown}
         />
 
+        <CandidatesPanel
+          key={`c:${spec.mode}:${spec.detector}:${spec.passIndex}:${fov}`}
+          sequence={sequence}
+          target={target}
+          fov={fov}
+          source={source}
+          enabled={spec.mode === "pass" && new Set(sequence.map((f) => f.pointing)).size >= 2}
+          known={known}
+          showWeak={showWeak}
+          onShowWeak={setShowWeak}
+          onResult={setMoving}
+        />
+
         <section aria-labelledby="display-title" className="space-y-3 border-t border-rule pt-6">
           <h2 id="display-title" className="panel-title">
             Display
@@ -555,13 +586,13 @@ function initialPosition(
 
 function DifferenceLegend({ limit }: { limit: number }) {
   return (
-    <div className="pointer-events-none absolute bottom-2 right-2 rounded-sm bg-black/55 px-2 py-1.5 text-[0.6875rem] text-white">
+    <div className="pointer-events-none absolute bottom-2 right-2 rounded-sm bg-black/60 px-2 py-1.5 text-[0.6875rem] text-on-image">
       <div className="flex items-center gap-2">
         <span>fainter</span>
         <span className="h-2 w-24 rounded-[1px]" style={{ background: "linear-gradient(90deg, rgb(80 200 255), rgb(12 14 17), rgb(255 176 70))" }} />
         <span>brighter</span>
       </div>
-      <p className="num mt-1 text-center text-white/70">±{formatNumber(limit, 2)} MJy/sr</p>
+      <p className="num mt-1 text-center text-on-image/80">±{formatNumber(limit, 2)} MJy/sr</p>
     </div>
   );
 }

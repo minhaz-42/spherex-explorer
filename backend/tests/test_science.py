@@ -225,3 +225,16 @@ def test_payload_has_units_methods_and_decodable_arrays() -> None:
     assert p["time"]["isoMid"].startswith("2025-12-02")
     assert p["spacecraft"]["positionKm"][0] == pytest.approx(5481.95)
     assert "HOT" in p["mask"]["maskedFlags"]
+
+
+def test_display_fill_closes_large_holes() -> None:
+    from spherex_explorer.science.grid import fill_for_display
+
+    image = np.full((40, 40), 5.0, dtype=np.float32)
+    holes = np.zeros((40, 40), dtype=bool)
+    holes[15:25, 15:25] = True  # a 10×10 flagged core with no clean pixel inside
+    image[holes] = np.nan
+    filled = fill_for_display(image, holes)
+    assert np.isfinite(filled[holes]).all()
+    assert filled[holes] == pytest.approx(5.0, abs=1e-4)
+    assert (filled[~holes] == 5.0).all()  # real pixels are untouched

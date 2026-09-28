@@ -4,7 +4,7 @@ import { queryOptions } from "@tanstack/react-query";
 
 import { type DataSource, getJson, postJson } from "./api";
 import { decodeCutout } from "./pixels";
-import type { CutoutPayload, DecodedCutout, KnownObjects, Measurement, Observations, Target } from "./types";
+import type { Candidates, CutoutPayload, DecodedCutout, KnownObjects, Measurement, Observations, Target } from "./types";
 
 export function resolveQuery(q: string, source: DataSource) {
   return queryOptions({
@@ -50,6 +50,17 @@ export function knownObjectsQuery(ra: number, dec: number, size: number, keys: s
   return queryOptions({
     queryKey: ["known", ra.toFixed(6), dec.toFixed(6), size, sorted.join("|"), source],
     queryFn: ({ signal }) => postJson<KnownObjects>("/known-objects", { ra, dec, size, keys: sorted }, { source }, signal),
+    staleTime: Infinity,
+    gcTime: 60 * 60 * 1000,
+    retry: false,
+  });
+}
+
+export function candidatesQuery(ra: number, dec: number, size: number, keys: string[], source: DataSource) {
+  const sorted = [...keys].sort();
+  return queryOptions({
+    queryKey: ["candidates", ra.toFixed(6), dec.toFixed(6), size, sorted.join("|"), source],
+    queryFn: ({ signal }) => postJson<Candidates>("/candidates", { ra, dec, size, keys: sorted }, { source }, signal),
     staleTime: Infinity,
     gcTime: 60 * 60 * 1000,
     retry: false,

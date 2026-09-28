@@ -18,9 +18,10 @@ from ..cache import cache_key
 from ..errors import InvalidQuery
 from ..resolve import coords, sesame
 from ..resolve.target import deep_field_at, describe
-from ..science.cutout import build_payload, fetch_window
+from ..science.cutout import PIPELINE_VERSION, build_payload, fetch_window
 from ..science.grid import Grid, make_grid
 from ..science.moving import moving_candidates
+from ..science.sources import ALGORITHM_VERSION
 from ..services import Services
 from ..solar_system.known import known_objects
 
@@ -199,7 +200,7 @@ async def _cutout(
         )
         return payload
 
-    ck = cache_key(frame.key, grid.ra, grid.dec, grid.size_px)
+    ck = cache_key(frame.key, grid.ra, grid.dec, grid.size_px, PIPELINE_VERSION)
     return await svc.store.get_or_compute("cutout", ck, compute, ttl_s=30 * DAY, source=source)
 
 
@@ -240,7 +241,7 @@ async def measure(
             "retrievedAt": _now(),
         }
 
-    ck = cache_key(frame.key, grid.ra, grid.dec)
+    ck = cache_key(frame.key, grid.ra, grid.dec, PIPELINE_VERSION)
     return await svc.store.get_or_compute("measure", ck, compute, ttl_s=30 * DAY, source=source)
 
 
@@ -295,5 +296,12 @@ async def candidates(
         result["retrievedAt"] = _now()
         return result
 
-    ck = cache_key(body.ra, body.dec, grid.size_px, [f.key for f in frames], "v1")
+    ck = cache_key(
+        body.ra,
+        body.dec,
+        grid.size_px,
+        [f.key for f in frames],
+        PIPELINE_VERSION,
+        ALGORITHM_VERSION,
+    )
     return await svc.store.get_or_compute("candidates", ck, compute, ttl_s=30 * DAY, source=source)

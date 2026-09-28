@@ -37,6 +37,8 @@ log = logging.getLogger(__name__)
 
 MASK_FLAGGED = 1
 MASK_NO_DATA = 2
+# Part of every cutout cache key: bump it whenever the payload a frame produces would change.
+PIPELINE_VERSION = 2
 
 
 class _Chooser:

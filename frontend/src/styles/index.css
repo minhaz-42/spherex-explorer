@@ -46,6 +46,9 @@
   --bg-image: #1b1d33;
   --text-on-image: #eeeaf5;
   --accent-on-image: #ffb35c;
+  /* Predicted positions of known bodies (JPL) and our own moving-source candidates, over images. */
+  --track-on-image: #9cc2ff;
+  --candidate-on-image: #7fe3b4;
 
   --focus: #2f56c6;
   --live: #1b7040;

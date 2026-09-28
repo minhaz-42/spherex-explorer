@@ -30,6 +30,10 @@ import numpy as np
 from numpy.typing import NDArray
 from scipy import ndimage
 
+# Part of the cache key for search results: bump it whenever the search would give a different
+# answer for the same frames.
+ALGORITHM_VERSION = 2
+
 DETECT_SIGMA = 5.0
 STATIC_RADIUS_PX = 1.5
 SIGHTING_RADIUS_PX = 1.5

@@ -6,7 +6,7 @@ export function TargetMarker({ x, y, scale, label = "Target" }: { x: number; y: 
   const gap = 5 / scale;
   const tick = 6 / scale;
   return (
-    <g stroke="var(--accent)" strokeWidth={1.5} fill="none" vectorEffect="non-scaling-stroke">
+    <g stroke="var(--accent-on-image)" strokeWidth={1.5} fill="none" vectorEffect="non-scaling-stroke">
       <title>{label}</title>
       <circle cx={x} cy={y} r={r} vectorEffect="non-scaling-stroke" opacity={0.9} />
       <line x1={x} y1={y - r - gap} x2={x} y2={y - r - gap - tick} vectorEffect="non-scaling-stroke" />
@@ -37,7 +37,7 @@ function arcsecLabel(arcsec: number): string {
 export function ScaleAndCompass({ scale, arcsecPerPixel }: { scale: number; arcsecPerPixel: number }) {
   const { arcsec, px } = niceLength(scale, arcsecPerPixel);
   return (
-    <div className="pointer-events-none absolute bottom-2 left-2 flex items-end gap-4 text-[0.6875rem] text-white/85">
+    <div className="pointer-events-none absolute bottom-2 left-2 flex items-end gap-4 text-[0.6875rem] text-on-image">
       <svg width={34} height={34} viewBox="0 0 34 34" aria-hidden="true">
         <g stroke="currentColor" strokeWidth={1.25} fill="none">
           <path d="M28 28 V8" />
@@ -50,7 +50,7 @@ export function ScaleAndCompass({ scale, arcsecPerPixel }: { scale: number; arcs
       </svg>
       <div className="flex flex-col items-start gap-1">
         <span className="font-mono leading-none">{arcsecLabel(arcsec)}</span>
-        <span className="block h-[3px] bg-white/85" style={{ width: `${px}px` }} />
+        <span className="block h-[3px] bg-on-image" style={{ width: `${px}px` }} />
       </div>
     </div>
   );
@@ -71,18 +71,18 @@ export function PredictedTrack({ name, points, scale }: { name: string; points: 
   return (
     <g>
       <title>{`${name}: position predicted by JPL`}</title>
-      <path d={path} fill="none" stroke="var(--focus)" strokeOpacity={0.55} strokeWidth={1} vectorEffect="non-scaling-stroke" />
+      <path d={path} fill="none" stroke="var(--track-on-image)" strokeOpacity={0.55} strokeWidth={1} vectorEffect="non-scaling-stroke" />
       {points.map((p) => (
-        <circle key={`${p.x},${p.y}`} cx={p.x} cy={p.y} r={1.6 / scale} fill="var(--focus)" fillOpacity={0.7} />
+        <circle key={`${p.x},${p.y}`} cx={p.x} cy={p.y} r={1.6 / scale} fill="var(--track-on-image)" fillOpacity={0.7} />
       ))}
       {now && (
         <>
-          <circle cx={now.x} cy={now.y} r={r} fill="none" stroke="var(--focus)" strokeWidth={1.5} vectorEffect="non-scaling-stroke" />
+          <circle cx={now.x} cy={now.y} r={r} fill="none" stroke="var(--track-on-image)" strokeWidth={1.5} vectorEffect="non-scaling-stroke" />
           <text
             x={now.x + r * 1.3}
             y={now.y - r * 1.1}
             fontSize={11 / scale}
-            fill="var(--focus)"
+            fill="var(--track-on-image)"
             stroke="rgb(0 0 0 / 0.6)"
             strokeWidth={3 / scale}
             paintOrder="stroke"
@@ -92,6 +92,51 @@ export function PredictedTrack({ name, points, scale }: { name: string; points: 
           </text>
         </>
       )}
+    </g>
+  );
+}
+
+export interface CandidatePoint {
+  x: number;
+  y: number;
+  current: boolean;
+}
+
+/** One of our moving-source candidates: squares at its sightings, joined by its fitted track. */
+export function CandidateTrack({ id, points, scale, weak }: { id: string; points: CandidatePoint[]; scale: number; weak: boolean }) {
+  if (points.length === 0) return null;
+  const s = 6 / scale;
+  const path = points.map((p, i) => `${i === 0 ? "M" : "L"}${p.x} ${p.y}`).join(" ");
+  const label = points[points.length - 1]!;
+  return (
+    <g opacity={weak ? 0.6 : 1}>
+      <title>{`Candidate ${id}${weak ? " (weak)" : ""}`}</title>
+      <path d={path} fill="none" stroke="var(--candidate-on-image)" strokeWidth={1} vectorEffect="non-scaling-stroke" />
+      {points.map((p) => (
+        <rect
+          key={`${p.x},${p.y}`}
+          x={p.x - (p.current ? s * 1.4 : s)}
+          y={p.y - (p.current ? s * 1.4 : s)}
+          width={(p.current ? s * 1.4 : s) * 2}
+          height={(p.current ? s * 1.4 : s) * 2}
+          fill="none"
+          stroke="var(--candidate-on-image)"
+          strokeWidth={p.current ? 1.75 : 1}
+          vectorEffect="non-scaling-stroke"
+        />
+      ))}
+      <text
+        x={label.x + s * 1.6}
+        y={label.y + s * 2.6}
+        fontSize={11 / scale}
+        fill="var(--candidate-on-image)"
+        stroke="rgb(0 0 0 / 0.6)"
+        strokeWidth={3 / scale}
+        paintOrder="stroke"
+        fontFamily="var(--font-mono)"
+      >
+        {id}
+      </text>
     </g>
   );
 }
