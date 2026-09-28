@@ -34,10 +34,11 @@ import { type CompareMode, FIELDS, type ViewerState } from "./state";
 import { useSequence } from "./useSequence";
 import { fitView, type Rendered, type ViewState } from "./view";
 
-const MODES: { id: CompareMode; label: ViewerKey; hint: ViewerKey }[] = [
+// Below 400 px wide the four modes must fit one row, so "Side by side" shortens to "Side".
+const MODES: { id: CompareMode; label: ViewerKey; short?: ViewerKey; hint: ViewerKey }[] = [
   { id: "single", label: "single", hint: "singleHint" },
   { id: "blink", label: "blink", hint: "blinkHint" },
-  { id: "side", label: "side", hint: "sideHint" },
+  { id: "side", label: "side", short: "sideShort", hint: "sideHint" },
   { id: "diff", label: "diff", hint: "diffHint" },
 ];
 
@@ -342,10 +343,25 @@ export function Viewer({ observations, target, source, initial, onStateChange }:
       <div className="min-w-0 space-y-4">
         {/* Toolbar */}
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="segmented" role="radiogroup" aria-label={t("comparison")}>
+          <div className="segmented max-[399px]:[&>button]:px-2.5" role="radiogroup" aria-label={t("comparison")}>
             {MODES.map((m) => (
-              <button key={m.id} type="button" role="radio" aria-checked={compare === m.id} title={t(m.hint)} onClick={() => setCompare(m.id)}>
-                {t(m.label)}
+              <button
+                key={m.id}
+                type="button"
+                role="radio"
+                aria-checked={compare === m.id}
+                aria-label={t(m.label)}
+                title={t(m.hint)}
+                onClick={() => setCompare(m.id)}
+              >
+                {m.short ? (
+                  <>
+                    <span className="min-[400px]:hidden">{t(m.short)}</span>
+                    <span className="max-[399px]:hidden">{t(m.label)}</span>
+                  </>
+                ) : (
+                  t(m.label)
+                )}
               </button>
             ))}
           </div>

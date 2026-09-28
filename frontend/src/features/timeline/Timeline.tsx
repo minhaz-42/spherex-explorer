@@ -67,7 +67,7 @@ export function PassTrack({ passes, selected, onSelect, disabled }: PassTrackPro
           );
         })}
       </div>
-      <ul className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 sm:flex-wrap sm:overflow-visible" aria-label={t("passes")}>
+      <ul className="flex gap-2 overflow-x-auto pb-1 sm:-mx-1 sm:flex-wrap sm:overflow-visible sm:px-1" aria-label={t("passes")}>
         {passes.map((p) => (
           <li key={p.index} className="shrink-0">
             <button
