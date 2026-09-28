@@ -3,10 +3,10 @@
 An interactive web explorer for visualizing how the infrared sky changes across SPHEREx observations
 over time and wavelength.
 
-> **Status: in development.** The backend and frontend skeletons run; data access, the viewer and
-> the change tools are being built phase by phase (see [docs/architecture.md](docs/architecture.md)).
-> If something here doesn't match the code, the README is out of date: please fix it in your next
-> commit.
+> **Status:** working end to end on live data. Search, the timeline viewer, comparisons, brightness
+> plots, JPL known objects, the moving-source search and the Discover cases are built and tested;
+> see [docs/development-log.md](docs/development-log.md). If something here doesn't match the code,
+> the README is out of date: please fix it in your next commit.
 
 ## What the project does
 
@@ -14,6 +14,25 @@ over time and wavelength.
 narrow spectral channels from 0.75 to 5.0 µm, mapping the entire sky four times over about two years.
 SPHEREx Explorer lets you pick a position on the sky, finds every SPHEREx spectral image that covers
 it, and lets you browse those images by **observation time** and by **wavelength**.
+
+**Where → when → what changed:**
+
+- **Search** by object name (CDS Sesame) or coordinates in decimal, sexagesimal or galactic form.
+- **Timeline** of every frame from Quick Releases 2 and 3, grouped into survey passes and pointings,
+  with play, speeds and keyboard control. Each frame shows the wavelength that fell on the target.
+- **Compare** frames by single view, blink, side by side, or difference. A difference is only shown
+  when the two frames saw the target at the same wavelength; otherwise the app says why not.
+- **Measure** brightness at the target, plotted against wavelength (a spectrum) or against time at
+  one matched wavelength (a fair light curve).
+- **Moving objects:**
+  - JPL's predicted positions of catalogued asteroids and comets, as seen from SPHEREx;
+  - the app's own moving-source search, whose candidates are matched against those predictions.
+- **Discover:** curated cases built from live data by a script, each with its evidence and cautions,
+  such as asteroid (7) Iris caught moving past 36 Sextantis.
+
+Everything shown is real SPHEREx data. The demo snapshot is a labelled recording of real data, used
+only when the visitor chooses it. The app never claims a discovery; see
+[docs/limitations.md](docs/limitations.md).
 
 ## Data sources
 
@@ -106,6 +125,30 @@ Open <http://localhost:5173>. The web app proxies `/api` to the API server.
 | `make test-e2e` | Browser tests with Playwright |
 | `make build` | Production build of the web app into `frontend/dist` |
 | `make serve` | Build, then serve the API and the app from one process on <http://127.0.0.1:8000> |
+| `make snapshot` | Rebuild the Discover cases (`data/cases.json`) and the demo snapshot (`data/snapshot/`) from live data; takes several minutes |
+
+`make test-e2e` runs Playwright against the committed demo snapshot, so it needs no network. It
+starts its own API server on port 8010 and web server on port 5183.
+
+### Live data and demo mode
+
+By default every view asks IRSA, AWS S3, JPL and CDS at request time, through the server's cache
+(`backend/.cache/`, safe to delete). Add `source=snapshot` to an Explore link, or use *Open the demo
+snapshot* on Discover, to use only the recorded answers in `data/snapshot/`. A badge on every data
+view says which mode is in use, and nothing outside the snapshot is ever substituted.
+
+### Deployment
+
+The app is one process. `make build` produces `frontend/dist`, which the FastAPI app serves at `/`,
+with the API under `/api`. To deploy:
+
+1. Run `uv run uvicorn spherex_explorer.main:app --host 0.0.0.0 --port 8000` from `backend/`, behind
+   any HTTPS reverse proxy.
+2. Give it a writable `SPHEREX_CACHE_DIR`.
+
+It needs outbound HTTPS to irsa.ipac.caltech.edu, nasa-irsa-spherex.s3.us-east-1.amazonaws.com,
+ssd-api.jpl.nasa.gov, ssd.jpl.nasa.gov and cds.unistra.fr. A server in a US region reads frames many
+times faster than a distant one.
 
 ## Project structure
 
@@ -121,16 +164,18 @@ backend/                   Python data service (FastAPI)
     science/               alignment, background, photometry, change tools
     solar_system/          JPL SBIdent and Horizons, parallax
     resolve/               coordinate parsing, CDS Sesame
+  scripts/                 build_cases.py (Discover + snapshot), extract_wave_tables.py
   tests/                   pytest suite with fixtures recorded from real responses
 frontend/                  Web app (Vite, React, TypeScript, Tailwind CSS)
   src/app/                 router, layout, error boundary
   src/pages/               Landing, Explore, Discover, About
-  src/features/            search, viewer, timeline, wavelength, compare, discover
+  src/features/            search, viewer, timeline, wavelength, known objects, discover
   src/lib/                 API client and helpers
   src/components/space/    pencil-drawn solar system, sky globe, spectrum and sketches (landing page)
   src/styles/index.css     design tokens (pencil-on-paper light theme) and base styles
   tests/, e2e/             Vitest and Playwright tests
-data/                      curated Discover cases and the demo snapshot
+data/cases.json            curated Discover cases (built by backend/scripts/build_cases.py)
+data/snapshot/             demo snapshot: recorded API answers for those cases
 docs/                      research, architecture, requirements, methods, limitations, demo guide
 Makefile                   setup, dev, check, build, serve
 ```
@@ -158,6 +203,18 @@ Makefile                   setup, dev, check, build, serve
   build output or secrets.
 - **Keep this README accurate.** A change to setup, run commands, configuration or project layout
   includes the README update in the same commit.
+
+## Documentation
+
+| Document | What it covers |
+|---|---|
+| [docs/research/spherex-data-research.md](docs/research/spherex-data-research.md) | Every archive service, verified with real requests |
+| [docs/architecture.md](docs/architecture.md) | System shape, modules, API, risks, plan |
+| [docs/product-requirements.md](docs/product-requirements.md) | Who it is for and what it must do |
+| [docs/scientific-methods.md](docs/scientific-methods.md) | Every method, with the check that validates it |
+| [docs/limitations.md](docs/limitations.md) | What the app cannot do or conclude |
+| [docs/demo-guide.md](docs/demo-guide.md) | A three-minute demo, with a fallback |
+| [docs/development-log.md](docs/development-log.md) | What was built, when, and what was verified |
 
 ## References
 

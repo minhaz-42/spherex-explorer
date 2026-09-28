@@ -274,3 +274,8 @@ async def test_measure_returns_numbers_without_pixels(
     assert body["wavelength"]["atTargetUm"] is not None
     assert body["photometry"]["fluxMicroJy"] is not None
     assert body["time"]["isoMid"].startswith("2025-12-02")
+
+
+async def test_cases_are_served(api: httpx.AsyncClient) -> None:
+    body = (await api.get("/api/cases")).json()
+    assert body["cases"][0]["id"] == "demo"

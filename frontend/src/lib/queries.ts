@@ -4,7 +4,7 @@ import { queryOptions } from "@tanstack/react-query";
 
 import { type DataSource, getJson, postJson } from "./api";
 import { decodeCutout } from "./pixels";
-import type { Candidates, CutoutPayload, DecodedCutout, KnownObjects, Measurement, Observations, Target } from "./types";
+import type { Candidates, CasesFile, CutoutPayload, DecodedCutout, KnownObjects, Measurement, Observations, Target } from "./types";
 
 export function resolveQuery(q: string, source: DataSource) {
   return queryOptions({
@@ -65,4 +65,20 @@ export function candidatesQuery(ra: number, dec: number, size: number, keys: str
     gcTime: 60 * 60 * 1000,
     retry: false,
   });
+}
+
+export function casesQuery() {
+  return queryOptions({
+    queryKey: ["cases"],
+    queryFn: ({ signal }) => getJson<CasesFile>("/cases", {}, signal),
+    staleTime: 10 * 60 * 1000,
+  });
+}
+
+/** The explorer link that opens a Discover case. */
+export function caseLink(c: { target: { ra: number; dec: number; name: string }; viewer: Record<string, string | number> }, source?: DataSource): string {
+  const p = new URLSearchParams({ ra: String(c.target.ra), dec: String(c.target.dec), name: c.target.name });
+  for (const [k, v] of Object.entries(c.viewer)) p.set(k, String(v));
+  if (source === "snapshot") p.set("source", "snapshot");
+  return `/explore?${p.toString()}`;
 }

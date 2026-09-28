@@ -178,3 +178,28 @@ export interface Candidates {
   caution: string;
   retrievedAt: string;
 }
+
+export interface CasePreviewFrame {
+  obsId: string;
+  key: string;
+  isoMid: string;
+  wavelengthUm: number | null;
+}
+
+export interface DiscoverCase {
+  id: string;
+  kind: "moving" | "spectrum" | "brightness" | "context";
+  title: string;
+  summary: string;
+  target: { ra: number; dec: number; name: string; constellation: string };
+  viewer: { seq: string; det: number; f: string; fa: string; cmp: string; fov: number };
+  observed: { start: string; end: string; frames: number; pointings: number; detector: number; wavelengthUm: [number, number] };
+  preview: { a: CasePreviewFrame; b: CasePreviewFrame };
+  evidence: string[];
+  caution: string;
+}
+
+export interface CasesFile {
+  built: string | null;
+  cases: DiscoverCase[];
+}

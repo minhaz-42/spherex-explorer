@@ -82,16 +82,24 @@ All routes are `GET` under `/api`, return JSON, and validate their parameters.
 
 | Route | Purpose | Notes |
 |---|---|---|
-| `/api/health` | Liveness and mode | |
-| `/api/resolve?q=` | Name or coordinates → `Target` | Coordinates parsed locally; names via Sesame |
-| `/api/observations?ra&dec` | All frames covering the point | Cached 6 h; deep collections only inside deep fields |
-| `/api/frames/{frameId}/cutout?ra&dec&size` | Aligned cutout of one frame | Cached on disk; size capped at 0.5° |
-| `/api/known-objects?ra&dec&size&frames=` | JPL known bodies across a set of frames | Slow upstream (≈20–80 s); cached |
-| `/api/cases` | Curated Discover cases | Static JSON built by a script |
+| `GET /api/health` | Liveness and whether a demo snapshot exists | |
+| `GET /api/resolve?q=` | Name or coordinates → target with context | Coordinates parsed locally; names via Sesame; cached 7 days |
+| `GET /api/observations?ra&dec` | Every frame covering the point, grouped into passes | Cached 6 h; deep collections only for an explicit window of ≤ 31 days |
+| `GET /api/cutout?key&ra&dec&size` | One frame aligned onto the target grid, with measurements | Cached 30 days; size 0.03–0.5° |
+| `GET /api/measure?key&ra&dec` | Wavelength, time and brightness at the target, no pixels | Reads a 0.05° window; used for full-pass spectra |
+| `POST /api/known-objects` | Catalogued bodies crossing the field, with per-frame predicted positions | JPL SBIdent + Horizons; 30 s–2 min the first time |
+| `POST /api/candidates` | The moving-source search over a pass | Needs the pass's cutouts |
+| `GET /api/cases` | Curated Discover cases | From `data/cases.json` |
 
-Frame IDs are IVOA publisher DIDs (`ivo://irsa.ipac/spherex_qr2?2025W49_1A_0332_1/D2`). The cutout
-route accepts only IDs whose S3 key the service itself derived from an SIA response, so it cannot be
-used as an open proxy.
+Every data route accepts `source=live|snapshot`. In snapshot mode only recorded answers are served,
+and anything else is a `404 not_in_snapshot`. Errors are JSON `{"error": {"code", "message",
+"service"?}}` with 400 (invalid input), 404, 429 (rate limit), 502 (upstream failed) or 504
+(upstream timed out).
+
+Frames are named to the cutout routes by their archive key
+(`qr2/level2/2025W49_1A/l2b-v20-2025-339/2/level2_2025W49_1A_0332_1D2_spx_l2b-v20-2025-339.fits`).
+The server accepts only keys matching the Level 2 naming pattern and builds the URL itself, so the
+routes cannot be used as an open proxy.
 
 ## Reading pixels without downloading files
 

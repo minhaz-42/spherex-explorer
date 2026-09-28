@@ -48,7 +48,9 @@ export function Explore() {
     enabled: posRa !== undefined && posDec !== undefined,
   });
 
-  const search = (query: string) => navigate(`/explore?q=${encodeURIComponent(query)}`);
+  // A search keeps the data source: in demo mode, a new search stays on the demo snapshot.
+  const search = (query: string) =>
+    navigate(`/explore?q=${encodeURIComponent(query)}${source === "snapshot" ? "&source=snapshot" : ""}`);
 
   const setSource = (next: DataSource) => {
     const p = new URLSearchParams(params);

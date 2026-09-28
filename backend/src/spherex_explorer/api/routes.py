@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 from datetime import UTC, datetime
 from typing import Annotated, Any, Literal
 
@@ -305,3 +306,15 @@ async def candidates(
         ALGORITHM_VERSION,
     )
     return await svc.store.get_or_compute("candidates", ck, compute, ttl_s=30 * DAY, source=source)
+
+
+@router.get("/cases")
+async def cases(request: Request) -> dict[str, Any]:
+    """The curated Discover cases, built from live data by ``scripts/build_cases.py``."""
+    svc = services(request)
+    path = svc.settings.cases_file
+    try:
+        data: dict[str, Any] = await asyncio.to_thread(lambda: json.loads(path.read_text()))
+    except FileNotFoundError:
+        return {"built": None, "cases": []}
+    return data
