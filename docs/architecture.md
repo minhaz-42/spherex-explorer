@@ -13,12 +13,15 @@
    blink, diff, pixel readout                 align to common grid, mask flags,
                                               background, aperture photometry
  Known objects /api/known-objects ──────────► JPL adapters + parallax ─────────────► JPL SBIdent, Horizons
+ About the ── /api/object, /field-objects ──► SIMBAD TAP adapter ──────────────────► CDS SIMBAD
+   object      /api/object-image ───────────► hips2fits adapter (JPEG) ────────────► CDS hips2fits
+ Decades ──── /api/plate ───────────────────► DSS adapter (FITS → PNG) ────────────► STScI Digitized Sky Survey
  Discover ─── /api/cases ───────────────────► curated JSON (built by a script from real data)
  Ask ──────── /api/assistant/chat ──────────► evidence from the cache → local model ► Ollama on the same
    (server-sent events)                       → checks (or built-in answers)          machine, not upstream
 ```
 
-The browser never talks to NASA, JPL or CDS directly. The Python service owns every upstream call,
+The browser never talks to NASA, JPL, CDS or STScI directly. The Python service owns every upstream call,
 so it can validate input, cap sizes, time out, cache, and hide protocol details from the UI. The
 assistant's language model runs next to the service, on the same machine, and receives only text
 evidence the service has assembled.
@@ -59,6 +62,10 @@ evidence the service has assembled.
 | `science/sources.py` | Point-source detection and candidate moving-source tracks |
 | `solar_system/jpl.py` | SBIdent and Horizons adapters |
 | `solar_system/parallax.py` | Geocentric → SPHEREx-centric direction using the header state vector |
+| `objects/simbad.py` | SIMBAD TAP: the most-studied object at a position (type, common name, distance, size, magnitudes, proper motion) and the catalogued objects in a cone |
+| `objects/categories.py` | SIMBAD's object-type hierarchy mapped to the app's categories |
+| `objects/images.py` | CDS hips2fits: DSS2, 2MASS and AllWISE colour images of a field, with their credits |
+| `objects/plates.py` | STScI Digitized Sky Survey: a POSS-I or POSS-II plate of a field as a north-up PNG, with its plate id and date |
 | `api/*.py` | HTTP routes and response schemas; `api/cachekeys.py` builds the cache keys the routes and the assistant share |
 | `api/compute.py` | The data the routes serve, computed without a request, so the assistant shares their cache keys, lifetimes and costs |
 | `assistant/live.py` | Fetches, live, what a question needs and the cache lacks (frames, SIMBAD facts, coverage, JPL, the search) |
@@ -104,6 +111,10 @@ their parameters. POST bodies are capped at 64 KB.
 | `POST /api/known-objects` | Catalogued bodies crossing the field, with per-frame predicted positions | JPL SBIdent + Horizons; 30 s–2 min the first time |
 | `POST /api/candidates` | The moving-source search over a pass | Needs the pass's cutouts |
 | `GET /api/cases` | Curated Discover cases | From `data/cases.json` |
+| `GET /api/object?ra&dec` | The most-studied SIMBAD object within 36″ (`radius` ≤ 0.05°), with its facts | Cached 7 days; `{"object": null, "message"}` when nothing is catalogued there, cached too |
+| `GET /api/field-objects?ra&dec&radius&limit` | The most-studied catalogued objects in a cone (≤ 0.5°, ≤ 60 objects) | One TAP request; cached 7 days |
+| `GET /api/object-image?ra&dec&fov&survey` | A DSS2, 2MASS or AllWISE JPEG of the field (`survey=dss\|2mass\|wise`, 0.02–5°) | Cached 30 days; credit in `X-Image-Credit` |
+| `GET /api/plate?ra&dec&fov&survey` | A scanned Palomar plate (`poss1` 1950s, `poss2` about 1990) as a PNG with its date and plate id | Cached a year; costs 5 rate-limit tokens; 10–30 s the first time |
 | `GET /api/assistant/status` | Whether answers come from a local model or are built in | Model health cached 20 s |
 | `POST /api/assistant/chat` | One answer, as server-sent events: `progress` while live data is fetched, then `meta`, `notice`, `delta`, and `done` or `error` | Up to 16 messages of 2,000 characters; one answer at a time; costs 3 rate-limit tokens |
 
@@ -202,6 +213,8 @@ so an answer keeps streaming while the visitor switches chats or follows one of 
 ## Caching and limits
 
 - SIA results: memory, 6 h. Sesame: memory, 7 days. JPL: disk, 30 days, keyed by frame set.
+- SIMBAD facts and fields: 7 days. Survey images: 30 days. Photographic plates: a year (they never
+  change).
 - Cutouts: disk, keyed by frame ID, centre and size; about 100–250 KB each.
 - The browser fetches frames with a small concurrency limit, current frame first, then its
   neighbours, then the rest. TanStack Query deduplicates identical requests.
@@ -218,10 +231,15 @@ so an answer keeps streaming while the visitor switches chats or follows one of 
 ## Frontend structure (`frontend/src`)
 
 ```text
-app/            router, layout (header with Ask and the theme toggle), error boundary
-components/     ThemeToggle, Wordmark; space/: landing-page figures and the sky background
+app/            router, layout (header with Ask, the theme toggle and the language switch), error boundary
+components/     ThemeToggle, LanguageToggle, Wordmark; space/: landing-page figures and the sky background
 features/
   search/       SearchForm
+  objects/      the object profile, sky locator, other-light images, objects in view, the atlas
+  decades/      the same field from 1950s plates to SPHEREx, with a proper-motion track
+  spacecraft/   "Where was SPHEREx?": the globe drawn from a frame's recorded state
+  share/        GIF and video export with captions and credits, share menu, sonification
+  game/         Spot the mover
   viewer/       Viewer, SkyCanvas (2D canvas), overlays, frame panel, sequence loading
   timeline/     frame strip, pass track, transport and speeds
   wavelength/   band picker, brightness against wavelength or time
@@ -229,8 +247,8 @@ features/
   known/        JPL known objects and the moving-source search
   discover/     blink preview for the cases
   assistant/    conversation store, streaming client, safe answer rendering, the last view
-pages/          Landing, Explore, Discover, Ask, About, NotFound
-lib/            API client, queries, types, sequence and matching rules, formatting, WCS, pixels
+pages/          Landing, Explore, Discover, Ask, About, Play, Tour (judge mode), Embed, NotFound
+lib/            API client, queries, types, sequence and matching rules, formatting, WCS, pixels, i18n
 styles/         index.css: design tokens for the light and dark themes, and components
 ```
 

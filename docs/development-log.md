@@ -2,6 +2,62 @@
 
 Newest entries first. Each entry says what changed, why, and what was verified.
 
+## 2026-09-28 · About the object, across the decades, where SPHEREx was, share and play, Bangla
+
+**Why.** The user asked for a more informative Explore page "with proper objects", a clearer place
+for the dark theme and the chat, and a better design overall; the team's plan added a decades blink,
+exports, a globe, a game, a judges' tour and a Bangla switch.
+
+**What.**
+- Four API routes proxy the services the browser may not reach: SIMBAD facts at a position and in a
+  field, hips2fits survey images, and scanned Palomar plates from the Digitized Sky Survey.
+- Explore opens every search with the object's profile (its type in plain words, distance, size,
+  brightness, other names), an all-sky locator, the same patch in other light, and the catalogued
+  objects in view. The start page has an atlas of 24 objects.
+- "Across the decades" blinks one field from a 1950s POSS-I plate to the latest SPHEREx frame that
+  covers it. "Where was SPHEREx?" draws Earth, the orbit and the line of sight from a frame's
+  header, in the game, the decades view, the tour and the frame panel.
+- Blinks export as GIFs or videos with captions and credits; share cards; `/embed/<case>`;
+  "Spot the mover" at `/play`; a 90-second tour at `/tour`; a Bangla/English switch.
+
+**Verified on real data.**
+- Barnard's Star moves 13.1′ between the POSS-I plate of 9 July 1950 (E164) and the SPHEREx frame of
+  11 March 2026, as its Gaia proper motion predicts; it sits 8.5′ south of centre on the 1950 plate
+  and 1.5′ south on the 1991 one.
+- The globe first put the Sun 0.38° from astropy's position: the solar formula gives coordinates of
+  date, while the headers are ICRF-aligned. With the longitude carried back to J2000 and the Earth
+  rotation angle instead of sidereal time, the Sun is within 0.03°, the rotation within 0.001° and
+  the ground point within 0.2° of astropy, on a real Iris frame (652 km up, 7.53 km/s).
+- SIMBAD classes Andromeda as an "Active Galaxy Nucleus", Centaurus A as a "BL Lac" and M33 as a
+  "Galaxy towards a Group of Galaxies". The profile now names galaxies by their morphology (SA(s)b is
+  a spiral) and keeps SIMBAD's class underneath; the mapping is tested on the codes SIMBAD returns
+  for ten well-known galaxies.
+- Sorting a SIMBAD cone on `nbref` takes 11–20 s; on the computed `nbref + 0`, under a second.
+- "Nothing catalogued here" is now a cached answer (`{"object": null}`), so an empty spot is not
+  asked about again on every visit, and the browser console stays clean; the assistant still sees
+  it as "no object".
+
+**Bangla.** Every page switches between English and Bangla (the header button, or `?lang=bn`),
+except what the server writes: case texts, photometry reasons, JPL notes, SIMBAD's type labels and
+the assistant's answers stay in English, and credits keep the exact wording the services ask for.
+- Each feature keeps `defineMessages({ en, bn })` next to its components; TypeScript refuses a
+  Bangla table that misses or adds a key. English output was checked unchanged, state by state,
+  before and after, and the unit and end-to-end tests still assert the English.
+- Bangla is set in Noto Sans Bengali, loaded only when Bengali text is on screen. Headings get more
+  line height and no negative letter-spacing; numbers keep their units on the same line; a word
+  joiner after each hyphen that meets a Bangla letter keeps "SPHEREx-এর" from breaking (it broke
+  at 30 of 241 widths tested without one). Numbers stay in Western digits; large distances read in
+  lakh and crore ("প্রায় 25 লক্ষ আলোকবর্ষ").
+- The validity rules keep their exact meaning: a difference across more than half a spectral
+  channel "would mostly show the sources' colours, not a change in time" in both languages.
+- A page sweep in both languages at 1440 and 390 px finds no console errors and no sideways
+  scrolling.
+
+**JPL.** A transient Horizons failure had been cached as "no known objects" for the Hebe field for
+30 days (the snapshot had Hebe; a fresh live lookup found it again in 27 s). The other session made
+such answers uncacheable; the known-objects panel now says when JPL's list may be incomplete and
+offers a fresh lookup.
+
 ## 2026-09-28 · Ask fetches live data; a fuller chat sidebar
 
 **Why.** The user asked whether the chat could use live data, and whether that would be better, for

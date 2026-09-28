@@ -30,6 +30,19 @@ it, and lets you browse those images by **observation time** and by **wavelength
   - the app's own moving-source search, whose candidates are matched against those predictions.
 - **Discover:** curated cases built from live data by a script, each with its evidence and cautions,
   such as asteroid (7) Iris caught moving past 36 Sextantis.
+- **About the object:** what SIMBAD knows about the target (its type in plain words, distance,
+  size, brightness and other names), where it sits on the whole sky, the same patch in visible light
+  (DSS2), 2MASS and AllWISE, the catalogued objects in view, and an atlas of 24 starting points.
+- **Across the decades:** the same field on Palomar photographic plates from the 1950s and about
+  1990, in 2MASS, AllWISE and SPHEREx, blinked in time order. Fast stars such as Barnard's Star
+  visibly move, and a ring marks where their catalogued motion puts them.
+- **Where was SPHEREx?** A globe for any frame, drawn from the spacecraft position and velocity in
+  its header: Earth lit as it was, the orbit, and the line of sight. It shows where parallax comes
+  from.
+- **Share and play:** blinks export as GIFs or videos with their captions and credits; cases can be
+  embedded (`/embed/<case>`); "Spot the mover" (`/play`) is a blink game scored against JPL; `/tour`
+  is a 90-second guided tour for judges.
+- **English and Bangla:** a switch in the header, remembered per browser (`?lang=bn` also works).
 - **Ask:** a chat app of its own at `/ask`, with a list of chats, the conversation and a message
   box. It answers questions about the view you had open, about any named object or position, about
   SPHEREx and about the app's methods. It works from the server's own measurements, JPL's
@@ -54,6 +67,15 @@ No account, API key or AWS credentials are needed.
 | Cutout service | an image's `access_url` + `?center=RA,Dec&size=deg` | Fetching a small region instead of a full image |
 | Cloud mirror (AWS S3) | bucket `nasa-irsa-spherex`, region `us-east-1`, anonymous access | Reading full image files directly |
 | Browsable directories | `https://irsa.ipac.caltech.edu/ibe/data/spherex/qr2/` and `…/qr3/` | Manual inspection and bulk downloads |
+
+Context around the target comes from other public services, also without keys:
+
+| What | Where | Used for |
+|---|---|---|
+| SIMBAD TAP (CDS) | `https://simbad.cds.unistra.fr/simbad/sim-tap/sync` | Object facts and the catalogued objects in a field |
+| hips2fits (CDS) | `https://alasky.cds.unistra.fr/hips-image-services/hips2fits` | DSS2, 2MASS and AllWISE colour images of the same field |
+| Digitized Sky Survey (STScI) | `https://archive.stsci.edu/cgi-bin/dss_search` | Palomar plates from the 1950s (POSS-I) and about 1990 (POSS-II) |
+| Natural Earth | bundled as `frontend/public/data/land-110m.json` | Coastlines on the "Where was SPHEREx?" globe (public domain) |
 
 SIA2 collections. Quick Releases 2 and 3 are consecutive time slices, not reprocessings of the same
 data, so a timeline has to query both:
