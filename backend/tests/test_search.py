@@ -181,3 +181,11 @@ def test_target_context() -> None:
     assert info["deepField"] is None
     assert deep_field_at(270.0, 66.56) is not None
     assert describe(270.0, 66.56)["deepField"] == "North ecliptic pole deep field"
+
+
+def test_the_south_deep_field_is_where_the_archive_has_its_frames() -> None:
+    # IRSA's deep collections have frames at ecliptic (+44.8°, −82°) and none at (−44.8°, −82°).
+    assert describe(78.4651, -60.4058)["deepField"] == "South deep field"
+    assert deep_field_at(72.0, -71.3629) is None
+    # The Large Magellanic Cloud, which the field was placed to avoid, is outside it.
+    assert deep_field_at(80.894, -69.756) is None

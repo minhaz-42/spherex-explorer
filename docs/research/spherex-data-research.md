@@ -68,7 +68,12 @@ Survey facts that shape the product:
 - **Cadence.** "The entire sky is completely sampled twice every year"; a full 102-channel spectrum
   of one position takes one to two weeks (Bock et al. §II).
 - **Deep fields.** About 100 deg² each, one centred on the north ecliptic pole and one at ecliptic
-  latitude −82°, longitude −44.8°, "generally observed every orbit" (Bock et al. §III.4.1, §IV.2.4).
+  latitude −82°, longitude +44.8° (RA 78.47°, Dec −60.41°), "generally observed every orbit" (Bock
+  et al. §III.4.1, §IV.2.4). The sign of the longitude was checked against the archive on
+  2026-09-28. SIA returns at least 300 frames (the cap asked for) from both `spherex_qr2_deep` and
+  `spherex_qr3_deep` within 0.001° of (+44.8°, −82°), and none at (−44.8°, −82°), although the wide
+  survey covers both. The app first used −44.8°, a point 3.4° from the Large Magellanic Cloud, until
+  a teammate found no deep frames there.
 - **Time-domain caveat.** Repeat visits usually put a source on a different part of the filter, so
   it is seen at a different wavelength. Outside the deep fields, a same-wavelength repeat happens
   about every six months.

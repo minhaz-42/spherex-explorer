@@ -10,7 +10,9 @@ import astropy.units as u
 from astropy.coordinates import BarycentricMeanEcliptic, SkyCoord, get_constellation
 
 # SPHEREx deep fields: about 100 deg² each. The north field is centred on the north ecliptic
-# pole; the south one on ecliptic (−44.8°, −82°) to avoid the Magellanic Clouds (Bock et al. 2025).
+# pole; the south one on ecliptic (+44.8°, −82°), RA 78.47°, Dec −60.41°, clear of the Magellanic
+# Clouds (Bock et al. 2025). The sign of the longitude is checked against the archive: IRSA's deep
+# collections return frames at +44.8° and none at −44.8° (docs/research, "Deep fields").
 DEEP_FIELD_RADIUS_DEG = 6.5
 
 
@@ -24,7 +26,7 @@ class DeepField:
 @lru_cache
 def deep_fields() -> tuple[DeepField, ...]:
     north = SkyCoord(lon=0 * u.deg, lat=90 * u.deg, frame=BarycentricMeanEcliptic()).icrs
-    south = SkyCoord(lon=-44.8 * u.deg, lat=-82 * u.deg, frame=BarycentricMeanEcliptic()).icrs
+    south = SkyCoord(lon=44.8 * u.deg, lat=-82 * u.deg, frame=BarycentricMeanEcliptic()).icrs
     return (
         DeepField("North ecliptic pole deep field", float(north.ra.deg), float(north.dec.deg)),
         DeepField("South deep field", float(south.ra.deg), float(south.dec.deg)),
