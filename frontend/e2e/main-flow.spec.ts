@@ -13,19 +13,22 @@ test("search, step through time, play and inspect", async ({ page }) => {
   await page.getByLabel("Object name or sky coordinates").fill("161.29678 2.44824");
   await page.getByRole("button", { name: "Search" }).click();
 
-  // Observations: the heading summarises every pass that covers the position.
-  await expect(page.getByText(/243 frames in 4 passes/)).toBeVisible();
+  // Observations: the heading summarises every pass that covers the position. (Counts grow as
+  // releases add data, so only the form is checked.)
+  await expect(page.getByText(/\d+ frames in \d+ passes/)).toBeVisible();
   await expect(page.getByText(/Demo snapshot/).first()).toBeVisible();
 
   // The snapshot holds the December 2025 pass in detector 2: choose it.
-  await page.getByRole("button", { name: /25 Nov – 6 Dec 2025/ }).click();
+  await page.getByRole("button", { name: /Nov – .*Dec 2025/ }).click();
   await page.getByRole("radio", { name: /Detector 2,/ }).click();
+  // The snapshot recorded this pass with an 18′ field, so choose it as a visitor would.
+  await page.getByLabel("Field of view").selectOption("0.3");
   await expect(page.getByText(/19 frames of 19 loaded/)).toBeVisible();
 
   // View an image and its metadata.
-  const panel = page.getByRole("region", { name: /This observation/ });
+  await expect(page.getByRole("region", { name: /This observation/ })).toBeVisible();
   await expect(page.getByRole("img", { name: /SPHEREx image of/ })).toBeVisible();
-  await expect(page.getByText("Wavelength at the target")).toBeVisible();
+  await expect(page.getByText("Wavelength at the target", { exact: true })).toBeVisible();
   const firstDate = await page.locator("#frame-title").locator("xpath=..").textContent();
 
   // Change observation with the Next button and with the keyboard.
@@ -45,13 +48,12 @@ test("search, step through time, play and inspect", async ({ page }) => {
   await page.getByText("Technical details").click();
   await expect(page.getByText("Observation", { exact: true })).toBeVisible();
   await expect(page.getByText(/^2025W49_1A_/)).toBeVisible();
-  void panel;
 
   // The view is in the URL, so it can be shared.
   await expect(page).toHaveURL(/f=2025W49_1A_/);
 
   // Return to search.
-  await page.getByRole("link", { name: "Explore", exact: true }).click();
+  await page.getByRole("link", { name: "Explore", exact: true }).first().click();
   await expect(page.getByRole("heading", { name: "Where in the sky?" })).toBeVisible();
 });
 
@@ -82,7 +84,7 @@ test("known objects and the moving-source search agree on Iris", async ({ page }
   );
   await expect(page.getByText(/19 frames of 19 loaded/)).toBeVisible();
   await page.getByRole("button", { name: /Check JPL for known objects/ }).click();
-  await expect(page.getByText("7 Iris (A847 PA)")).toBeVisible();
+  await expect(page.getByRole("listitem").filter({ hasText: "7 Iris (A847 PA)" })).toBeVisible();
   await page.getByRole("button", { name: /Search for moving sources/ }).click();
   await expect(page.getByText(/Matches JPL’s prediction for 7 Iris/)).toBeVisible();
 });

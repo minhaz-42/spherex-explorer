@@ -17,6 +17,7 @@ from __future__ import annotations
 import asyncio
 import json
 import math
+import shutil
 import sys
 from datetime import UTC, datetime
 from typing import Any
@@ -96,7 +97,8 @@ CASES: list[dict[str, Any]] = [
         "dec": 66.56,
         "detector": None,
         "month": None,
-        "fov": 0.2,
+        # A small field keeps this case's 80-odd frames light in the demo snapshot.
+        "fov": 0.1,
         "compare": "single",
         "summary": (
             "SPHEREx's orbit carries it over the ecliptic poles on every revolution, so this "
@@ -319,7 +321,8 @@ async def build_case(api: Api, case: dict[str, Any]) -> dict[str, Any] | None:
         if deep:
             evidence.append(
                 f"It lies in the {deep['name']}, where SPHEREx's separate deep survey takes "
-                "images on nearly every orbit (more than 24,000 of them cover this very point)."
+                "images on nearly every orbit: Quick Release 2 alone holds 24,103 deep-survey "
+                "images of this very point (IRSA image search, September 2026)."
             )
         caution = (
             "Many frames of the same spot are ideal for finding faint, slow changes, but each "
@@ -435,6 +438,9 @@ async def main() -> int:
         + "\n"
     )
     print(f"wrote {len(cases)} cases to {CASES_FILE}")
+    # Header facts are only an input to live JPL checks; demo mode replays the JPL answers
+    # themselves, so they need not ship with the snapshot.
+    shutil.rmtree(SNAPSHOT / "meta", ignore_errors=True)
     return 0
 
 

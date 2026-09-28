@@ -1,0 +1,219 @@
+{
+ "about": "Discover cases built by backend/scripts/build_cases.py from live data.",
+ "built": "2026-09-28",
+ "cases": [
+  {
+   "id": "iris-2025-12",
+   "kind": "moving",
+   "title": "Asteroid (7) Iris crosses a field in Sextans",
+   "summary": "Over one night and morning SPHEREx looked at this patch of Sextans five times. The bright star 36 Sextantis stays put; a point of light beside it does not. It is the main-belt asteroid (7) Iris, about 2 au from us, moving roughly its own width every ten minutes.",
+   "target": {
+    "ra": 161.29678,
+    "dec": 2.44824,
+    "name": "Asteroid (7) Iris near 36 Sextantis",
+    "constellation": "Sextans"
+   },
+   "viewer": {
+    "seq": "pass",
+    "det": 2,
+    "f": "2025W49_1A_0423_1",
+    "fa": "2025W49_1A_0332_1",
+    "cmp": "blink",
+    "fov": 0.3
+   },
+   "observed": {
+    "start": "2025-12-01T21:32:06.202",
+    "end": "2025-12-03T06:00:25.013",
+    "frames": 19,
+    "pointings": 7,
+    "detector": 2,
+    "wavelengthUm": [
+     1.1041,
+     1.6581
+    ]
+   },
+   "preview": {
+    "a": {
+     "obsId": "2025W49_1A_0332_1",
+     "key": "qr2/level2/2025W49_1A/l2b-v20-2025-339/2/level2_2025W49_1A_0332_1D2_spx_l2b-v20-2025-339.fits",
+     "isoMid": "2025-12-02T12:06:59.472",
+     "wavelengthUm": 1.12939
+    },
+    "b": {
+     "obsId": "2025W49_1A_0423_1",
+     "key": "qr2/level2/2025W49_1A/l2b-v20-2025-339/2/level2_2025W49_1A_0423_1D2_spx_l2b-v20-2025-339.fits",
+     "isoMid": "2025-12-02T21:49:19.718",
+     "wavelengthUm": 1.50813
+    }
+   },
+   "evidence": [
+    "JPL predicts 7 Iris (A847 PA) (V 10.2) inside this field in 14 of 19 frames, moving about 40″ per hour, as seen from SPHEREx.",
+    "SPHEREx Explorer's own moving-source search, which knows nothing about asteroids, found 3 sightings on a straight line at 39″ per hour, a candidate, 0.8″ from JPL's prediction."
+   ],
+   "caution": "The asteroid's identity comes from JPL's catalogue and orbit predictions, not from this app. Brightness differences between frames are partly the asteroid's colour: each frame saw it at a different wavelength.",
+   "facts": {
+    "knownObject": "7 Iris (A847 PA)",
+    "searchCandidates": 1
+   }
+  },
+  {
+   "id": "hebe-2025-05",
+   "kind": "moving",
+   "title": "Asteroid (6) Hebe in Aquarius",
+   "summary": "In May 2025, during SPHEREx's first weeks of science, asteroid (6) Hebe passed through this field. Compare the pointings: the stars keep their places, one source changes position.",
+   "target": {
+    "ra": 326.891,
+    "dec": -7.683,
+    "name": "Asteroid (6) Hebe in Aquarius",
+    "constellation": "Aquarius"
+   },
+   "viewer": {
+    "seq": "pass",
+    "det": 2,
+    "f": "2025W20_1C_0370_4",
+    "fa": "2025W20_1C_0314_1",
+    "cmp": "side",
+    "fov": 0.3
+   },
+   "observed": {
+    "start": "2025-05-13T04:58:04.411",
+    "end": "2025-05-14T18:34:47.726",
+    "frames": 19,
+    "pointings": 6,
+    "detector": 2,
+    "wavelengthUm": [
+     1.0873,
+     1.637
+    ]
+   },
+   "preview": {
+    "a": {
+     "obsId": "2025W20_1C_0314_1",
+     "key": "qr2/level2/2025W20_1C/l2b-v20-2025-247/2/level2_2025W20_1C_0314_1D2_spx_l2b-v20-2025-247.fits",
+     "isoMid": "2025-05-14T00:26:48.898",
+     "wavelengthUm": 1.38355
+    },
+    "b": {
+     "obsId": "2025W20_1C_0370_4",
+     "key": "qr2/level2/2025W20_1C/l2b-v20-2025-247/2/level2_2025W20_1C_0370_4D2_spx_l2b-v20-2025-247.fits",
+     "isoMid": "2025-05-14T08:44:50.122",
+     "wavelengthUm": 1.63495
+    }
+   },
+   "evidence": [
+    "JPL predicts 6 Hebe (A847 NA) (V 10.0) inside this field in 7 of 19 frames, moving about 52″ per hour, as seen from SPHEREx.",
+    "SPHEREx Explorer's own moving-source search, which knows nothing about asteroids, found 2 sightings on a straight line at 52″ per hour, a weak candidate on its own (two pointings), 1.3″ from JPL's prediction."
+   ],
+   "caution": "The asteroid's identity comes from JPL's catalogue and orbit predictions, not from this app. Brightness differences between frames are partly the asteroid's colour: each frame saw it at a different wavelength.",
+   "facts": {
+    "knownObject": "6 Hebe (A847 NA)",
+    "searchCandidates": 0
+   }
+  },
+  {
+   "id": "m31-spectrum",
+   "kind": "spectrum",
+   "title": "The core of the Andromeda Galaxy, from 0.75 to 5 µm",
+   "summary": "SPHEREx never takes a colour picture. Each exposure sees a place through a slightly different part of its filters, and over a week the exposures add up to a spectrum in 102 colours. Here that spectrum is measured, frame by frame, at the centre of our neighbouring galaxy.",
+   "target": {
+    "ra": 10.6847083,
+    "dec": 41.26875,
+    "name": "Andromeda Galaxy (M31)",
+    "constellation": "Andromeda"
+   },
+   "viewer": {
+    "seq": "pass",
+    "det": 3,
+    "f": "2025W52_1A_0344_1",
+    "fa": "2025W51_1A_0684_1",
+    "cmp": "single",
+    "fov": 0.2
+   },
+   "observed": {
+    "start": "2025-12-18T05:08:23.251",
+    "end": "2025-12-27T07:33:20.102",
+    "frames": 18,
+    "pointings": 6,
+    "detector": 3,
+    "wavelengthUm": [
+     1.6244,
+     2.3773
+    ]
+   },
+   "preview": {
+    "a": {
+     "obsId": "2025W51_1A_0684_1",
+     "key": "qr2/level2/2025W51_1A/l2b-v21-2025-354/3/level2_2025W51_1A_0684_1D3_spx_l2b-v21-2025-354.fits",
+     "isoMid": "2025-12-18T05:08:23.251",
+     "wavelengthUm": 1.97885
+    },
+    "b": {
+     "obsId": "2025W52_1A_0344_1",
+     "key": "qr2/level2/2025W52_1A/l2b-v21-2025-363/3/level2_2025W52_1A_0344_1D3_spx_l2b-v21-2025-363.fits",
+     "isoMid": "2025-12-23T17:08:22.344",
+     "wavelengthUm": 1.62194
+    }
+   },
+   "evidence": [
+    "110 frames from all six detectors in one pass, 18 Dec 2025 to 4 Jan 2026, measure the centre at 106 wavelengths between 0.74 and 4.97 µm.",
+    "The brightness rises to 2.44 Jy at 1.70 µm and falls to about 471 mJy near 5.0 µm, the shape of the light of old, cool stars, which dominate a galaxy's centre.",
+    "The centre is so bright that 71 of these frames reach the detectors' overflow threshold (about half their full capacity) inside the aperture, all at wavelengths up to 3.9 µm. Those points carry a caveat in the plot."
+   ],
+   "caution": "Simple aperture photometry on an extended galaxy: the numbers depend on the aperture and are not calibrated for extended sources. Frames were taken days apart, and the six detectors are calibrated separately.",
+   "facts": {
+    "measured": 106
+   }
+  },
+  {
+   "id": "nep-deep",
+   "kind": "context",
+   "title": "The north ecliptic pole, the most watched spot in the survey",
+   "summary": "SPHEREx's orbit carries it over the ecliptic poles on every revolution, so this spot is seen far more often than the rest of the sky: the wide survey alone covers it in every pass, and the separate deep survey adds tens of thousands of frames.",
+   "target": {
+    "ra": 270.0,
+    "dec": 66.56,
+    "name": "North ecliptic pole",
+    "constellation": "Draco"
+   },
+   "viewer": {
+    "seq": "pass",
+    "det": 2,
+    "f": "2026W26_1A_0548_2",
+    "fa": "2026W20_2A_0368_1",
+    "cmp": "single",
+    "fov": 0.1
+   },
+   "observed": {
+    "start": "2026-05-16T20:05:05.438",
+    "end": "2026-08-08T06:25:56.107",
+    "frames": 87,
+    "pointings": 37,
+    "detector": 2,
+    "wavelengthUm": [
+     1.0893,
+     1.6459
+    ]
+   },
+   "preview": {
+    "a": {
+     "obsId": "2026W20_2A_0368_1",
+     "key": "qr2/level2/2026W20_2A/l2b-v25-2026-140/2/level2_2026W20_2A_0368_1D2_spx_l2b-v25-2026-140.fits",
+     "isoMid": "2026-05-16T20:05:05.438",
+     "wavelengthUm": 1.36457
+    },
+    "b": {
+     "obsId": "2026W26_1A_0548_2",
+     "key": "qr2/level2/2026W26_1A/l2b-v25-2026-180/2/level2_2026W26_1A_0548_2D2_spx_l2b-v25-2026-180.fits",
+     "isoMid": "2026-06-24T07:55:54.509",
+     "wavelengthUm": 1.22342
+    }
+   },
+   "evidence": [
+    "608 wide-survey frames cover this spot in 4 passes between 25 Apr 2025 and 8 Aug 2026.",
+    "It lies in the North ecliptic pole deep field, where SPHEREx's separate deep survey takes images on nearly every orbit: Quick Release 2 alone holds 24,103 deep-survey images of this very point (IRSA image search, September 2026)."
+   ],
+   "caution": "Many frames of the same spot are ideal for finding faint, slow changes, but each frame still sees a different wavelength.",
+   "facts": {}
+  }
+ ]
+}

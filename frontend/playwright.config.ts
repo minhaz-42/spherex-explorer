@@ -5,8 +5,9 @@ import { defineConfig, devices } from "@playwright/test";
  * `make snapshot`), so they need no network and give the same answer every time. Playwright starts
  * its own API and web servers on ports that do not clash with `make dev`.
  */
-const API_PORT = 8010;
-const WEB_PORT = 5183;
+// Override with E2E_API_PORT / E2E_WEB_PORT when another checkout is already using these.
+const API_PORT = Number(process.env.E2E_API_PORT ?? 8010);
+const WEB_PORT = Number(process.env.E2E_WEB_PORT ?? 5183);
 
 export default defineConfig({
   testDir: "e2e",
@@ -20,7 +21,11 @@ export default defineConfig({
     trace: "retain-on-failure",
   },
   projects: [
-    { name: "desktop", use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 1000 } } },
+    {
+      name: "desktop",
+      use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 1000 } },
+      testIgnore: /responsive\.spec\.ts/,
+    },
     { name: "phone", use: { ...devices["Pixel 7"] }, testMatch: /responsive\.spec\.ts/ },
   ],
   webServer: [
