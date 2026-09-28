@@ -2,6 +2,8 @@
 @import "@fontsource-variable/plus-jakarta-sans/wght.css";
 @import "@fontsource-variable/plus-jakarta-sans/wght-italic.css";
 @import "@fontsource-variable/jetbrains-mono/wght.css";
+/* Bangla text (the language toggle); fetched only when Bengali characters are on the page. */
+@import "@fontsource-variable/noto-sans-bengali/index.css";
 @import "tailwindcss";
 
 /*
@@ -77,8 +79,8 @@
   --band-5: #1a4f98;
   --band-6: #113e7a;
 
-  --font-sans: "Plus Jakarta Sans Variable", "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", Roboto,
-    sans-serif;
+  --font-sans: "Plus Jakarta Sans Variable", "Plus Jakarta Sans", "Noto Sans Bengali Variable", system-ui,
+    -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-display: "Sora Variable", "Sora", var(--font-sans);
   --font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
 
