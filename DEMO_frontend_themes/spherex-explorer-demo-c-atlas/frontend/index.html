@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en" class="no-js" data-theme-variant="circle">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>SPHEREx Explorer · Demo C, atlas</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪐</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <!-- Sets the theme before first paint, so there's no flash of the wrong one. -->
+  <script>try{var t=localStorage.getItem('spherex-theme');document.documentElement.dataset.theme=t||(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark')}catch(e){document.documentElement.dataset.theme='dark'}</script>
+</head>
+<body>
+  <div data-preloader class="grid place-items-center" data-duration="1100">
+    <div class="grid justify-items-center gap-4">
+      <span class="track">Acquiring target</span>
+      <span class="cap text-8xl tabular-nums" data-preloader-count>000</span>
+    </div>
+  </div>
+
+  <header data-header class="fixed inset-x-0 top-0 z-50 grid grid-cols-[1fr_auto_1fr] items-center px-5 md:px-8 pb-3" style="padding-top: calc(env(safe-area-inset-top, 0px) + 16px)">
+    <nav class="flex items-center gap-7 text-[11px] tracking-[0.2em] uppercase" aria-label="Main">
+      <a href="#search" class="text-ink" aria-label="Search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></svg>
+      </a>
+      <a class="hidden md:inline text-ink no-underline" href="#places" data-roll>Places</a>
+      <a class="hidden md:inline text-ink no-underline" href="#bands" data-roll>Bands</a>
+    </nav>
+    <a href="#top" class="wordmark text-ink no-underline"><span data-glitch>SPHEREx</span></a>
+    <div class="flex items-center justify-end gap-7 text-[11px] tracking-[0.2em] uppercase">
+      <a class="hidden md:inline text-ink no-underline" href="#explore" data-roll>Explore</a>
+      <a class="hidden md:inline text-ink no-underline" href="#how" data-roll>How it works</a>
+      <span class="hidden lg:grid text-right leading-tight"><span class="track text-[9px]">UTC</span><span class="cap text-2xl tabular-nums" data-clock="utc">--:--:--</span></span>
+      <button class="theme-toggle" type="button" data-theme-toggle>
+        <svg class="t-sun" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>
+        <svg class="t-moon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main id="top">
+    <!-- HERO -->
+    <section class="relative min-h-[92svh] overflow-hidden grid content-center justify-items-center text-center px-5 pt-28 pb-44">
+      <canvas class="absolute inset-0 w-full h-full" data-starfield data-density="0.00022" aria-hidden="true"></canvas>
+      <!-- A planet-sized sky globe sinking below the hero, like the reference's horizon -->
+      <div class="orb orb-texture absolute left-1/2 -translate-x-1/2 w-[140vw] max-w-[1800px] top-[70%]" style="--orb: color-mix(in oklab, var(--haze-a) 55%, var(--bg))" aria-hidden="true"></div>
+      <div class="haze absolute inset-0" aria-hidden="true"></div>
+      <div class="relative grid gap-5 justify-items-center">
+        <p class="track tracking-[0.7em]" data-scramble>Every frame, every wavelength</p>
+        <h1 class="cap text-[clamp(3.4rem,1rem+9vw,9.5rem)]">
+          <span class="block" data-scramble data-duration="1100">Explore the</span>
+          <span class="block" data-scramble data-duration="1200">infrared sky</span>
+        </h1>
+      </div>
+      <p class="vertical track absolute right-5 top-1/2 -translate-y-1/2 hidden md:block text-[9.5px]">Latest release QR3, public 2026-09-16</p>
+    </section>
+
+    <!-- SEARCH BAR, straddling the hero edge -->
+    <section id="search" class="relative z-10 -mt-28 px-5 md:px-8">
+      <form class="sbar max-w-5xl mx-auto" role="search" data-search="explore">
+        <label><span class="k">Target</span><input name="q" placeholder="M31" autocomplete="off" /></label>
+        <label><span class="k">Release</span><select name="release"><option value="all">QR2 + QR3</option><option value="QR2">QR2</option><option value="QR3">QR3</option></select></label>
+        <label><span class="k">Survey</span><select name="survey"><option value="all">Wide + Deep</option><option value="wide">Wide</option><option value="deep">Deep</option></select></label>
+        <label><span class="k">Band</span><select name="band"><option value="all">All six</option><option value="1">1, 0.75–1.09 µm</option><option value="2">2, 1.10–1.62 µm</option><option value="3">3, 1.63–2.41 µm</option><option value="4">4, 2.42–3.82 µm</option><option value="5">5, 3.83–4.41 µm</option><option value="6">6, 4.42–5.00 µm</option></select></label>
+        <button type="submit" data-scramble-hover>Search</button>
+      </form>
+      <p class="search-status max-w-5xl mx-auto" role="status" aria-live="polite"></p>
+    </section>
+
+    <!-- PLACES TO START -->
+    <section id="places" class="px-5 md:px-8 pt-28 pb-24">
+      <div class="sec-head mb-28"><span class="track">Featured</span><h2 class="cap text-4xl md:text-5xl" data-scramble-view>Places to start</h2></div>
+      <div class="grid md:grid-cols-3 gap-y-32 gap-x-10 max-w-5xl mx-auto">
+        <a href="#explore" class="card-c isolate">
+          <span class="orb" style="--orb:#6f6a78" aria-hidden="true"><span class="absolute inset-[22%] rounded-[50%] rotate-[-28deg] scale-y-[.45]" style="background: radial-gradient(closest-side, #fff6e0, #d9b98f 35%, transparent 72%)"></span></span>
+          <span class="art" style="background: linear-gradient(to top, #1a1d2b 10%, #3b3450 60%, #6c5a6e)" aria-hidden="true"></span>
+          <span class="track" style="color:#e2c7a4">Wide Survey</span>
+          <span class="cap text-3xl mt-1">Andromeda<br />Galaxy</span>
+          <span class="tag">A few hundred QR2 images</span>
+        </a>
+        <a href="#explore" class="card-c isolate">
+          <span class="orb" style="--orb:#2b3f66" aria-hidden="true"><canvas class="absolute inset-0 w-full h-full rounded-full" data-starfield data-density="0.004"></canvas></span>
+          <span class="art" style="background: linear-gradient(to top, #0f1830 5%, #1f3a5e 60%, #3f6d8d)" aria-hidden="true"></span>
+          <span class="track" style="color:#b7d3e6">Deep Survey</span>
+          <span class="cap text-3xl mt-1">North<br />ecliptic pole</span>
+          <span class="tag">Many more visits</span>
+        </a>
+        <a href="#explore" class="card-c isolate">
+          <span class="orb orb-texture" style="--orb:#8c8378; width: 34%" aria-hidden="true"></span>
+          <span class="art" style="background: linear-gradient(to top, #3a2217 5%, #9a5a3a 60%, #d49a6a)" aria-hidden="true"></span>
+          <span class="track" style="color:#fbe1c4">Discover case</span>
+          <span class="cap text-3xl mt-1">(7) Iris passes<br />36 Sextantis</span>
+          <span class="tag">Open the case</span>
+        </a>
+      </div>
+    </section>
+
+    <!-- ONE POINTING, SIX DETECTORS -->
+    <section class="px-5 md:px-8 py-24">
+      <div class="max-w-5xl mx-auto grid md:grid-cols-2 gap-12 items-center">
+        <div class="lvf" data-lvf aria-hidden="true"></div>
+        <div class="grid gap-6">
+          <div class="flex items-end justify-between gap-4">
+            <div><p class="track">How SPHEREx sees</p><h2 class="cap text-4xl md:text-5xl mt-2" data-scramble-view>One pointing, six detectors</h2></div>
+          </div>
+          <div class="h-px w-24 bg-accent"></div>
+          <p class="text-mute max-w-md">Each detector sits behind a linear variable filter, so the wavelength changes along one axis of the image. Every pointing gives six images at once, one per band.</p>
+          <div class="cells">
+            <div><div class="cell-num"><span data-odometer="6">6</span></div><div class="cell-lab">Detectors</div></div>
+            <div><div class="cell-num"><span data-odometer="102">102</span></div><div class="cell-lab">Channels</div></div>
+            <div><div class="cell-num">2040²</div><div class="cell-lab">Pixels each</div></div>
+          </div>
+          <a class="btn-c justify-self-end" href="#bands">See the six bands</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- BANDS, after "Other worlds" -->
+    <section id="bands" class="px-5 md:px-8 py-24" data-bands>
+      <div class="sec-head mb-10"><span class="track">Discover</span><h2 class="cap text-4xl md:text-5xl" data-scramble-view>The six bands</h2></div>
+      <div class="max-w-5xl mx-auto">
+        <div class="tabs" role="tablist" aria-label="Bands">
+          <button role="tab" id="tab-1" aria-controls="band-panel" aria-selected="false" data-band="1">Band 1</button>
+          <button role="tab" id="tab-2" aria-controls="band-panel" aria-selected="false" data-band="2">Band 2</button>
+          <button role="tab" id="tab-3" aria-controls="band-panel" aria-selected="true" data-band="3">Band 3</button>
+          <button role="tab" id="tab-4" aria-controls="band-panel" aria-selected="false" data-band="4">Band 4</button>
+          <button role="tab" id="tab-5" aria-controls="band-panel" aria-selected="false" data-band="5">Band 5</button>
+          <button role="tab" id="tab-6" aria-controls="band-panel" aria-selected="false" data-band="6">Band 6</button>
+        </div>
+        <div id="band-panel" role="tabpanel" aria-labelledby="tab-3" class="grid md:grid-cols-[1fr_1.3fr] gap-10 items-center pt-14">
+          <div class="grid gap-5">
+            <div class="flex items-baseline justify-between gap-4"><h3 class="cap text-3xl m-0" data-band-title>Band 3</h3><span class="track normal-case tracking-[0.2em]" data-band-range>1.63–2.41 µm</span></div>
+            <p class="text-mute m-0 max-w-sm" data-band-text></p>
+            <div class="box">
+              <div class="cells border-0 border-b border-line">
+                <div><div class="cell-num" data-band-r>41</div><div class="cell-lab">Resolving power</div></div>
+                <div><div class="cell-num">17</div><div class="cell-lab">Channels</div></div>
+                <div><div class="cell-num" data-band-det>D3</div><div class="cell-lab">Detector</div></div>
+              </div>
+              <div class="flex">
+                <a class="btn-c border-0 flex-1" href="#explore">Explore this band</a>
+                <button class="btn-c border-0 border-l border-line" type="button" data-band-step="-1" aria-label="Previous band">‹</button>
+                <button class="btn-c border-0 border-l border-line" type="button" data-band-step="1" aria-label="Next band">›</button>
+              </div>
+            </div>
+          </div>
+          <div class="relative">
+            <div class="orb orb-texture w-[82%] ml-auto" data-band-orb style="--orb:#3aa37a" aria-hidden="true">
+              <span class="brackets left-[18%] top-[22%]"></span>
+              <span class="brackets right-[20%] top-[46%]"></span>
+            </div>
+            <div class="absolute left-0 bottom-0 w-[38%] aspect-square rounded-full p-2 border border-dashed border-line bg-bg" aria-hidden="true">
+              <div class="w-full h-full rounded-full" data-band-lvf></div>
+            </div>
+            <p class="track absolute left-[40%] bottom-[8%] text-[9.5px]" data-band-caption>Filter gradient, D3</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- EXPLORER -->
+    <section id="explore" class="px-5 md:px-8 py-24" aria-labelledby="ex-title">
+      <div class="sec-head mb-12"><span class="track">Preview</span><h2 id="ex-title" class="cap text-4xl md:text-5xl" data-scramble-view>Step through time</h2></div>
+      <p class="text-center text-mute max-w-xl mx-auto mb-10">Generated frames, to show the controls. The app shows real SPHEREx images for the target you search.</p>
+      <div class="ex-c max-w-5xl mx-auto box p-4 md:p-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]" data-explorer tabindex="0" aria-label="Explore preview. Arrow keys step frames, space plays, B sets frame B, 1 to 4 change the compare mode.">
+        <div class="grid gap-4 content-start">
+          <div class="grid grid-cols-4" role="group" aria-label="Compare mode">
+            <button class="btn-c" type="button" data-ex-mode="single">Single</button>
+            <button class="btn-c border-l-0" type="button" data-ex-mode="blink">Blink</button>
+            <button class="btn-c border-l-0" type="button" data-ex-mode="side">Side</button>
+            <button class="btn-c border-l-0" type="button" data-ex-mode="difference">Diff</button>
+          </div>
+          <div data-ex="views">
+            <figure class="grid gap-3 m-0">
+              <div class="ex-view"><canvas data-ex="view-a" aria-label="Frame A"></canvas></div>
+              <figcaption class="cells text-left">
+                <div class="text-left!"><div class="cell-num text-2xl" data-ex="a-lambda"></div><div class="cell-lab">At the target</div></div>
+                <div class="text-left!"><div class="text-[12px]" data-ex="a-time"></div><div class="cell-lab" data-ex="a-meta"></div><div class="cell-lab" data-ex-only="blink" data-ex="blink-label"></div></div>
+              </figcaption>
+            </figure>
+            <figure class="grid gap-3 m-0" data-ex-only="side">
+              <div class="ex-view"><canvas data-ex="view-b" aria-label="Frame B"></canvas></div>
+              <figcaption class="cells"><div class="text-left!"><div class="cell-num text-2xl" data-ex="b-lambda"></div><div class="cell-lab" data-ex="b-time"></div></div></figcaption>
+            </figure>
+          </div>
+          <p data-ex="notice" role="status" hidden></p>
+        </div>
+        <div class="grid gap-6 content-start">
+          <div class="flex items-center gap-2">
+            <button class="btn-c" type="button" data-ex="prev" aria-label="Previous frame">‹</button>
+            <button class="btn-c" type="button" data-ex="play">Play</button>
+            <button class="btn-c" type="button" data-ex="next" aria-label="Next frame">›</button>
+            <button class="btn-c" type="button" data-ex="speed" aria-label="Playback speed">1×</button>
+            <span class="ml-auto track text-mute" data-ex="count"></span>
+          </div>
+          <div data-ex="timeline" aria-label="Timeline. Click a frame to open it; shift-click to set it as frame B."></div>
+          <div class="flex flex-wrap gap-2">
+            <button class="btn-c" type="button" data-ex="pin">Use as frame B</button>
+            <button class="btn-c" type="button" data-ex="match">Match wavelength</button>
+          </div>
+          <div class="grid gap-3 border-t border-line pt-6">
+            <div class="flex gap-2" role="group" aria-label="Plot">
+              <button class="btn-c" type="button" data-ex-plot="spectrum">Spectrum</button>
+              <button class="btn-c" type="button" data-ex-plot="lightcurve">Light curve</button>
+            </div>
+            <div data-ex="plot"></div>
+            <p class="text-mute text-[12px] m-0" data-ex="plot-caption"></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- HOW IT WORKS, after "Plan your trip" -->
+    <section id="how" class="px-5 md:px-8 py-24">
+      <div class="sec-head mb-16"><span class="track">Getting started</span><h2 class="cap text-4xl md:text-5xl" data-scramble-view>How it works</h2></div>
+      <ol class="max-w-5xl mx-auto grid sm:grid-cols-2 lg:grid-cols-4 gap-12 list-none p-0 m-0 text-center">
+        <li class="grid justify-items-center content-start gap-3">
+          <svg class="icon-c" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><circle cx="21" cy="21" r="12"/><path d="m30 30 10 10M21 13v16M13 21h16"/></svg>
+          <h3 class="cap text-xl m-0">Search</h3>
+          <p class="text-mute text-[12px] m-0 max-w-[24ch]">A name, or coordinates in decimal, sexagesimal or galactic form.</p>
+        </li>
+        <li class="grid justify-items-center content-start gap-3">
+          <svg class="icon-c" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M4 34h40M8 34V22M14 34V16M20 34V24M26 34V12M32 34V20M38 34V26"/></svg>
+          <h3 class="cap text-xl m-0">Timeline</h3>
+          <p class="text-mute text-[12px] m-0 max-w-[24ch]">Every frame from QR2 and QR3, grouped into passes and pointings.</p>
+        </li>
+        <li class="grid justify-items-center content-start gap-3">
+          <svg class="icon-c" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><rect x="5" y="11" width="17" height="26"/><rect x="26" y="11" width="17" height="26"/><circle cx="13.5" cy="24" r="2.5"/><circle cx="34.5" cy="22" r="2.5"/></svg>
+          <h3 class="cap text-xl m-0">Compare</h3>
+          <p class="text-mute text-[12px] m-0 max-w-[24ch]">Blink, side by side, or a difference when the wavelengths match.</p>
+        </li>
+        <li class="grid justify-items-center content-start gap-3">
+          <svg class="icon-c" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M5 40h38M5 40V8"/><path d="M9 30c5-14 9-16 13-9s7 9 11 2 6-9 8-8"/></svg>
+          <h3 class="cap text-xl m-0">Measure</h3>
+          <p class="text-mute text-[12px] m-0 max-w-[24ch]">Brightness as a spectrum, or over time at one matched wavelength.</p>
+        </li>
+      </ol>
+    </section>
+  </main>
+
+  <footer class="relative overflow-hidden pt-40 pb-28 text-center">
+    <div class="orb absolute left-1/2 -translate-x-1/2 top-10 w-[46vw] max-w-[640px]" style="--orb: color-mix(in oklab, var(--mute) 30%, var(--bg))" aria-hidden="true"></div>
+    <div class="relative grid gap-8 justify-items-center">
+      <p class="wordmark text-2xl"><span data-glitch>SPHEREx</span></p>
+      <nav class="flex flex-wrap justify-center gap-8 text-[11px] tracking-[0.2em] uppercase" aria-label="Footer">
+        <a class="text-ink no-underline" href="#search" data-roll>Search</a>
+        <a class="text-ink no-underline" href="#places" data-roll>Places</a>
+        <a class="text-ink no-underline" href="#bands" data-roll>Bands</a>
+        <a class="text-ink no-underline" href="#explore" data-roll>Explore</a>
+      </nav>
+      <p class="text-mute text-[11px] m-0">Data from the public SPHEREx archive at IRSA (NASA/IPAC).</p>
+    </div>
+  </footer>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

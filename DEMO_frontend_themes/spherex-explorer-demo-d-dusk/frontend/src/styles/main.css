@@ -1,0 +1,170 @@
+@import "tailwindcss";
+@import "./base.css";
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* ===== Demo D: dusk editorial. Violet night, an ember-lit sphere, a
+   Didone serif, and the page cut into three hairline columns. ===== */
+:root,
+:root[data-theme="light"] {
+  --bg: #e9e5ee;
+  --panel: #f2eff5;
+  --ink: #221a33;
+  --mute: #6b6380;
+  --line: rgb(34 26 51 / 0.14);
+  --accent: #b24f1d;
+  --glow: #ff9a55;
+  --glow-soft: rgb(255 140 70 / 0.35);
+  --sphere: #2a1c33;
+  --sky-a: #d9cfe6;
+  --sky-b: #f3d9c9;
+  --star: #221a33;
+  --frame-ink: #221a33;
+  --frame-paper: #f2eff5;
+  --diff-pos: #b24f1d;
+  --diff-neg: #5b4bb7;
+  --glitch-a: #e0602a;
+  --glitch-b: #6d5cf0;
+  --pass-1: #221a33;
+  --pass-2: #a39bb5;
+  --pass-3: #b24f1d;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15112a; --panel: #1c1735; --ink: #f2edf6; --mute: #a49cb6; --line: rgb(242 237 246 / 0.13);
+    --accent: #f39152; --glow: #ffb36b; --glow-soft: rgb(255 140 70 / 0.4); --sphere: #1a1026;
+    --sky-a: #2b2150; --sky-b: #5a3448; --star: #f2edf6; --frame-ink: #fff1e6; --frame-paper: #15112a;
+    --diff-pos: #f39152; --diff-neg: #8f82ff; --glitch-a: #ff7a3a; --glitch-b: #8f82ff;
+    --pass-1: #f2edf6; --pass-2: #6f6788; --pass-3: #f39152;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15112a; --panel: #1c1735; --ink: #f2edf6; --mute: #a49cb6; --line: rgb(242 237 246 / 0.13);
+  --accent: #f39152; --glow: #ffb36b; --glow-soft: rgb(255 140 70 / 0.4); --sphere: #1a1026;
+  --sky-a: #2b2150; --sky-b: #5a3448; --star: #f2edf6; --frame-ink: #fff1e6; --frame-paper: #15112a;
+  --diff-pos: #f39152; --diff-neg: #8f82ff; --glitch-a: #ff7a3a; --glitch-b: #8f82ff;
+  --pass-1: #f2edf6; --pass-2: #6f6788; --pass-3: #f39152;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-panel: var(--panel);
+  --color-ink: var(--ink);
+  --color-mute: var(--mute);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --font-serif: "Bodoni Moda", "Didot", "Bodoni 72", Georgia, serif;
+  --font-sans: "Albert Sans", "Helvetica Neue", Arial, sans-serif;
+}
+
+@layer components {
+body { font-family: var(--font-sans); font-size: 15px; line-height: 1.6; }
+
+.serif { font-family: var(--font-serif); font-weight: 400; letter-spacing: -0.01em; line-height: 1.02; }
+.label { font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; }
+.logo { font-weight: 700; font-size: 20px; letter-spacing: -0.02em; }
+.logo i { font-style: normal; color: var(--accent); }
+
+/* The framed stage */
+.stage {
+  position: relative;
+  min-height: max(100svh, 720px);
+  display: grid;
+  grid-template-columns: minmax(0, 15%) minmax(0, 33%) minmax(0, 1fr);
+  overflow: hidden;
+  background:
+    radial-gradient(80% 70% at 100% 0%, var(--sky-b), transparent 60%),
+    radial-gradient(90% 80% at 0% 100%, var(--sky-a), transparent 70%),
+    var(--bg);
+}
+.stage > .col { position: relative; border-left: 1px solid var(--line); }
+.stage > .col:first-child { border-left: 0; }
+@media (max-width: 767px) {
+  .stage { grid-template-columns: 1fr; }
+  .stage > .col { border-left: 0; }
+  .stage > .col:first-child { display: none; }
+}
+
+.nav-d a { position: relative; color: var(--ink); text-decoration: none; padding-bottom: 4px; }
+.nav-d a::after { content: ""; position: absolute; left: 100%; bottom: 7px; width: 10px; height: 1.5px; background: currentColor; margin-left: 4px; transition: width 0.3s; }
+.nav-d a:hover::after { width: 18px; }
+
+.pager { display: flex; align-items: center; gap: 12px; font-size: 11px; color: var(--mute); font-variant-numeric: tabular-nums; }
+.pager .bar { width: 44px; height: 1px; background: var(--mute); position: relative; overflow: hidden; }
+.pager .bar::after { content: ""; position: absolute; inset: 0; background: var(--ink); transform-origin: left; transform: scaleX(var(--p, 0.25)); transition: transform 0.6s cubic-bezier(0.76, 0, 0.24, 1); }
+
+.plus { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid currentColor; font-size: 15px; line-height: 1; transition: transform 0.35s; }
+.more { display: inline-flex; align-items: center; gap: 12px; background: none; border: 0; color: var(--ink); cursor: pointer; padding: 0; text-decoration: none; }
+.more:hover .plus { transform: rotate(90deg); }
+
+/* The ember-lit sphere */
+.sphere {
+  position: absolute;
+  border-radius: 50%;
+  aspect-ratio: 1;
+  background: radial-gradient(circle at 70% 25%, color-mix(in oklab, var(--sphere) 80%, #000), var(--sphere) 55%, color-mix(in oklab, var(--sphere) 70%, var(--glow)) 100%);
+  box-shadow:
+    inset 26px -30px 44px -18px var(--glow),
+    inset 4px -6px 10px -2px #fff3e0,
+    -30px 40px 120px 10px var(--glow-soft);
+}
+.sphere::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  opacity: 0.55;
+  mix-blend-mode: soft-light;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='400'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.012' numOctaves='5' seed='7'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 0.75  0 0 0 0 0.55  0 0 0 1.4 -0.35'/></filter><rect width='400' height='400' filter='url(%23n)'/></svg>");
+  background-size: cover;
+}
+.sphere-flare {
+  position: absolute;
+  width: 60%;
+  height: 26%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, #fff8ee, var(--glow) 40%, transparent 75%);
+  filter: blur(6px);
+  mix-blend-mode: screen;
+  transform: rotate(-38deg);
+}
+
+/* Meteors: slow, occasional, off for reduced motion */
+.meteor { position: absolute; width: 1.5px; height: 180px; background: linear-gradient(to bottom, transparent, color-mix(in oklab, var(--glow) 80%, #fff)); transform: rotate(-32deg); opacity: 0; animation: meteor 11s linear infinite; }
+.meteor::after { content: ""; position: absolute; bottom: -4px; left: 50%; width: 9px; height: 9px; transform: translateX(-50%); border-radius: 50%; background: radial-gradient(circle, #fff7ea, var(--glow) 60%, transparent 70%); }
+.meteor.m2 { height: 120px; animation-delay: 4.5s; animation-duration: 13s; }
+@keyframes meteor {
+  0% { opacity: 0; translate: 0 0; }
+  4% { opacity: 1; }
+  14% { opacity: 0; translate: 160px 260px; }
+  100% { opacity: 0; translate: 160px 260px; }
+}
+
+/* Step accordion over the sphere */
+.acc { border-top: 1px solid var(--line); }
+.acc > li { border-bottom: 1px solid var(--line); }
+.acc button { width: 100%; text-align: left; background: none; border: 0; color: var(--mute); padding: 13px 18px; cursor: pointer; }
+.acc button[aria-expanded="true"] { color: var(--ink); background: color-mix(in oklab, var(--bg) 55%, transparent); }
+.acc .panel { padding: 0 18px 18px; background: color-mix(in oklab, var(--bg) 55%, transparent); }
+
+.rule-cols { display: grid; grid-template-columns: minmax(0, 15%) minmax(0, 33%) minmax(0, 1fr); }
+.rule-cols > * { border-left: 1px solid var(--line); }
+.rule-cols > :first-child { border-left: 0; }
+@media (max-width: 767px) {
+  .rule-cols { grid-template-columns: 1fr; }
+  .rule-cols > * { border-left: 0; }
+}
+
+.btn-d { display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--ink); font: 600 11px/1 var(--font-sans); letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; }
+.btn-d:hover { border-color: var(--ink); }
+.btn-d[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+.ex-d [data-ex="view-a"], .ex-d [data-ex="view-b"] { border-radius: 4px; box-shadow: 0 30px 80px -40px var(--glow-soft); }
+.ex-d .ex-pass-label { font-size: 11px; color: var(--mute); }
+.ex-d .ex-tick { border-radius: 99px; width: 8px; }
+.ex-d [data-ex="notice"] { border-left: 2px solid var(--accent); padding: 6px 0 6px 14px; font-family: var(--font-serif); font-size: 18px; line-height: 1.35; }
+
+.theme-toggle { width: 34px; height: 34px; border-radius: 50%; border: 1.5px solid var(--ink); background: transparent; color: var(--ink); cursor: pointer; display: grid; place-items: center; overflow: hidden; }
+.theme-toggle i { width: 14px; height: 14px; border-radius: 50%; background: currentColor; box-shadow: inset -5px -2px 0 0 var(--bg); transition: box-shadow 0.4s; }
+.theme-toggle[data-state="light"] i { box-shadow: inset 0 0 0 0 var(--bg), 0 0 0 3px color-mix(in oklab, currentColor 20%, transparent); }
+}

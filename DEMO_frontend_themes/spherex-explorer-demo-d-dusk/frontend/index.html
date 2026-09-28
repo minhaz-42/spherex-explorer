@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en" class="no-js" data-theme-variant="circle">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>SPHEREx Explorer · Demo D, dusk</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌘</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@400;500;600;700&family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500&display=swap" rel="stylesheet" />
+  <!-- Sets the theme before first paint, so there's no flash of the wrong one. -->
+  <script>try{var t=localStorage.getItem('spherex-theme');document.documentElement.dataset.theme=t||(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark')}catch(e){document.documentElement.dataset.theme='dark'}</script>
+</head>
+<body>
+  <div data-preloader class="grid place-items-center" data-duration="1100">
+    <p class="serif text-[clamp(4rem,12vw,10rem)] tabular-nums m-0"><span data-preloader-count>000</span></p>
+  </div>
+
+  <main id="top">
+    <!-- STAGE: three columns, after the "planet." layout -->
+    <section class="stage" data-stage aria-label="Introduction">
+      <!-- column 1 -->
+      <div class="col hidden md:flex flex-col justify-between p-8" style="padding-top: calc(env(safe-area-inset-top, 0px) + 34px)">
+        <a href="#top" class="logo text-ink no-underline"><span data-glitch>spherex<i>.</i></span></a>
+        <div class="sphere" style="width: 120%; left: -86%; bottom: -12%; --glow-soft: transparent" aria-hidden="true"></div>
+        <div class="relative grid gap-5 justify-items-start">
+          <span class="block w-px h-24 bg-line ml-2"></span>
+          <span class="label text-mute [writing-mode:vertical-rl] rotate-180">Live data, IRSA</span>
+        </div>
+      </div>
+
+      <!-- column 2 -->
+      <div class="col flex flex-col justify-between p-8 md:p-12 pt-8 md:pt-40">
+        <div class="md:hidden flex items-center justify-between mb-16">
+          <a href="#top" class="logo text-ink no-underline">spherex<i>.</i></a>
+          <button class="theme-toggle" type="button" data-theme-toggle><i></i></button>
+        </div>
+        <span class="meteor" style="left: 18%; top: -120px" aria-hidden="true"></span>
+        <span class="meteor m2" style="left: 58%; top: -40px" aria-hidden="true"></span>
+        <div class="grid gap-7 max-w-md">
+          <div class="pager" aria-live="polite">
+            <span data-step-num>01</span><span class="bar" data-step-bar></span><span>04</span>
+          </div>
+          <h1 class="serif text-[clamp(2.8rem,1rem+4.4vw,5.4rem)] m-0" data-step-title>Pick a point on the sky</h1>
+          <p class="text-mute m-0 max-w-[42ch]" data-step-body>Type a name or coordinates. SPHEREx Explorer finds every SPHEREx image that covers it, from Quick Releases 2 and 3.</p>
+          <div class="flex items-center gap-8">
+            <a class="more label" href="#explore" data-scramble-hover><span data-scramble-target>Open the explorer</span><span class="plus" aria-hidden="true">+</span></a>
+            <button class="more label text-mute" type="button" data-step-next aria-label="Next step"><span>Next</span><span class="plus" aria-hidden="true">›</span></button>
+          </div>
+        </div>
+        <div class="grid gap-2 max-w-xs mt-16">
+          <a class="more label" href="#discover"><span>Demo snapshot</span><span class="plus" aria-hidden="true">+</span></a>
+          <p class="text-mute text-[13px] m-0">A labelled recording of real data, used only when you choose it.</p>
+        </div>
+      </div>
+
+      <!-- column 3 -->
+      <div class="col min-h-[80svh] md:min-h-0" style="padding-top: calc(env(safe-area-inset-top, 0px) + 30px)">
+        <header class="relative z-10 flex items-center justify-end gap-8 px-8">
+          <nav class="nav-d hidden sm:flex gap-9 label" aria-label="Main">
+            <a href="#explore">Explore</a><a href="#discover">Discover</a><a href="#bands">Bands</a>
+          </nav>
+          <span class="hidden md:inline-grid"><button class="theme-toggle" type="button" data-theme-toggle><i></i></button></span>
+        </header>
+        <div class="sphere" style="width: min(78vh, 86%); right: -12%; top: 11%" aria-hidden="true"></div>
+        <div class="sphere-flare" style="right: 18%; top: 62%" aria-hidden="true"></div>
+
+        <ul class="acc absolute left-0 bottom-10 w-[min(360px,80%)] list-none m-0 p-0" data-steps>
+          <li>
+            <button type="button" class="label" aria-expanded="true" aria-controls="s1" data-title="Pick a point on the sky" data-body="Type a name or coordinates. SPHEREx Explorer finds every SPHEREx image that covers it, from Quick Releases 2 and 3.">Search</button>
+            <div class="panel text-[13px] text-mute" id="s1">Names resolve through CDS Sesame. Decimal, sexagesimal and galactic coordinates all work.</div>
+          </li>
+          <li>
+            <button type="button" class="label" aria-expanded="false" aria-controls="s2" data-title="Step through time" data-body="Every frame is grouped into survey passes and pointings. Play it, change speed, or step with the arrow keys.">Timeline</button>
+            <div class="panel text-[13px] text-mute" id="s2" hidden>Each frame is labelled with the wavelength that fell on your target.</div>
+          </li>
+          <li>
+            <button type="button" class="label" aria-expanded="false" aria-controls="s3" data-title="Only like with like" data-body="Blink, side by side, or difference. A difference is only shown when both frames saw the target at the same wavelength.">Compare</button>
+            <div class="panel text-[13px] text-mute" id="s3" hidden>Otherwise the app says why not, so a spectrum is never mistaken for a change.</div>
+          </li>
+          <li>
+            <button type="button" class="label" aria-expanded="false" aria-controls="s4" data-title="Read the light" data-body="Brightness at the target, as a spectrum across 102 channels or over time at one matched wavelength.">Measure</button>
+            <div class="panel text-[13px] text-mute" id="s4" hidden>Known asteroids and comets from JPL are marked, and the app's own moving-source search is checked against them.</div>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- EXPLORER -->
+    <section id="explore" class="rule-cols border-t border-line" aria-labelledby="ex-title">
+      <div class="p-8"><p class="label text-mute">Preview</p></div>
+      <div class="p-8 md:p-12 grid gap-6 content-start">
+        <h2 id="ex-title" class="serif text-5xl m-0" data-scramble-view>Where, when, what changed</h2>
+        <p class="text-mute m-0">These frames are generated to show the controls. The app shows real SPHEREx images for your target.</p>
+        <form class="grid gap-2" role="search" data-search="explore">
+          <label class="label text-mute" for="d-q">Object name or coordinates</label>
+          <div class="flex gap-2">
+            <input id="d-q" class="w-full bg-transparent border-0 border-b border-line py-2 text-ink placeholder:text-mute focus:outline-none focus:border-accent" placeholder="M31, 10.6847 +41.2690" autocomplete="off" />
+            <button class="btn-d" type="submit">Search</button>
+          </div>
+          <p class="search-status" role="status" aria-live="polite"></p>
+        </form>
+      </div>
+      <div class="ex-d p-8 md:p-12 grid gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]" data-explorer tabindex="0" aria-label="Explore preview. Arrow keys step frames, space plays, B sets frame B, 1 to 4 change the compare mode.">
+        <div class="grid gap-4 content-start">
+          <div class="flex flex-wrap gap-2" role="group" aria-label="Compare mode">
+            <button class="btn-d" type="button" data-ex-mode="single">Single</button>
+            <button class="btn-d" type="button" data-ex-mode="blink">Blink</button>
+            <button class="btn-d" type="button" data-ex-mode="side">Side by side</button>
+            <button class="btn-d" type="button" data-ex-mode="difference">Difference</button>
+          </div>
+          <div data-ex="views">
+            <figure class="grid gap-3 m-0">
+              <div class="ex-view"><canvas data-ex="view-a" aria-label="Frame A"></canvas></div>
+              <figcaption class="grid gap-1">
+                <span class="flex items-center gap-3"><i class="inline-block w-2 h-2 rounded-full" data-ex="a-swatch"></i><span class="serif text-3xl" data-ex="a-lambda"></span></span>
+                <span class="text-[13px] text-mute" data-ex="a-time"></span>
+                <span class="text-[13px] text-mute" data-ex="a-meta"></span>
+                <span class="text-[13px] text-mute" data-ex-only="blink" data-ex="blink-label"></span>
+              </figcaption>
+            </figure>
+            <figure class="grid gap-3 m-0" data-ex-only="side">
+              <div class="ex-view"><canvas data-ex="view-b" aria-label="Frame B"></canvas></div>
+              <figcaption class="grid gap-1"><span class="serif text-3xl" data-ex="b-lambda"></span><span class="text-[13px] text-mute" data-ex="b-time"></span></figcaption>
+            </figure>
+          </div>
+          <p data-ex="notice" role="status" hidden></p>
+        </div>
+        <div class="grid gap-6 content-start">
+          <div class="flex flex-wrap items-center gap-2">
+            <button class="btn-d" type="button" data-ex="prev" aria-label="Previous frame">‹</button>
+            <button class="btn-d" type="button" data-ex="play">Play</button>
+            <button class="btn-d" type="button" data-ex="next" aria-label="Next frame">›</button>
+            <button class="btn-d" type="button" data-ex="speed" aria-label="Playback speed">1×</button>
+            <span class="ml-auto text-[13px] text-mute tabular-nums" data-ex="count"></span>
+          </div>
+          <div data-ex="timeline" aria-label="Timeline. Click a frame to open it; shift-click to set it as frame B."></div>
+          <div class="flex flex-wrap gap-2">
+            <button class="btn-d" type="button" data-ex="pin">Use as frame B</button>
+            <button class="btn-d" type="button" data-ex="match">Match wavelength</button>
+          </div>
+          <div class="grid gap-3 border-t border-line pt-6">
+            <div class="flex gap-2" role="group" aria-label="Plot">
+              <button class="btn-d" type="button" data-ex-plot="spectrum">Spectrum</button>
+              <button class="btn-d" type="button" data-ex-plot="lightcurve">Light curve</button>
+            </div>
+            <div data-ex="plot"></div>
+            <p class="text-[13px] text-mute m-0" data-ex="plot-caption"></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- BANDS -->
+    <section id="bands" class="rule-cols border-t border-line" aria-labelledby="bands-title">
+      <div class="p-8"><p class="label text-mute">Bands</p></div>
+      <div class="p-8 md:p-12 grid gap-5 content-start">
+        <h2 id="bands-title" class="serif text-5xl m-0" data-scramble-view>Six detectors, one sky</h2>
+        <p class="text-mute m-0">One pointing gives six images, one per detector. Each covers one band, and the wavelength changes across each image because the detectors sit behind linear variable filters.</p>
+      </div>
+      <ol class="list-none m-0 p-0">
+        <li class="grid grid-cols-[4rem_1fr_auto] items-baseline gap-4 px-8 md:px-12 py-5 border-b border-line"><span class="serif text-3xl">1</span><span>0.75–1.09 µm</span><span class="text-mute text-[13px]">D1, R 39</span></li>
+        <li class="grid grid-cols-[4rem_1fr_auto] items-baseline gap-4 px-8 md:px-12 py-5 border-b border-line"><span class="serif text-3xl">2</span><span>1.10–1.62 µm</span><span class="text-mute text-[13px]">D2, R 41</span></li>
+        <li class="grid grid-cols-[4rem_1fr_auto] items-baseline gap-4 px-8 md:px-12 py-5 border-b border-line"><span class="serif text-3xl">3</span><span>1.63–2.41 µm</span><span class="text-mute text-[13px]">D3, R 41</span></li>
+        <li class="grid grid-cols-[4rem_1fr_auto] items-baseline gap-4 px-8 md:px-12 py-5 border-b border-line"><span class="serif text-3xl">4</span><span>2.42–3.82 µm</span><span class="text-mute text-[13px]">D4, R 35</span></li>
+        <li class="grid grid-cols-[4rem_1fr_auto] items-baseline gap-4 px-8 md:px-12 py-5 border-b border-line"><span class="serif text-3xl">5</span><span>3.83–4.41 µm</span><span class="text-mute text-[13px]">D5, R 112</span></li>
+        <li class="grid grid-cols-[4rem_1fr_auto] items-baseline gap-4 px-8 md:px-12 py-5"><span class="serif text-3xl">6</span><span>4.42–5.00 µm</span><span class="text-mute text-[13px]">D6, R 128</span></li>
+      </ol>
+    </section>
+
+    <!-- DISCOVER -->
+    <section id="discover" class="rule-cols border-t border-line" aria-labelledby="disc-title">
+      <div class="p-8"><p class="label text-mute">Discover</p></div>
+      <div class="p-8 md:p-12 grid gap-5 content-start">
+        <h2 id="disc-title" class="serif text-5xl m-0" data-scramble-view>Cases, with their cautions</h2>
+        <p class="text-mute m-0">Each case is built from live data by a script. The app never claims a discovery; it shows the evidence and says what it can't conclude.</p>
+      </div>
+      <div class="p-8 md:p-12 grid gap-8 content-start">
+        <article class="grid gap-3">
+          <p class="label text-accent m-0">Case</p>
+          <h3 class="serif text-4xl m-0">Asteroid (7) Iris, caught moving past 36 Sextantis</h3>
+          <p class="text-mute m-0 max-w-[52ch]">JPL's predicted position, the app's own moving-source candidate, and the frames that show both.</p>
+          <a class="more label mt-2" href="#explore" data-scramble-hover><span data-scramble-target>Open the case</span><span class="plus" aria-hidden="true">+</span></a>
+        </article>
+        <div class="grid sm:grid-cols-2 gap-6 border-t border-line pt-8">
+          <a class="more label" href="#explore"><span>Andromeda, M31</span><span class="plus" aria-hidden="true">+</span></a>
+          <a class="more label" href="#explore"><span>North ecliptic pole</span><span class="plus" aria-hidden="true">+</span></a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="rule-cols border-t border-line pb-24">
+    <div class="p-8"><span class="logo">spherex<i>.</i></span></div>
+    <div class="p-8 text-[13px] text-mute">Data from the public SPHEREx archive at IRSA (NASA/IPAC).</div>
+    <div class="p-8 flex justify-end"><a class="more label" href="#top"><span>Back to top</span><span class="plus" aria-hidden="true">↑</span></a></div>
+  </footer>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
