@@ -2,6 +2,28 @@
 
 Newest entries first. Each entry says what changed, why, and what was verified.
 
+## 2026-09-28 · Ask gets its own page; the app gets new type
+
+**Why.** Asked for by the user: the chat should be its own page, the problems fixed, and the text
+styles across the app replaced.
+
+**Found and fixed.**
+- "HTTP 404" in the chat: a preview API started before the assistant existed, without reload. The
+  page now says the assistant is not on that server and how to fix it, instead of waiting forever
+  on "Checking the assistant…".
+- The drawer covered the viewer's side panel. Ask is now `/ask`: the viewer's *Ask about this view*
+  attaches that view, and the conversation survives following an answer's links.
+- The compact search box cut its placeholder off mid-number.
+- The orrery wrote SPHEREx as SPHEREX, because its labels were upper-cased.
+
+**Type.** Inter everywhere, with its display cut at headline sizes, bold headings, sentence-case
+labels and tabular figures. IBM Plex Mono only for identifiers. No gradient or italic headline text,
+no letter-spaced capitals, nothing under 11 px.
+
+**Verified.** Every page swept on desktop and phone, in light and dark: no console errors, no
+failed requests, no sideways scroll. Frontend: 60 tests. Playwright: 13, including the Ask flow from
+the viewer and on a phone.
+
 ## 2026-09-28 · The Ask assistant, on a local model
 
 **What and why.** The brief makes AI optional; the project owner asked for a chat assistant that

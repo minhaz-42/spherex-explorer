@@ -30,7 +30,7 @@ it, and lets you browse those images by **observation time** and by **wavelength
   - the app's own moving-source search, whose candidates are matched against those predictions.
 - **Discover:** curated cases built from live data by a script, each with its evidence and cautions,
   such as asteroid (7) Iris caught moving past 36 Sextantis.
-- **Ask:** a chat panel that answers questions about the view on screen, SPHEREx and the app's
+- **Ask:** a chat page that answers questions about the view you had open, SPHEREx and the app's
   methods, from the server's own measurements, JPL's predictions and method notes. A language model
   running on the same machine phrases the answer and cites numbered sources, and every number and
   date in it is checked against them. Without a model, it answers from the same evidence directly.
@@ -125,7 +125,7 @@ Open <http://localhost:5173>. The web app proxies `/api` to the API server.
 
 ### The assistant's local model (optional)
 
-The Ask panel works without a model, with answers put together from the app's own data. For answers
+The Ask page works without a model, with answers put together from the app's own data. For answers
 in plain language, run a model on the same machine with [Ollama](https://ollama.com):
 
 ```bash
@@ -173,7 +173,7 @@ with the API under `/api`. To deploy:
 3. Give it a writable `SPHEREX_CACHE_DIR`.
 4. For the assistant, run Ollama (or another local model server) on the same machine. Keep
    `SPHEREX_ASSISTANT_URL` on localhost: questions then never leave the server. Without a model the
-   Ask panel says so and gives built-in answers.
+   Ask page says so and gives built-in answers.
 
 It needs outbound HTTPS to irsa.ipac.caltech.edu, nasa-irsa-spherex.s3.us-east-1.amazonaws.com,
 ssd-api.jpl.nasa.gov, ssd.jpl.nasa.gov and cds.unistra.fr. A server in a US region reads frames many
@@ -189,7 +189,7 @@ backend/                   Python data service (FastAPI)
     cache.py               memory + disk cache, demo snapshot store
     http.py                pooled upstream HTTP client
     api/                   HTTP routes; cachekeys.py shares cache keys with the assistant
-    assistant/             the Ask panel's backend: evidence, local-model adapters, answer checks
+    assistant/             the Ask page's backend: evidence, local-model adapters, answer checks
     archive/               IRSA SIA, FITS byte-range reader, frame normalisation
     science/               alignment, background, photometry, change tools
     solar_system/          JPL SBIdent and Horizons, parallax
@@ -198,7 +198,7 @@ backend/                   Python data service (FastAPI)
   tests/                   pytest suite with fixtures recorded from real responses
 frontend/                  Web app (Vite, React, TypeScript, Tailwind CSS)
   src/app/                 router, layout, error boundary
-  src/pages/               Landing, Explore, Discover, About
+  src/pages/               Landing, Explore, Discover, Ask, About
   src/features/            search, viewer, timeline, wavelength, known objects, discover, assistant
   src/lib/                 API client and helpers
   src/components/          theme toggle, wordmark; space/: lit solar system, sky globe and

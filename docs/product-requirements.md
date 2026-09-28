@@ -86,9 +86,10 @@ The whole interface is organised around three questions, in this order:
 
 ### Ask (the assistant)
 
-- R23. A chat panel, reachable from every page, answers questions about the view on screen, about
-  SPHEREx and about the app's methods, and offers links to views (Discover cases, named objects,
-  coordinates).
+- R23. A chat page in the main navigation answers questions about the view the visitor had open
+  ("Ask about this view" in the viewer), about SPHEREx and about the app's methods, and offers links
+  to views (Discover cases, named objects, coordinates). The conversation survives following those
+  links and is never stored.
 - R24. Answers come from evidence the server gathers from its own data for the view on screen; the
   browser sends identifiers only. A language model running on the same machine phrases the evidence
   and cites it by number. It never sees images, and links are built by the server, never by the

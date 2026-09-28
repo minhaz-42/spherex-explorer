@@ -14,7 +14,7 @@ appear at each step, a fallback for bad network, and a clear account of what is 
    beforehand with the network off.
 4. For the assistant, start Ollama with `qwen3:4b-instruct-2507-q4_K_M` (see the README) and ask
    one question, because the first answer also loads the model (about 15 seconds). It needs no
-   network. Without Ollama the Ask panel still answers, from the app's data only, and says so.
+   network. Without Ollama the Ask page still answers, from the app's data only, and says so.
 
 ## The flow
 
@@ -28,7 +28,7 @@ appear at each step, a fallback for bad network, and a clear account of what is 
 | 6 | "And our own search, which knows nothing about asteroids:" | *Search for moving sources*. | Candidate C1, "Matches JPL's prediction for 7 Iris, 0.8″ away (known object)". |
 | 7 | "SPHEREx sees each frame at a different wavelength, so we don't pretend a brightness change is a time change." | Click *Difference*. | "A difference image would be misleading here", with the two wavelengths. |
 | 8 | "Here is what we measured, and how." | Scroll to *Brightness at the target*; open *Technical details*. | The plot of brightness against wavelength; observation ID, flags, background, pipeline version, link to the original file. |
-| 9 | "You can also just ask." | On the Iris case, open *Ask* → *What am I looking at?* | A few sentences in 3–8 seconds, with numbered source chips: the frames, JPL's prediction and the search result, and Iris's motion as the reason for the brightness jump. Under it: which local model phrased it and how many numbers were checked. |
+| 9 | "You can also just ask." | On the Iris case, click *Ask about this view* → *What am I looking at?* | A few sentences in 3–8 seconds, with numbered source chips: the frames, JPL's prediction and the search result, and Iris's motion as the reason for the brightness jump. Under it: which local model phrased it and how many numbers were checked. |
 | 10 | "What can't it do? It can't find Planet X, and it tells you why." | Discover → *What about Planet X?*, or ask *Could SPHEREx find Planet Nine?* | The honest limits: slow motion, faintness. |
 
 ## Fallback: the demo snapshot

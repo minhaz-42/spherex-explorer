@@ -137,12 +137,14 @@ the IRSA cutout service bit for bit (verified; see the research notes).
 Every explanation in the app is written from the measured values: the wavelength gap between two
 frames, why a difference is refused, what JPL predicts and how far a candidate lies from it.
 
-The assistant (the **Ask** panel) keeps to the same rule: **real data → the app's measurements →
+The assistant (the **Ask** page, `/ask`) keeps to the same rule: **real data → the app's measurements →
 numbered evidence → a local model phrases it → checks**, never images → model → conclusion.
 
-1. **Evidence, gathered by the server for each question** (`assistant/evidence.py`). The browser
-   says only what is on screen: the target, the archive keys of frames B and A, the comparison mode,
-   the field of view and the sequence's frame keys. It never sends values. The server reads its own
+1. **Evidence, gathered by the server for each question** (`assistant/evidence.py`). The viewer
+   publishes what is on screen, and the Ask page keeps the last view until the visitor sets it
+   aside. With a question the browser sends only identifiers: the target, the archive keys of frames
+   B and A, the comparison mode, the field of view and the sequence's frame keys. It never sends
+   values. The server reads its own
    cached results for exactly that view (`Store.peek`, with the routes' keys from `api/cachekeys.py`):
    - each frame's time, wavelength at the target, brightness and caveats;
    - whether A and B may be differenced, and why not;
@@ -209,8 +211,8 @@ features/
   plots/        ScatterPlot (SVG)
   known/        JPL known objects and the moving-source search
   discover/     blink preview for the cases
-  assistant/    Ask panel, streaming client, safe answer rendering, the view on screen
-pages/          Landing, Explore, Discover, About, NotFound
+  assistant/    conversation store, streaming client, safe answer rendering, the last view
+pages/          Landing, Explore, Discover, Ask, About, NotFound
 lib/            API client, queries, types, sequence and matching rules, formatting, WCS, pixels
 styles/         index.css: design tokens for the light and dark themes, and components
 ```
