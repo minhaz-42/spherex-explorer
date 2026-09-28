@@ -45,11 +45,12 @@ CASES: list[dict[str, Any]] = [
         "frame": "2025W49_1A_0423_1",
         "reference": "2025W49_1A_0332_1",
         "compare": "blink",
+        # {placeholders} are filled from the data when the case is built.
         "summary": (
-            "Over one night and morning SPHEREx looked at this patch of Sextans five times. The "
+            "Over {hours} hours SPHEREx pointed at this patch of Sextans {pointings} times. The "
             "bright star 36 Sextantis stays put; a point of light beside it does not. It is the "
-            "main-belt asteroid (7) Iris, about 2 au from us, moving roughly its own width every "
-            "ten minutes."
+            "main-belt asteroid (7) Iris, {distance_au} au away, crossing one SPHEREx pixel "
+            "about every {minutes_per_pixel} minutes."
         ),
     },
     {
@@ -65,9 +66,9 @@ CASES: list[dict[str, Any]] = [
         "compare": "side",
         "optional": True,
         "summary": (
-            "In May 2025, during SPHEREx's first weeks of science, asteroid (6) Hebe passed "
-            "through this field. Compare the pointings: the stars keep their places, one "
-            "source changes position."
+            "In May 2025, in SPHEREx's first weeks of science, the main-belt asteroid (6) Hebe, "
+            "{distance_au} au away, passed through this field. Compare the {pointings} pointings "
+            "over {hours} hours: the stars keep their places, one source changes position."
         ),
     },
     {
@@ -83,9 +84,9 @@ CASES: list[dict[str, Any]] = [
         "measure_pass": True,
         "summary": (
             "SPHEREx never takes a colour picture. Each exposure sees a place through a slightly "
-            "different part of its filters, and over a week the exposures add up to a spectrum "
-            "in 102 colours. Here that spectrum is measured, frame by frame, at the centre of "
-            "our neighbouring galaxy."
+            "different part of its filters, and over one to two weeks the exposures add up to a "
+            "spectrum in 102 colours. Here that spectrum is measured, frame by frame, at the "
+            "centre of our neighbouring galaxy."
         ),
     },
     {
@@ -101,9 +102,9 @@ CASES: list[dict[str, Any]] = [
         "fov": 0.1,
         "compare": "single",
         "summary": (
-            "SPHEREx's orbit carries it over the ecliptic poles on every revolution, so this "
-            "spot is seen far more often than the rest of the sky: the wide survey alone covers "
-            "it in every pass, and the separate deep survey adds tens of thousands of frames."
+            "SPHEREx turns to look at the ecliptic poles on nearly every orbit, so this spot is "
+            "seen far more often than the rest of the sky: the wide survey covers it in every "
+            "pass, and a separate deep survey adds tens of thousands of frames."
         ),
     },
 ]
@@ -260,6 +261,10 @@ async def build_case(api: Api, case: dict[str, Any]) -> dict[str, Any] | None:
                 "SPHEREx Explorer's own moving-source search did not recover it as a track "
                 f"(it needs three pointings; {found['stats']['sightings']} sightings were found)."
             )
+        in_field = [p for p in main["positions"] if p["inField"]] or main["positions"]
+        facts["distance_au"] = f"{sum(p['distanceAu'] for p in in_field) / len(in_field):.1f}"
+        if main["rateArcsecPerHour"]:
+            facts["minutes_per_pixel"] = f"{6.15 / main['rateArcsecPerHour'] * 60:.0f}"
         facts["knownObject"] = main["name"]
         facts["searchCandidates"] = len(
             [c for c in found["candidates"] if c["strength"] == "candidate"]
@@ -343,11 +348,30 @@ async def build_case(api: Api, case: dict[str, Any]) -> dict[str, Any] | None:
                 f"{note}, signal-to-noise {phot['snr']:.0f}."
             )
 
+    span_h = datetime.fromisoformat(sequence[-1]["isoMid"]) - datetime.fromisoformat(
+        sequence[0]["isoMid"]
+    )
+    words = {
+        2: "two",
+        3: "three",
+        4: "four",
+        5: "five",
+        6: "six",
+        7: "seven",
+        8: "eight",
+        9: "nine",
+    }
+    n_pointings = len({f["pointing"] for f in sequence})
+    fill = {
+        "hours": f"{span_h.total_seconds() / 3600:.0f}",
+        "pointings": words.get(n_pointings, str(n_pointings)),
+        **{k: v for k, v in facts.items() if isinstance(v, str)},
+    }
     return {
         "id": case["id"],
         "kind": case["kind"],
         "title": case["title"],
-        "summary": case["summary"],
+        "summary": case["summary"].format(**fill),
         "target": {
             "ra": ra,
             "dec": dec,

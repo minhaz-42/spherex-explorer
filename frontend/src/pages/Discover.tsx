@@ -4,7 +4,7 @@ import { Link } from "react-router";
 
 import { BlinkPreview } from "../features/discover/BlinkPreview";
 import { getJson } from "../lib/api";
-import { formatDate, formatRange, formatWavelength, plural } from "../lib/format";
+import { formatDate, formatRange, plural } from "../lib/format";
 import { caseLink, casesQuery } from "../lib/queries";
 import type { DiscoverCase } from "../lib/types";
 
@@ -72,8 +72,7 @@ function CaseEntry({ c, snapshot }: { c: DiscoverCase; snapshot: boolean }) {
         <p className="num text-sm text-muted">
           {formatRange(c.observed.start, c.observed.end)} · {plural(c.observed.frames, "frame")} in{" "}
           {plural(c.observed.pointings, "pointing")} · detector {c.observed.detector},{" "}
-          {formatWavelength(c.observed.wavelengthUm[0], 2)}–{formatWavelength(c.observed.wavelengthUm[1], 2)} · in{" "}
-          {c.target.constellation}
+          {c.observed.wavelengthUm[0].toFixed(2)}–{c.observed.wavelengthUm[1].toFixed(2)} µm · in {c.target.constellation}
         </p>
         <p className="prose-body">{c.summary}</p>
         <div>

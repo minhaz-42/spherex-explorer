@@ -6,7 +6,7 @@
    "id": "iris-2025-12",
    "kind": "moving",
    "title": "Asteroid (7) Iris crosses a field in Sextans",
-   "summary": "Over one night and morning SPHEREx looked at this patch of Sextans five times. The bright star 36 Sextantis stays put; a point of light beside it does not. It is the main-belt asteroid (7) Iris, about 2 au from us, moving roughly its own width every ten minutes.",
+   "summary": "Over 32 hours SPHEREx pointed at this patch of Sextans seven times. The bright star 36 Sextantis stays put; a point of light beside it does not. It is the main-belt asteroid (7) Iris, 2.1 au away, crossing one SPHEREx pixel about every 9 minutes.",
    "target": {
     "ra": 161.29678,
     "dec": 2.44824,
@@ -52,6 +52,8 @@
    ],
    "caution": "The asteroid's identity comes from JPL's catalogue and orbit predictions, not from this app. Brightness differences between frames are partly the asteroid's colour: each frame saw it at a different wavelength.",
    "facts": {
+    "distance_au": "2.1",
+    "minutes_per_pixel": "9",
     "knownObject": "7 Iris (A847 PA)",
     "searchCandidates": 1
    }
@@ -60,7 +62,7 @@
    "id": "hebe-2025-05",
    "kind": "moving",
    "title": "Asteroid (6) Hebe in Aquarius",
-   "summary": "In May 2025, during SPHEREx's first weeks of science, asteroid (6) Hebe passed through this field. Compare the pointings: the stars keep their places, one source changes position.",
+   "summary": "In May 2025, in SPHEREx's first weeks of science, the main-belt asteroid (6) Hebe, 2.1 au away, passed through this field. Compare the six pointings over 38 hours: the stars keep their places, one source changes position.",
    "target": {
     "ra": 326.891,
     "dec": -7.683,
@@ -106,6 +108,8 @@
    ],
    "caution": "The asteroid's identity comes from JPL's catalogue and orbit predictions, not from this app. Brightness differences between frames are partly the asteroid's colour: each frame saw it at a different wavelength.",
    "facts": {
+    "distance_au": "2.1",
+    "minutes_per_pixel": "7",
     "knownObject": "6 Hebe (A847 NA)",
     "searchCandidates": 0
    }
@@ -114,7 +118,7 @@
    "id": "m31-spectrum",
    "kind": "spectrum",
    "title": "The core of the Andromeda Galaxy, from 0.75 to 5 µm",
-   "summary": "SPHEREx never takes a colour picture. Each exposure sees a place through a slightly different part of its filters, and over a week the exposures add up to a spectrum in 102 colours. Here that spectrum is measured, frame by frame, at the centre of our neighbouring galaxy.",
+   "summary": "SPHEREx never takes a colour picture. Each exposure sees a place through a slightly different part of its filters, and over one to two weeks the exposures add up to a spectrum in 102 colours. Here that spectrum is measured, frame by frame, at the centre of our neighbouring galaxy.",
    "target": {
     "ra": 10.6847083,
     "dec": 41.26875,
@@ -168,7 +172,7 @@
    "id": "nep-deep",
    "kind": "context",
    "title": "The north ecliptic pole, the most watched spot in the survey",
-   "summary": "SPHEREx's orbit carries it over the ecliptic poles on every revolution, so this spot is seen far more often than the rest of the sky: the wide survey alone covers it in every pass, and the separate deep survey adds tens of thousands of frames.",
+   "summary": "SPHEREx turns to look at the ecliptic poles on nearly every orbit, so this spot is seen far more often than the rest of the sky: the wide survey covers it in every pass, and a separate deep survey adds tens of thousands of frames.",
    "target": {
     "ra": 270.0,
     "dec": 66.56,
