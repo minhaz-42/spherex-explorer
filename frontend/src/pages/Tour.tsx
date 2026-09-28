@@ -13,7 +13,9 @@ import { ObjectProfile } from "../features/objects/ObjectProfile";
 import { whereFrom } from "../features/spacecraft/where";
 import { WhereWasSpherex } from "../features/spacecraft/WhereWasSpherex";
 import { getJson } from "../lib/api";
+import { useT } from "../lib/i18n";
 import { casesQuery, cutoutQuery } from "../lib/queries";
+import { TOUR } from "./tour.messages";
 
 const SCENE_MS = 11_500;
 
@@ -31,6 +33,7 @@ function useSnapshot(): boolean {
 }
 
 function IrisScene() {
+  const t = useT(TOUR);
   const source = useSnapshot() ? "snapshot" : "live";
   const cases = useQuery(casesQuery());
   const iris = cases.data?.cases.find((c) => c.id === "iris-2025-12");
@@ -39,7 +42,7 @@ function IrisScene() {
     ...cutoutQuery(iris?.preview.a.key ?? "", iris?.target.ra ?? 0, iris?.target.dec ?? 0, iris?.viewer.fov ?? 0, source),
     enabled: !!iris,
   });
-  if (!iris) return <p className="text-muted">Loading the Iris frames…</p>;
+  if (!iris) return <p className="text-muted">{t("loadingIris")}</p>;
   const where = frameA.data ? whereFrom(frameA.data.payload, iris.target) : null;
   return (
     <div className="grid items-center gap-6 sm:grid-cols-2">
@@ -59,88 +62,70 @@ function IrisScene() {
   );
 }
 
+/** The profile's heading shows this until SIMBAD answers, so it matches the atlas name it then shows. */
+function WhereScene() {
+  const t = useT(TOUR);
+  return <ObjectProfile ra={M31.ra} dec={M31.dec} label={t("andromeda")} source="live" />;
+}
+
+function DecadesScene() {
+  const t = useT(TOUR);
+  return (
+    <DecadesBlink ra={BARNARD.ra} dec={BARNARD.dec} name={t("barnard")} source="live" properMotion={BARNARD.pm} />
+  );
+}
+
+function PlanetXScene() {
+  const t = useT(TOUR);
+  return (
+    <div className="card mx-auto max-w-2xl p-6 text-center">
+      <p className="font-display text-3xl leading-tight">{t("candidates")}</p>
+      <p className="mt-3 text-muted">{t("checked")}</p>
+      <Link to="/discover#planet-x" className="btn btn-secondary mt-5">
+        {t("readPlanetX")}
+      </Link>
+    </div>
+  );
+}
+
+function YourTurnScene() {
+  const t = useT(TOUR);
+  return (
+    <div className="flex flex-wrap justify-center gap-3">
+      <Link to="/explore" className="btn btn-primary">
+        {t("exploreSky")} <ArrowRight size={16} aria-hidden />
+      </Link>
+      <Link to="/discover" className="btn btn-secondary">
+        {t("seeCases")}
+      </Link>
+    </div>
+  );
+}
+
+/** Each scene's kicker, title and narration are the messages `<id>Kicker`, `<id>Title` and `<id>Say`. */
+type SceneId = "intro" | "survey" | "where" | "iris" | "decades" | "colours" | "planetX" | "yours";
+
 interface Scene {
-  kicker: string;
-  title: string;
-  say: string;
+  id: SceneId;
   body: ReactNode;
 }
 
 const SCENES: Scene[] = [
+  { id: "intro", body: <Orrery /> },
   {
-    kicker: "NASA Space Apps Challenge 2026",
-    title: "SPHEREx Explorer",
-    say: "NASA's SPHEREx telescope maps the whole sky every six months in 102 colours of infrared light. This app lets anyone see how the sky changes in those images.",
-    body: <Orrery />,
-  },
-  {
-    kicker: "The survey",
-    title: "A fresh map of the sky, twice a year",
-    say: "From a pole-to-pole orbit, SPHEREx sweeps great circles through the ecliptic poles. Every point is revisited about every six months; the poles, its deep fields, far more often.",
+    id: "survey",
     body: (
       <div className="mx-auto w-full max-w-md">
         <SkyGlobe />
       </div>
     ),
   },
-  {
-    kicker: "Where?",
-    title: "Pick any object",
-    say: "Search a name or coordinates. The explorer finds every SPHEREx image of that spot, and shows what the catalogues know: type, distance, and the same patch in other light.",
-    body: <ObjectProfile ra={M31.ra} dec={M31.dec} label="Andromeda Galaxy" source="live" />,
-  },
-  {
-    kicker: "What changed?",
-    title: "An asteroid, caught in the act",
-    say: "Two real SPHEREx frames, 9.7 hours apart, on one brightness scale. The stars stay put; the asteroid (7) Iris moves. JPL's orbit, seen from where SPHEREx was, lands within 1 arcsecond of the track the app found.",
-    body: <IrisScene />,
-  },
-  {
-    kicker: "Across the decades",
-    title: "75 years of one fast star",
-    say: "Barnard's Star moves 10.4 arcseconds a year. Palomar plates from 1950, 2MASS, WISE and SPHEREx on one grid show it creeping about 13 arcminutes.",
-    body: (
-      <DecadesBlink ra={BARNARD.ra} dec={BARNARD.dec} name="Barnard's Star" source="live" properMotion={BARNARD.pm} />
-    ),
-  },
-  {
-    kicker: "The colours",
-    title: "102 colours of infrared",
-    say: "Six detectors from 0.75 to 5 micrometres. Water ice absorbs at 3 µm, carbon dioxide at 4.3 µm: the ices SPHEREx was built to measure.",
-    body: <SpectrumExplorer />,
-  },
-  {
-    kicker: "Planet X",
-    title: "What it can't find, and why",
-    say: "A planet far beyond Neptune would move less than one SPHEREx pixel a day and be near the limit of a single exposure. The app explains that honestly rather than claim a discovery.",
-    body: (
-      <div className="card mx-auto max-w-2xl p-6 text-center">
-        <p className="font-display text-3xl leading-tight">Candidates, never discoveries.</p>
-        <p className="mt-3 text-muted">
-          Every moving source the app finds is checked against JPL. Unmatched ones are called candidates, and most are
-          artefacts.
-        </p>
-        <Link to="/discover#planet-x" className="btn btn-secondary mt-5">
-          Read the Planet X explanation
-        </Link>
-      </div>
-    ),
-  },
-  {
-    kicker: "Your turn",
-    title: "Where will you look first?",
-    say: "Everything shown is real SPHEREx data from NASA/IPAC's archive, measured by this app with its methods and limits stated.",
-    body: (
-      <div className="flex flex-wrap justify-center gap-3">
-        <Link to="/explore" className="btn btn-primary">
-          Explore the sky <ArrowRight size={16} aria-hidden />
-        </Link>
-        <Link to="/discover" className="btn btn-secondary">
-          See the cases
-        </Link>
-      </div>
-    ),
-  },
+  { id: "where", body: <WhereScene /> },
+  { id: "iris", body: <IrisScene /> },
+  { id: "decades", body: <DecadesScene /> },
+  { id: "colours", body: <SpectrumExplorer /> },
+  { id: "planetX", body: <PlanetXScene /> },
+  { id: "yours", body: <YourTurnScene /> },
 ];
 
 /** One progress segment; the current scene's fills over its duration (Web Animations, no stylesheet needed). */
@@ -176,6 +161,7 @@ function Segment({
  * narration on screen. It pauses on reduced motion and can be stepped by hand.
  */
 export function Tour() {
+  const t = useT(TOUR);
   const reduced = usePrefersReducedMotion();
   const [index, setIndex] = useState(0);
   const [playing, setPlaying] = useState(!reduced);
@@ -184,11 +170,11 @@ export function Tour() {
 
   useEffect(() => {
     if (!playing || index >= SCENES.length - 1) return;
-    const t = window.setTimeout(() => {
+    const timer = window.setTimeout(() => {
       setIndex((i) => i + 1);
       setStarted(performance.now());
     }, SCENE_MS);
-    return () => window.clearTimeout(t);
+    return () => window.clearTimeout(timer);
   }, [playing, index]);
 
   const go = (d: number) => {
@@ -213,14 +199,12 @@ export function Tour() {
   return (
     <div className="page flex flex-1 flex-col gap-8 py-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="kicker">
-          Judge mode · {index + 1} of {SCENES.length}
-        </p>
+        <p className="kicker">{t("judge", { n: index + 1, total: SCENES.length })}</p>
         <div className="flex items-center gap-2">
           <button
             type="button"
             className="btn btn-secondary btn-sm btn-icon"
-            aria-label="Previous"
+            aria-label={t("previous")}
             onClick={() => go(-1)}
             disabled={index === 0}
           >
@@ -232,19 +216,19 @@ export function Tour() {
             aria-pressed={playing}
             onClick={() => setPlaying((p) => !p)}
           >
-            {playing ? <Pause size={14} aria-hidden /> : <Play size={14} aria-hidden />} {playing ? "Pause" : "Play"}
+            {playing ? <Pause size={14} aria-hidden /> : <Play size={14} aria-hidden />} {playing ? t("pause") : t("play")}
           </button>
           <button
             type="button"
             className="btn btn-secondary btn-sm btn-icon"
-            aria-label="Next"
+            aria-label={t("next")}
             onClick={() => go(1)}
             disabled={index === SCENES.length - 1}
           >
             <ChevronRight size={15} aria-hidden />
           </button>
-          <Link to="/" className="btn btn-ghost btn-sm" aria-label="Leave the tour">
-            <X size={15} aria-hidden /> Exit
+          <Link to="/" className="btn btn-ghost btn-sm" aria-label={t("leave")}>
+            <X size={15} aria-hidden /> {t("exit")}
           </Link>
         </div>
       </div>
@@ -257,7 +241,7 @@ export function Tour() {
       >
         {SCENES.map((s, i) => (
           <Segment
-            key={`${s.title}-${i === index ? started : 0}`}
+            key={`${s.id}-${i === index ? started : 0}`}
             state={i < index ? "done" : i === index ? "current" : "todo"}
             playing={playing && !reduced}
             duration={SCENE_MS}
@@ -267,9 +251,9 @@ export function Tour() {
 
       <div className="grid flex-1 items-center gap-10 lg:grid-cols-[minmax(0,0.75fr)_minmax(0,1.25fr)]">
         <div key={index} className="motion-safe:animate-[rise_0.7s_cubic-bezier(0.16,1,0.3,1)_both]" aria-live="polite">
-          <p className="kicker">{scene.kicker}</p>
-          <h1 className="mt-3 text-[length:var(--fs-h1)]">{scene.title}</h1>
-          <p className="prose-body mt-4 text-lg">{scene.say}</p>
+          <p className="kicker">{t(`${scene.id}Kicker`)}</p>
+          <h1 className="mt-3 text-[length:var(--fs-h1)]">{t(`${scene.id}Title`)}</h1>
+          <p className="prose-body mt-4 text-lg">{t(`${scene.id}Say`)}</p>
         </div>
         <div key={`body-${index}`} className="min-w-0 motion-safe:animate-[rise_0.7s_cubic-bezier(0.16,1,0.3,1)_both]">
           {scene.body}

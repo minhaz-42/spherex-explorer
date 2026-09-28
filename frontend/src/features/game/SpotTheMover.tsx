@@ -5,6 +5,7 @@ import { type PointerEvent, useEffect, useMemo, useRef, useState } from "react";
 import { usePrefersReducedMotion } from "../../components/space/motion";
 import type { DataSource } from "../../lib/api";
 import { formatDate, formatTime } from "../../lib/format";
+import { useT } from "../../lib/i18n";
 import { autoStretch, renderGray } from "../../lib/pixels";
 import { casesQuery, cutoutQuery, knownObjectsQuery, observationsQuery } from "../../lib/queries";
 import { passSequence } from "../../lib/sequence";
@@ -13,6 +14,7 @@ import type { DecodedCutout, DiscoverCase, KnownObjects } from "../../lib/types"
 import { skyToGrid } from "../../lib/wcs";
 import { whereFrom } from "../spacecraft/where";
 import { WhereDisclosure } from "../spacecraft/WhereWasSpherex";
+import { GAME } from "./messages";
 
 /** How close a tap must land to JPL's predicted position, in SPHEREx pixels (6.15″ each). */
 const TOLERANCE_PX = 4;
@@ -58,6 +60,7 @@ function findTruth(
 }
 
 function Round({ c, source, onDone }: { c: DiscoverCase; source: DataSource; onDone: (hit: boolean) => void }) {
+  const t = useT(GAME);
   const reduced = usePrefersReducedMotion();
   const qa = useQuery(cutoutQuery(c.preview.a.key, c.target.ra, c.target.dec, c.viewer.fov, source));
   const qb = useQuery(cutoutQuery(c.preview.b.key, c.target.ra, c.target.dec, c.viewer.fov, source));
@@ -86,8 +89,8 @@ function Round({ c, source, onDone }: { c: DiscoverCase; source: DataSource; onD
 
   useEffect(() => {
     if (reduced || !qa.data || !qb.data) return;
-    const t = window.setInterval(() => setShowB((v) => !v), 650);
-    return () => window.clearInterval(t);
+    const timer = window.setInterval(() => setShowB((v) => !v), 650);
+    return () => window.clearInterval(timer);
   }, [reduced, qa.data, qb.data]);
 
   // Ground truth: the catalogued body JPL places inside both frames (cheap, so worked out each render).
@@ -124,7 +127,7 @@ function Round({ c, source, onDone }: { c: DiscoverCase; source: DataSource; onD
         className={`relative aspect-square w-full overflow-hidden rounded-[14px] bg-image shadow-[var(--shadow)] ${phase === "hunt" && ready ? "cursor-crosshair" : ""}`}
         onPointerUp={onTap}
         role="application"
-        aria-label={`Two SPHEREx frames of ${c.title}, blinking. Tap the point of light that jumps between them.`}
+        aria-label={t("stage", { title: c.title })}
       >
         <canvas
           ref={canvasA}
@@ -139,7 +142,7 @@ function Round({ c, source, onDone }: { c: DiscoverCase; source: DataSource; onD
             className="absolute inset-0 flex items-center justify-center p-6 text-center text-sm text-on-image/80"
             role="status"
           >
-            {failed ? "This round could not be loaded right now." : "Loading two real SPHEREx frames…"}
+            {failed ? t("failed") : t("loading")}
           </div>
         ) : null}
         {ready ? (
@@ -191,21 +194,19 @@ function Round({ c, source, onDone }: { c: DiscoverCase; source: DataSource; onD
         <div>
           <p className="kicker">{c.target.constellation}</p>
           <h3 className="mt-1 text-xl font-semibold text-text">{c.title}</h3>
-          <p className="num mt-1 text-sm text-muted">{formatDate(c.preview.a.isoMid)} · frames A and B</p>
+          <p className="num mt-1 text-sm text-muted">{t("framesAB", { date: formatDate(c.preview.a.isoMid) })}</p>
         </div>
         {phase === "hunt" ? (
           <>
-            <p className="text-muted">
-              Stars stay where they are between two visits. Something in this field jumps. Tap it.
-            </p>
+            <p className="text-muted">{t("hunt")}</p>
             <div className="flex flex-wrap gap-2">
               {reduced ? (
                 <button type="button" className="btn btn-secondary btn-sm" onClick={() => setShowB((v) => !v)}>
-                  Show frame {showB ? "A" : "B"}
+                  {t("showFrame", { frame: showB ? "A" : "B" })}
                 </button>
               ) : null}
               <button type="button" className="btn btn-ghost btn-sm" onClick={reveal} disabled={!ready}>
-                <Eye size={14} aria-hidden /> Show me
+                <Eye size={14} aria-hidden /> {t("showMe")}
               </button>
             </div>
           </>
@@ -215,18 +216,19 @@ function Round({ c, source, onDone }: { c: DiscoverCase; source: DataSource; onD
               className={`inline-flex items-center gap-2 font-semibold ${phase === "hit" ? "text-live" : "text-danger"}`}
             >
               {phase === "hit" ? <Check size={18} aria-hidden /> : <X size={18} aria-hidden />}
-              {phase === "hit" ? "Found it." : "It was here."}
+              {phase === "hit" ? t("found") : t("here")}
             </p>
             {truth ? (
               <p className="text-sm text-muted">
-                The mover is <strong className="text-text">{truth.name}</strong>
-                {truth.rate ? `, crossing the sky at about ${Math.round(truth.rate)}″ per hour` : ""}. The rings are
-                where JPL's orbit puts it in each frame.
+                {t("moverIs")}
+                <strong className="text-text">{truth.name}</strong>
+                {truth.rate ? t("rate", { rate: Math.round(truth.rate) }) : ""}
+                {t("rings")}
               </p>
             ) : null}
             <WhereDisclosure
               where={qa.data ? whereFrom(qa.data.payload, c.target) : null}
-              label="Where was SPHEREx for frame A?"
+              label={t("where")}
             />
           </div>
         )}
@@ -240,6 +242,7 @@ function Round({ c, source, onDone }: { c: DiscoverCase; source: DataSource; onD
  * the ground truth. The rounds are the moving-object cases on the Discover page.
  */
 export function SpotTheMover({ source }: { source: DataSource }) {
+  const t = useT(GAME);
   const cases = useQuery(casesQuery());
   const rounds = (cases.data?.cases ?? []).filter((c) => c.kind === "moving");
   const [index, setIndex] = useState(0);
@@ -248,19 +251,19 @@ export function SpotTheMover({ source }: { source: DataSource }) {
   const score = Object.values(results).filter(Boolean).length;
   const finished = rounds.length > 0 && Object.keys(results).length === rounds.length;
 
-  if (cases.isPending) return <p className="text-muted">Loading the rounds…</p>;
-  if (!rounds.length) return <p className="text-muted">No moving-object cases are available right now.</p>;
+  if (cases.isPending) return <p className="text-muted">{t("loadingRounds")}</p>;
+  if (!rounds.length) return <p className="text-muted">{t("noRounds")}</p>;
 
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="num text-sm text-muted">
-          Round {index + 1} of {rounds.length} · score {score}/{Object.keys(results).length}
+          {t("progress", { round: index + 1, rounds: rounds.length, score, played: Object.keys(results).length })}
         </p>
         <div className="flex gap-2">
           {results[round!.id] !== undefined && index < rounds.length - 1 ? (
             <button type="button" className="btn btn-primary btn-sm" onClick={() => setIndex((i) => i + 1)}>
-              <Play size={14} aria-hidden /> Next round
+              <Play size={14} aria-hidden /> {t("next")}
             </button>
           ) : null}
           {finished ? (
@@ -272,7 +275,7 @@ export function SpotTheMover({ source }: { source: DataSource }) {
                 setIndex(0);
               }}
             >
-              <RotateCcw size={14} aria-hidden /> Play again
+              <RotateCcw size={14} aria-hidden /> {t("again")}
             </button>
           ) : null}
         </div>
@@ -287,8 +290,7 @@ export function SpotTheMover({ source }: { source: DataSource }) {
       ) : null}
       {finished ? (
         <p className="card p-5 text-muted">
-          You found {score} of {rounds.length}. That is how Clyde Tombaugh found Pluto in 1930: by blinking photographic
-          plates at Lowell Observatory. To hunt in real survey data, join NASA's{" "}
+          {t("endBefore", { score, rounds: rounds.length })}
           <a
             className="link"
             href="https://www.zooniverse.org/projects/marckuchner/backyard-worlds-planet-9"
@@ -297,7 +299,7 @@ export function SpotTheMover({ source }: { source: DataSource }) {
           >
             Backyard Worlds: Planet 9
           </a>
-          , where volunteers blink WISE images to find moving brown dwarfs and distant worlds.
+          {t("endAfter")}
         </p>
       ) : null}
     </div>

@@ -3,6 +3,8 @@
  * (redder is lower, as with sound and light) and loudness follows brightness; in "series" mode pitch
  * follows brightness through time. Every sound comes with a plain-language summary for screen readers.
  */
+import { currentLang, type Lang, translate } from "../../lib/i18n";
+import { AXIS_NAMES_BN, SONIFY } from "./messages";
 
 export interface SonifyPoint {
   x: number;
@@ -55,9 +57,9 @@ const fmt = (v: number) =>
   Math.abs(v) >= 100 || Math.abs(v) < 0.01 ? v.toPrecision(3) : Number(v.toPrecision(3)).toString();
 
 /** A one-sentence description of the shape of the data. */
-export function describeSeries(spec: SonifySpec): string {
+export function describeSeries(spec: SonifySpec, lang: Lang = "en"): string {
   const pts = clean(spec.points);
-  if (pts.length < 2) return "Not enough points to describe.";
+  if (pts.length < 2) return translate(SONIFY, lang, "tooFew");
   const first = pts[0]!;
   const last = pts[pts.length - 1]!;
   const max = pts.reduce((a, b) => (b.y > a.y ? b : a));
@@ -68,17 +70,28 @@ export function describeSeries(spec: SonifySpec): string {
   const my = pts.reduce((s, p) => s + p.y, 0) / n;
   const slope = pts.reduce((s, p) => s + (p.x - mx) * (p.y - my), 0) / pts.reduce((s, p) => s + (p.x - mx) ** 2, 0);
   const span = (last.x - first.x) * slope;
-  const trend =
-    Math.abs(span) < 0.1 * Math.abs(max.y - min.y || 1) ? "stays roughly level" : span > 0 ? "rises" : "falls";
-  const toward = spec.mode === "spectrum" ? "towards longer wavelengths" : "over time";
-  return `${n} points from ${fmt(first.x)} to ${fmt(last.x)} ${spec.units.x}. Brightest at ${spec.xName} ${fmt(max.x)} ${spec.units.x} (${fmt(max.y)} ${spec.units.y}), faintest at ${fmt(min.x)} ${spec.units.x}. Overall it ${trend} ${toward}.`;
+  const trend = Math.abs(span) < 0.1 * Math.abs(max.y - min.y || 1) ? "level" : span > 0 ? "rises" : "falls";
+  const toward = spec.mode === "spectrum" ? "longer" : "overTime";
+  return translate(SONIFY, lang, "summary", {
+    n,
+    from: fmt(first.x),
+    to: fmt(last.x),
+    ux: spec.units.x,
+    uy: spec.units.y,
+    xName: lang === "bn" ? (AXIS_NAMES_BN[spec.xName] ?? spec.xName) : spec.xName,
+    maxX: fmt(max.x),
+    maxY: fmt(max.y),
+    minX: fmt(min.x),
+    trend: translate(SONIFY, lang, trend),
+    toward: translate(SONIFY, lang, toward),
+  });
 }
 
 /** Plays the notes; returns a handle to stop early and a promise that settles when it ends. */
 export function play(spec: SonifySpec): { stop: () => void; done: Promise<void> } {
   const AudioCtx =
     window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-  if (!AudioCtx) throw new Error("This browser cannot play sound.");
+  if (!AudioCtx) throw new Error(translate(SONIFY, currentLang(), "cannotPlay"));
   const ctx = new AudioCtx();
   const master = ctx.createGain();
   master.gain.value = 0.22;

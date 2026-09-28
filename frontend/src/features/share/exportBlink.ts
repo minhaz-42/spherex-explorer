@@ -6,6 +6,8 @@
 import { applyPalette, GIFEncoder, quantize } from "gifenc";
 
 import { canvasFont } from "../../components/space/theme";
+import { currentLang, translate } from "../../lib/i18n";
+import { SHARE } from "./messages";
 
 export interface BlinkFrame {
   /** Anything canvas can draw: an <img>, <canvas> or ImageBitmap of the frame. */
@@ -63,7 +65,7 @@ function canvasFor(spec: BlinkExport) {
   canvas.width = size;
   canvas.height = size + BAND;
   const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("This browser cannot draw the export.");
+  if (!ctx) throw new Error(translate(SHARE, currentLang(), "noCanvas"));
   return { canvas, ctx, size };
 }
 
@@ -95,7 +97,7 @@ export function videoType(): string | null {
 /** A short video of the blink (a few loops), recorded from a canvas in real time. */
 export async function blinkToVideo(spec: BlinkExport, loops = 4): Promise<Blob> {
   const type = videoType();
-  if (!type) throw new Error("This browser cannot record video; download the GIF instead.");
+  if (!type) throw new Error(translate(SHARE, currentLang(), "noVideo"));
   const { canvas, ctx, size } = canvasFor(spec);
   drawFrame(ctx, spec, spec.frames[0]!, 0, size);
   const stream = canvas.captureStream(30);
@@ -132,13 +134,17 @@ export function downloadBlob(blob: Blob, filename: string): void {
   setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }
 
-/** A filesystem-safe name from a title, e.g. "spherex-asteroid-7-iris.gif". */
+/**
+ * A filesystem-safe name from a title, e.g. "spherex-asteroid-7-iris.gif". Bangla letters are kept,
+ * so a title in Bangla names its file in Bangla rather than being reduced to its numbers.
+ */
 export function exportName(title: string, ext: string): string {
   const slug = title
     .toLowerCase()
     .normalize("NFKD")
-    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/[^a-z0-9\u0980-\u09ff]+/g, "-")
     .replace(/^-|-$/g, "")
-    .slice(0, 60);
+    .slice(0, 60)
+    .normalize("NFC");
   return `spherex-${slug || "blink"}.${ext}`;
 }

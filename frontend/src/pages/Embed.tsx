@@ -3,13 +3,16 @@ import { useParams } from "react-router";
 
 import { BlinkPreview } from "../features/discover/BlinkPreview";
 import { getJson } from "../lib/api";
+import { useT } from "../lib/i18n";
 import { caseLink, casesQuery } from "../lib/queries";
+import { EMBED } from "./embed.messages";
 
 /**
  * A chrome-free view of one Discover case, for embedding in a classroom page or slide:
  * /embed/<case id>. It shows the real blink with its caption and credits, and links back.
  */
 export function Embed() {
+  const t = useT(EMBED);
   const { caseId } = useParams();
   const cases = useQuery(casesQuery());
   const health = useQuery({
@@ -44,17 +47,14 @@ export function Embed() {
               target="_top"
               rel="noreferrer"
             >
-              Open in SPHEREx Explorer
+              {t("open")}
             </a>
           </div>
-          <p className="text-xs text-faint">
-            Real SPHEREx images from the NASA/IPAC Infrared Science Archive, shown with one shared brightness scale.
-            Independent project; not endorsed by NASA.
-          </p>
+          <p className="text-xs text-faint">{t("credit")}</p>
         </>
       ) : (
         <p className="m-auto text-sm text-muted">
-          {cases.isPending ? "Loading…" : `There is no case called “${caseId ?? ""}”.`}
+          {cases.isPending ? t("loading") : t("missing", { id: caseId ?? "" })}
         </p>
       )}
     </main>

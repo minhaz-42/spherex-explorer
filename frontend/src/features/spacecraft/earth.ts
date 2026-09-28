@@ -4,6 +4,8 @@
  * Good to about a tenth of a degree: the drift of Earth's pole since 2000 and nutation are ignored,
  * and UTC stands in for UT1 (they differ by under a second).
  */
+import { type Lang, translate } from "../../lib/i18n";
+import { SPACECRAFT } from "./messages";
 
 export type V3 = [number, number, number];
 
@@ -62,8 +64,9 @@ export function subPoint(positionKm: V3, rotation: number): { lat: number; lon: 
   return { lat, lon };
 }
 
-export function formatLatLon(p: { lat: number; lon: number }): string {
-  const ns = p.lat >= 0 ? "N" : "S";
-  const ew = p.lon >= 0 ? "E" : "W";
+/** "9.4° N, 94.6° W"; in Bangla the compass letters are উ/দ/পূ/প. */
+export function formatLatLon(p: { lat: number; lon: number }, lang: Lang = "en"): string {
+  const ns = translate(SPACECRAFT, lang, p.lat >= 0 ? "north" : "south");
+  const ew = translate(SPACECRAFT, lang, p.lon >= 0 ? "east" : "west");
   return `${Math.abs(p.lat).toFixed(1)}° ${ns}, ${Math.abs(p.lon).toFixed(1)}° ${ew}`;
 }

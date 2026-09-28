@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { fitCanvas, observeSize } from "../../components/space/motion";
 import { canvasFont, usePalette } from "../../components/space/theme";
+import { translate, useLang, useT } from "../../lib/i18n";
 import {
   cross,
   dot,
@@ -18,6 +19,7 @@ import {
   unit,
   type V3,
 } from "./earth";
+import { SPACECRAFT } from "./messages";
 import type { Where } from "./where";
 
 const DEG = Math.PI / 180;
@@ -79,6 +81,8 @@ const NIGHT_LAND: RGB = [20, 27, 40];
 export function WhereWasSpherex({ where }: { where: Where }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const pal = usePalette();
+  const lang = useLang();
+  const t = useT(SPACECRAFT);
   const [land, setLand] = useState<Land | null>(null);
 
   useEffect(() => {
@@ -283,46 +287,42 @@ export function WhereWasSpherex({ where }: { where: Where }) {
         ctx.fillStyle = overGlobe ? `rgba(238, 242, 255, ${alpha})` : `rgba(${pal.ink}, ${alpha})`;
         ctx.fillText(text, left, top);
       };
-      label("SPHEREx", s.x - ux * 34, s.y - uy * 22, 600, 0.95);
-      label("to the target", ex + ux * 44, ey + uy * 16, 500, 0.8);
+      label(translate(SPACECRAFT, lang, "spacecraft"), s.x - ux * 34, s.y - uy * 22, 600, 0.95);
+      label(translate(SPACECRAFT, lang, "toTarget"), ex + ux * 44, ey + uy * 16, 500, 0.8);
     };
 
     draw();
     return observeSize(canvas, draw);
-  }, [rx, ry, rz, vx, vy, vz, isoTime, ra, dec, land, pal]);
+  }, [rx, ry, rz, vx, vy, vz, isoTime, ra, dec, land, pal, lang]);
 
   return (
     <figure className="flex flex-col gap-3">
       <canvas
         ref={canvasRef}
         role="img"
-        aria-label={`Earth at ${isoTime} UTC, with SPHEREx ${Math.round(altitude)} km up over ${formatLatLon(ground)}, looking towards the target.`}
+        aria-label={t("figure", { time: isoTime, height: Math.round(altitude), place: formatLatLon(ground, lang) })}
         className="aspect-square w-full"
       />
       <figcaption>
         <dl className="num grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
           <div>
-            <dt className="text-xs text-faint">Height</dt>
+            <dt className="text-xs text-faint">{t("height")}</dt>
             <dd>{Math.round(altitude)} km</dd>
           </div>
           <div>
-            <dt className="text-xs text-faint">Speed</dt>
+            <dt className="text-xs text-faint">{t("speed")}</dt>
             <dd>{speed.toFixed(2)} km/s</dd>
           </div>
           <div>
-            <dt className="text-xs text-faint">Above</dt>
-            <dd>{formatLatLon(ground)}</dd>
+            <dt className="text-xs text-faint">{t("above")}</dt>
+            <dd>{formatLatLon(ground, lang)}</dd>
           </div>
           <div>
-            <dt className="text-xs text-faint">Target from the Sun</dt>
+            <dt className="text-xs text-faint">{t("sunAngle")}</dt>
             <dd>{sunAngle.toFixed(0)}°</dd>
           </div>
         </dl>
-        <p className="mt-3 text-xs text-faint">
-          From the frame's recorded position and velocity. SPHEREx covers {speed.toFixed(1)} km every second, so two
-          frames taken hours apart see the sky from different places. A nearby asteroid shifts against the stars
-          between them: that is parallax. Coastlines: Natural Earth.
-        </p>
+        <p className="mt-3 text-xs text-faint">{t("note", { speed: speed.toFixed(1) })}</p>
       </figcaption>
     </figure>
   );

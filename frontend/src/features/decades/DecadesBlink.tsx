@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { DataSource } from "../../lib/api";
 import { formatDate, formatWavelength } from "../../lib/format";
+import { useT } from "../../lib/i18n";
 import { autoStretch, renderGray } from "../../lib/pixels";
 import { cutoutQuery, observationsQuery } from "../../lib/queries";
 import { tokenRgb } from "../../lib/theme";
@@ -13,6 +14,7 @@ import type { BlinkFrame } from "../share/exportBlink";
 import { ShareMenu } from "../share/ShareMenu";
 import { whereFrom } from "../spacecraft/where";
 import { WhereDisclosure } from "../spacecraft/WhereWasSpherex";
+import { DECADES } from "./messages";
 import { decimalYear, plateQuery, positionAt, trackField } from "./tiles";
 
 const SIZE = 384;
@@ -109,6 +111,7 @@ export function DecadesBlink({
   source: DataSource;
   properMotion?: { raMasYr: number; decMasYr: number } | null;
 }) {
+  const t = useT(DECADES);
   const moving = properMotion && Math.hypot(properMotion.raMasYr, properMotion.decMasYr) >= 300 ? properMotion : null;
   const star = moving ? { ra, dec, pmRa: moving.raMasYr, pmDec: moving.decMasYr } : null;
   const field = star ? trackField(star, 1950, 2026, 0.15) : { ra, dec, fovDeg: 0.15 };
@@ -121,7 +124,7 @@ export function DecadesBlink({
     {
       id: "poss1",
       survey: "POSS-I",
-      band: "Photographic red plate · about 0.65 µm",
+      band: t("redPlate"),
       when: p1.data ? formatDate(p1.data.epoch) : "1949–1958",
       year: p1.data ? decimalYear(p1.data.epoch) : null,
       status: p1.data ? "ready" : p1.isError ? "error" : "loading",
@@ -131,7 +134,7 @@ export function DecadesBlink({
     {
       id: "poss2",
       survey: "POSS-II / UK Schmidt",
-      band: "Photographic red plate · about 0.65 µm",
+      band: t("redPlate"),
       when: p2.data ? formatDate(p2.data.epoch) : "1985–2000",
       year: p2.data ? decimalYear(p2.data.epoch) : null,
       status: p2.data ? "ready" : p2.isError ? "error" : "loading",
@@ -141,7 +144,7 @@ export function DecadesBlink({
     {
       id: "2mass",
       survey: "2MASS",
-      band: "Near-infrared · 1.2–2.2 µm",
+      band: t("nearInfrared"),
       when: "1997–2001",
       year: 1999,
       status: "ready",
@@ -151,7 +154,7 @@ export function DecadesBlink({
     {
       id: "wise",
       survey: "AllWISE",
-      band: "Mid-infrared · 3.4–22 µm (many visits combined)",
+      band: t("midInfrared"),
       when: "2010–2011",
       year: 2010.5,
       status: "ready",
@@ -161,7 +164,9 @@ export function DecadesBlink({
     {
       id: "spherex",
       survey: "SPHEREx",
-      band: sx.frame ? `${formatWavelength(sx.frame.wavelengthUm)} · detector ${sx.frame.detector}` : "0.75–5 µm",
+      band: sx.frame
+        ? t("spherexBand", { wavelength: formatWavelength(sx.frame.wavelengthUm), detector: sx.frame.detector })
+        : "0.75–5 µm",
       when: sx.frame ? formatDate(sx.frame.isoMid) : "2025–2026",
       year: sx.frame ? decimalYear(sx.frame.isoMid) : null,
       status: sx.status,
@@ -179,8 +184,8 @@ export function DecadesBlink({
 
   useEffect(() => {
     if (!playing) return;
-    const t = window.setInterval(() => setIndex((i) => (i + 1) % tiles.length), 1400);
-    return () => window.clearInterval(t);
+    const timer = window.setInterval(() => setIndex((i) => (i + 1) % tiles.length), 1400);
+    return () => window.clearInterval(timer);
   }, [playing, tiles.length]);
 
   // Paint the SPHEREx frame onto the stage canvas when it is the tile on show.
@@ -197,17 +202,17 @@ export function DecadesBlink({
 
   // Five positions: cheap enough to work out on every render.
   const marks = star
-    ? tiles.map((t) => (t.year !== null ? { id: t.id, ...positionAt(star, t.year, field, field.fovDeg, 100) } : null))
+    ? tiles.map((x) => (x.year !== null ? { id: x.id, ...positionAt(star, x.year, field, field.fovDeg, 100) } : null))
     : [];
   const here = marks.find((m) => m?.id === tile.id) ?? null;
 
-  const years = tiles.map((t) => t.year).filter((y): y is number => y !== null);
+  const years = tiles.map((x) => x.year).filter((y): y is number => y !== null);
   const span = years.length ? Math.max(...years) - Math.min(...years) : 0;
   const moved = moving ? (Math.hypot(moving.raMasYr, moving.decMasYr) / 1000) * span : 0;
 
   /** A composite of one tile with its marker, for export. */
-  const composite = (t: Tile): HTMLCanvasElement | null => {
-    const source = t.canvas ?? (t.src ? imgs.current.get(t.id) : undefined);
+  const composite = (x: Tile): HTMLCanvasElement | null => {
+    const source = x.canvas ?? (x.src ? imgs.current.get(x.id) : undefined);
     if (!source || (source instanceof HTMLImageElement && !source.complete)) return null;
     const c = document.createElement("canvas");
     c.width = SIZE;
@@ -216,7 +221,7 @@ export function DecadesBlink({
     if (!ctx) return null;
     ctx.imageSmoothingEnabled = false;
     ctx.drawImage(source, 0, 0, SIZE, SIZE);
-    const m = marks.find((x) => x?.id === t.id);
+    const m = marks.find((mark) => mark?.id === x.id);
     if (m) {
       ctx.strokeStyle = "#ffb35c";
       ctx.lineWidth = 2;
@@ -229,14 +234,14 @@ export function DecadesBlink({
 
   const build = () => {
     const frames: BlinkFrame[] = [];
-    for (const t of tiles) {
-      const c = t.status === "ready" ? composite(t) : null;
-      if (c) frames.push({ image: c, caption: `${t.survey} · ${t.when} · ${t.band}` });
+    for (const x of tiles) {
+      const c = x.status === "ready" ? composite(x) : null;
+      if (c) frames.push({ image: c, caption: `${x.survey} · ${x.when} · ${x.band}` });
     }
     if (frames.length < 2) return null;
     return {
-      title: `${name} across ${Math.round(span) || 75} years`,
-      credit: `${tiles.map((t) => t.credit).join(" · ")} · SPHEREx Explorer`,
+      title: t("exportTitle", { name, years: Math.round(span) || 75 }),
+      credit: `${tiles.map((x) => x.credit).join(" · ")} · SPHEREx Explorer`,
       frames,
       delayMs: 1100,
     };
@@ -246,17 +251,17 @@ export function DecadesBlink({
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]">
       <div className="flex flex-col gap-3">
         <div className="relative aspect-square w-full overflow-hidden rounded-[14px] bg-image shadow-[var(--shadow)]">
-          {tiles.map((t) =>
-            t.src ? (
+          {tiles.map((x) =>
+            x.src ? (
               <img
-                key={t.id}
+                key={x.id}
                 ref={(el) => {
-                  if (el) imgs.current.set(t.id, el);
+                  if (el) imgs.current.set(x.id, el);
                 }}
-                src={t.src}
-                alt={`${name}: ${t.survey}, ${t.when}`}
-                className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-500 [image-rendering:pixelated] ${t.id === tile.id ? "opacity-100" : "opacity-0"}`}
-                onError={() => imgs.current.delete(t.id)}
+                src={x.src}
+                alt={`${name}: ${x.survey}, ${x.when}`}
+                className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-500 [image-rendering:pixelated] ${x.id === tile.id ? "opacity-100" : "opacity-0"}`}
+                onError={() => imgs.current.delete(x.id)}
               />
             ) : null,
           )}
@@ -271,9 +276,7 @@ export function DecadesBlink({
               className="absolute inset-0 flex items-center justify-center p-6 text-center text-sm text-on-image/80"
               role="status"
             >
-              {tile.status === "error"
-                ? `The ${tile.survey} image could not be loaded right now.`
-                : `Loading the ${tile.survey} image…`}
+              {tile.status === "error" ? t("failed", { survey: tile.survey }) : t("loading", { survey: tile.survey })}
             </div>
           ) : null}
           {star ? (
@@ -305,8 +308,8 @@ export function DecadesBlink({
                 {tile.survey} · {tile.band}
               </span>
             </span>
-            <span className="rounded-full bg-black/60 px-2 py-1 text-xs text-on-image">
-              {Math.round(field.fovDeg * 60)}′ across
+            <span className="shrink-0 rounded-full bg-black/60 px-2 py-1 text-xs text-on-image">
+              {t("across", { n: Math.round(field.fovDeg * 60) })}
             </span>
           </div>
         </div>
@@ -314,7 +317,7 @@ export function DecadesBlink({
           <button
             type="button"
             className="btn btn-secondary btn-sm btn-icon"
-            aria-label="Earlier survey"
+            aria-label={t("earlier")}
             onClick={() => setIndex((i) => (i + tiles.length - 1) % tiles.length)}
           >
             <ChevronLeft size={15} aria-hidden />
@@ -326,12 +329,12 @@ export function DecadesBlink({
             onClick={() => setPlaying((p) => !p)}
           >
             {playing ? <Pause size={14} aria-hidden /> : <Play size={14} aria-hidden />}{" "}
-            {playing ? "Pause" : "Blink through the decades"}
+            {playing ? t("pause") : t("blink")}
           </button>
           <button
             type="button"
             className="btn btn-secondary btn-sm btn-icon"
-            aria-label="Later survey"
+            aria-label={t("later")}
             onClick={() => setIndex((i) => (i + 1) % tiles.length)}
           >
             <ChevronRight size={15} aria-hidden />
@@ -343,9 +346,9 @@ export function DecadesBlink({
       </div>
 
       <div className="flex flex-col gap-4">
-        <ol className="grid grid-cols-5 gap-2 lg:grid-cols-1" aria-label="Surveys in time order">
-          {tiles.map((t, i) => (
-            <li key={t.id}>
+        <ol className="grid grid-cols-5 gap-2 lg:grid-cols-1" aria-label={t("order")}>
+          {tiles.map((x, i) => (
+            <li key={x.id}>
               <button
                 type="button"
                 onClick={() => {
@@ -357,26 +360,28 @@ export function DecadesBlink({
                   i === index ? "border-accent bg-accent-wash" : "border-rule hover:border-rule-strong"
                 }`}
               >
-                <span className="text-sm font-medium text-text">{t.survey}</span>
-                <span className="num text-xs text-faint">{t.when}</span>
+                <span className="text-sm font-medium text-text">{x.survey}</span>
+                <span className="num text-xs text-faint">{x.when}</span>
               </button>
             </li>
           ))}
         </ol>
         <p className="text-sm text-muted">
-          The same {Math.round(field.fovDeg * 60)}′ of sky, photographed by five surveys
-          {span ? ` over ${Math.round(span)} years` : ""}.
+          {span
+            ? t("sameOver", { fov: Math.round(field.fovDeg * 60), years: Math.round(span) })
+            : t("same", { fov: Math.round(field.fovDeg * 60) })}{" "}
           {moving
-            ? ` ${name} moves ${(Math.hypot(moving.raMasYr, moving.decMasYr) / 1000).toFixed(1)}″ a year across the sky, so between the first and last images it has shifted about ${(moved / 60).toFixed(1)}′. The ring marks where its catalogued motion puts it at each date.`
-            : " Stars stay put over these decades; what changes is the light each survey records."}
+            ? t("moves", {
+                name,
+                rate: (Math.hypot(moving.raMasYr, moving.decMasYr) / 1000).toFixed(1),
+                shift: (moved / 60).toFixed(1),
+              })
+            : t("still")}
         </p>
-        <p className="text-xs text-faint">
-          2MASS and AllWISE combine exposures from their survey years, so they are dated by those years. Each survey
-          sees a different wavelength, so brightnesses differ between the tiles.
-        </p>
+        <p className="text-xs text-faint">{t("dating")}</p>
         <WhereDisclosure
           where={sx.payload ? whereFrom(sx.payload, { ra: field.ra, dec: field.dec }) : null}
-          label={`Where was SPHEREx on ${tiles[4]!.when}?`}
+          label={t("where", { date: tiles[4]!.when })}
         />
       </div>
     </div>
