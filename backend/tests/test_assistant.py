@@ -6,8 +6,14 @@ import httpx
 import pytest
 import respx
 
-from spherex_explorer.api.cachekeys import candidates_key, cutout_key, known_key
-from spherex_explorer.assistant import chat, evidence, grounding, knowledge
+from spherex_explorer.api.cachekeys import (
+    candidates_key,
+    cutout_key,
+    known_key,
+    object_key,
+    observations_key,
+)
+from spherex_explorer.assistant import chat, evidence, grounding, knowledge, live
 from spherex_explorer.assistant.chat import ChatMessage, ChatRequest
 from spherex_explorer.assistant.evidence import ViewContext, ViewTarget
 from spherex_explorer.assistant.local_model import Health, ModelUnavailable, ThinkStripper
@@ -15,6 +21,7 @@ from spherex_explorer.assistant.prompts import ANSWER_REMINDER
 from spherex_explorer.cache import Store
 from spherex_explorer.config import Settings
 from spherex_explorer.main import create_app
+from spherex_explorer.objects import simbad
 from spherex_explorer.ratelimit import RateLimiter
 from spherex_explorer.science.grid import make_grid
 from spherex_explorer.services import Services
@@ -167,8 +174,22 @@ def svc(tmp_path: Path) -> Services:
     )
 
 
+FIXTURES = Path(__file__).parent / "fixtures"
+
+
+def simbad_object(name: str, ra: float, dec: float) -> dict:
+    rows = simbad.parse_tap(200, (FIXTURES / name).read_text())
+    return simbad.object_json(rows[0], [], ra, dec)
+
+
 def seed_view(svc: Services) -> ViewContext:
     grid = make_grid(RA, DEC, FOV)
+    svc.store.put(
+        "object",
+        object_key(RA, DEC, simbad.DEFAULT_RADIUS_DEG),
+        simbad_object("simbad_36sex_object.json", RA, DEC),
+        60,
+    )
     svc.store.put(
         "cutout",
         cutout_key(KEY_B, grid),
@@ -300,13 +321,145 @@ async def test_moving_questions_offer_discover_cases(svc: Services) -> None:
 
 
 @respx.mock
-async def test_named_objects_are_resolved_and_linked(svc: Services, fixtures: Path) -> None:
+async def test_named_objects_are_looked_up_live(svc: Services, fixtures: Path) -> None:
     respx.get(url__startswith=svc.settings.sesame_url).mock(
         return_value=httpx.Response(200, text=(fixtures / "sesame_m31.xml").read_text())
     )
-    ev = await evidence.build(svc, "Can you show me M31?", None, "live")
-    assert ev.actions[0].label == "Explore M 31"
-    assert ev.actions[0].href == "/explore?q=M31"
+
+    def tap(request: httpx.Request) -> httpx.Response:
+        body = request.content.decode()
+        name = "simbad_m31_distances.json" if "mesDistance" in body else "simbad_m31_object.json"
+        return httpx.Response(200, text=(fixtures / name).read_text())
+
+    respx.post(url__startswith=svc.settings.simbad_tap_url).mock(side_effect=tap)
+    respx.get(url__startswith=svc.settings.sia_url).mock(
+        return_value=httpx.Response(200, text=(fixtures / "sia_m31.csv").read_text())
+    )
+    question = "Tell me about the Andromeda Galaxy in infrared"
+    updates = [u async for u in live.gather(svc, question, None, "live", "test")]
+    assert [u.kind for u in updates] == ["progress"] * 3
+    assert updates[0].message == "Looking up “Andromeda Galaxy” with CDS Sesame…"
+    ev = await evidence.build(svc, question, None, "live")
+    text = ev.render()
+    assert "Catalogue facts — " in text and "galaxy" in text
+    assert "million light-years" in text
+    assert "SPHEREx coverage of" in text and "frames in" in text
+    assert ev.actions[0].href == "/explore?q=Andromeda+Galaxy"
+    # Asked again, everything comes from the cache.
+    assert [u async for u in live.gather(svc, question, None, "live", "test")] == []
+
+
+@pytest.mark.parametrize(
+    ("question", "name"),
+    [
+        ("Show me M31", "M31"),
+        ("Tell me about the Orion Nebula in infrared", "Orion Nebula"),
+        ("What is M42?", "M42"),
+        ("How far away is Betelgeuse?", "Betelgeuse"),
+        ("What is SPHEREx?", None),
+        ("What is a linear variable filter?", None),
+        ("What is the PSF?", None),
+        ("Could SPHEREx find Planet Nine?", None),
+        ("What am I looking at?", None),
+    ],
+)
+def test_names_in_questions(question: str, name: str | None) -> None:
+    assert evidence.named_object(question) == name
+
+
+async def test_a_motion_question_runs_jpl_and_the_search_for_the_pass(
+    svc: Services, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # A pass whose frames and image list are known, with no JPL check or search yet.
+    view = ViewContext(
+        page="explore",
+        target=ViewTarget(ra=RA, dec=DEC, name="Iris"),
+        frameKey=KEY_B,
+        referenceKey=KEY_A,
+        compare="blink",
+        fov=FOV,
+        sequenceMode="pass",
+        sequenceKeys=[KEY_A, KEY_B],
+        frameIndex=1,
+        frameCount=2,
+    )
+    grid = make_grid(RA, DEC, FOV)
+    svc.store.put(
+        "cutout",
+        cutout_key(KEY_B, grid),
+        payload("0423_1", "2025-12-02T21:49:19", 61011.909, 1.508, 0.037, 1.0),
+        60,
+    )
+    svc.store.put(
+        "cutout",
+        cutout_key(KEY_A, grid),
+        payload("0332_1", "2025-12-02T12:06:59", 61011.505, 1.129, 0.027, 1.0),
+        60,
+    )
+    svc.store.put(
+        "object",
+        object_key(RA, DEC, simbad.DEFAULT_RADIUS_DEG),
+        simbad_object("simbad_36sex_object.json", RA, DEC),
+        60,
+    )
+    frames = [
+        {"key": KEY_A, "mjdMid": 61011.505, "pointing": "0332"},
+        {"key": KEY_B, "mjdMid": 61011.909, "pointing": "0423"},
+    ]
+    svc.store.put(
+        "observations",
+        observations_key(RA, DEC, svc.settings.wide_collections, None),
+        {"frames": frames, "summary": {"frames": 2, "passes": 1, "first": None, "last": None}},
+        60,
+    )
+    calls: list[str] = []
+
+    async def fake_known(svc_, ra, dec, size, keys, vmag, source, client):  # type: ignore[no-untyped-def]
+        calls.append("known")
+        assert (size, keys, vmag) == (FOV, sorted([KEY_A, KEY_B]), 20.0)
+        return {}
+
+    async def fake_candidates(svc_, ra, dec, size, keys, source, client):  # type: ignore[no-untyped-def]
+        calls.append("candidates")
+        return {}
+
+    monkeypatch.setattr(live.compute, "known", fake_known)
+    monkeypatch.setattr(live.compute, "candidates", fake_candidates)
+    updates = [u async for u in live.gather(svc, "Did anything move here?", view, "live", "t")]
+    assert calls == ["known", "candidates"]
+    assert updates[0].message.startswith("Asking JPL which catalogued asteroids and comets")
+    assert updates[1].message == "Running the moving-source search over the 2 frames of this pass…"
+    # A question that is not about motion leaves JPL alone.
+    calls.clear()
+    assert [
+        u async for u in live.gather(svc, "What is the brightness here?", view, "live", "t")
+    ] == []
+    assert calls == []
+
+
+async def test_nothing_is_fetched_in_the_demo_snapshot(svc: Services) -> None:
+    view = ViewContext(target=ViewTarget(ra=RA, dec=DEC), frameKey=KEY_B, fov=FOV, compare="single")
+    assert [u async for u in live.gather(svc, "Tell me about M31", view, "snapshot", "t")] == []
+
+
+async def test_questions_about_live_data_say_where_the_data_came_from(svc: Services) -> None:
+    view = seed_view(svc)
+    live_ev = await evidence.build(svc, "Is this data live?", view, "live")
+    assert (
+        "Data mode: live: the frames, JPL's predictions and the catalogue facts" in live_ev.render()
+    )
+    demo = await evidence.build(svc, "Is this data live?", view, "snapshot")
+    assert "Data mode: this view uses the demo snapshot" in demo.render()
+    assert knowledge.search("Is this data live?")[0].id == "live"
+    other = await evidence.build(svc, "What am I looking at?", view, "live")
+    assert "Data mode" not in other.render()
+
+
+async def test_the_target_s_catalogue_entry_is_evidence(svc: Services) -> None:
+    view = seed_view(svc)
+    ev = await evidence.build(svc, "What am I looking at?", view, "live")
+    item = next(i for i in ev.items if i.title == "Catalogued at the target")
+    assert "36 Sex" in item.text or "HD" in item.text
 
 
 # --- the chat route ------------------------------------------------------------------------------

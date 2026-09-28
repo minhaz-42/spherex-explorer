@@ -20,11 +20,19 @@ from urllib.parse import urlencode
 
 from pydantic import BaseModel, Field
 
-from ..api.cachekeys import candidates_key, cutout_key, known_key, observations_key, resolve_key
+from ..api.cachekeys import (
+    candidates_key,
+    cutout_key,
+    known_key,
+    object_key,
+    observations_key,
+    resolve_key,
+)
 from ..archive.keys import FrameKey
 from ..cache import Source
 from ..errors import ExplorerError
-from ..resolve import coords, sesame
+from ..objects.simbad import DEFAULT_RADIUS_DEG as DEFAULT_OBJECT_RADIUS_DEG
+from ..resolve import coords
 from ..resolve.target import describe
 from ..science.grid import make_grid
 from ..services import Services
@@ -354,6 +362,14 @@ def add_view(ev: Evidence, svc: Services, view: ViewContext, source: Source) -> 
         + ".",
         "Explore",
     )
+    target_object = store.peek("object", object_key(t.ra, t.dec, DEFAULT_OBJECT_RADIUS_DEG), source)
+    if target_object:
+        ev.add(
+            "view",
+            "Catalogued at the target",
+            catalogue_text(target_object),
+            "SIMBAD, CDS, Strasbourg",
+        )
     obs = store.peek(
         "observations", observations_key(t.ra, t.dec, svc.settings.wide_collections, None), source
     )
@@ -419,6 +435,12 @@ def add_view(ev: Evidence, svc: Services, view: ViewContext, source: Source) -> 
         )
 
     if not keys:
+        return
+    if view.sequenceMode == "wavelength":
+        ev.notes.append(
+            "JPL's check and the moving-source search work on one survey pass; this view shows one "
+            "wavelength across passes months apart."
+        )
         return
     if known is not None:
         if bodies:
@@ -535,6 +557,76 @@ _NOT_A_NAME = re.compile(
     r"|some|all|why)",
     re.I,
 )
+# "Tell me about the Orion Nebula", "what is M31?", "how far away is Betelgeuse?". Only proper
+# names count here (a capital letter or a digit first), so "what is a linear variable filter?" is
+# not looked up; the app's own terms are answered from the knowledge notes instead.
+_ABOUT = re.compile(
+    r"\b(?:tell me (?:more )?about|what(?:'s|’s| is| are| kind of object is)|who is|facts about"
+    r"|info(?:rmation)? (?:on|about)|describe|how (?:far|big|old|bright|large|hot|massive)"
+    r"(?: away)? (?:is|are))\s+(?:the\s+)?(?P<name>[^?.!,;]{2,60})",
+    re.I,
+)
+_APP_TERMS = {
+    "spherex",
+    "spherex explorer",
+    "jpl",
+    "irsa",
+    "nasa",
+    "ipac",
+    "qr2",
+    "qr3",
+    "psf",
+    "lvf",
+    "planet x",
+    "planet nine",
+    "planet 9",
+    "sesame",
+    "simbad",
+    "horizons",
+    "sbident",
+    "mjy/sr",
+    "ab magnitude",
+    "ra",
+    "dec",
+    "a",
+    "b",
+    "e1",
+    "k1",
+}
+_TRAILING = re.compile(
+    r"\s+(?:in|with|on|using|from|and|for|seen|as|at|to|by|according|compared)\b.*$", re.I
+)
+
+
+def named_object(question: str) -> str | None:
+    """The object a question names, if any: "show me M31", "tell me about the Orion Nebula"."""
+    for pattern, proper in ((_NAME, False), (_ABOUT, True)):
+        m = pattern.search(question)
+        if not m:
+            continue
+        name = _TRAILING.sub("", m.group("name").strip()).strip().rstrip(".").strip()
+        if not name or _NOT_A_NAME.match(name) or len(name.split()) > 5:
+            continue
+        if name.lower() in _APP_TERMS or name.lower().startswith(("spherex", "this ", "that ")):
+            continue
+        if proper and not re.match(r"[A-Z0-9]", name):
+            continue
+        return name
+    return None
+
+
+def question_position(question: str) -> tuple[float, float, str] | None:
+    """Coordinates written in a question, as (RA, Dec, a label)."""
+    for m in _COORDS.finditer(question):
+        try:
+            pos = coords.parse(m.group("c"))
+        except ExplorerError:
+            continue
+        if pos is not None:
+            return pos.ra, pos.dec, f"RA {pos.ra:.4f}°, Dec {pos.dec:+.4f}°"
+    return None
+
+
 _COORDS = re.compile(
     r"(?P<c>\d{1,3}(?:[.:\s]\d+){0,2}\.?\d*[\s,]+[+\-−]?\d{1,2}(?:[.:\s]\d+){0,2}\.?\d*)"
 )
@@ -572,46 +664,30 @@ def add_cases(ev: Evidence, svc: Services, question: str, source: Source) -> Non
 
 
 async def add_lookup(ev: Evidence, svc: Services, question: str, source: Source) -> None:
-    """A position or a named object the visitor wants to see: resolve it and offer a link."""
-    for m in _COORDS.finditer(question):
-        try:
-            pos = coords.parse(m.group("c"))
-        except ExplorerError:
-            continue
-        if pos is not None:
-            info = describe(pos.ra, pos.dec)
-            ev.add(
-                "lookup",
-                "Position in your question",
-                f"RA {info['raHms']}, Dec {info['decDms']}, in {info['constellation']}.",
-                "Coordinates",
-            )
-            params = {"ra": f"{pos.ra:.6f}", "dec": f"{pos.dec:.6f}"}
-            if source == "snapshot":
-                params["source"] = "snapshot"
-            ev.actions.append(
-                Action(
-                    f"Explore RA {pos.ra:.4f}°, Dec {pos.dec:+.4f}°",
-                    "/explore?" + urlencode(params),
-                )
-            )
-            return
-    named = _NAME.search(question)
-    if not named:
+    """A position or a named object in the question: where it is, what the catalogues say about
+    it, how often SPHEREx saw it, and a link to explore it. Reads the cache only; ``live.gather``
+    fetches what is missing before the evidence is built."""
+    position = question_position(question)
+    if position is not None:
+        ra, dec, label = position
+        info = describe(ra, dec)
+        ev.add(
+            "lookup",
+            "Position in your question",
+            f"RA {info['raHms']}, Dec {info['decDms']}, in {info['constellation']}.",
+            "Coordinates",
+        )
+        _add_catalogue(ev, svc, ra, dec, "Catalogued at that position", source)
+        _add_coverage(ev, svc, ra, dec, label, source)
+        params = {"ra": f"{ra:.6f}", "dec": f"{dec:.6f}"}
+        if source == "snapshot":
+            params["source"] = "snapshot"
+        ev.actions.append(Action(f"Explore {label}", "/explore?" + urlencode(params)))
         return
-    name = named.group("name").strip().rstrip(".")
-    name = re.sub(r"\s+(in|with|on|using|from)\s+spherex.*$", "", name, flags=re.I).strip()
-    if _NOT_A_NAME.match(name) or len(name.split()) > 5:
+    name = named_object(question)
+    if name is None:
         return
-    cached = svc.store.peek("resolve", resolve_key(name), source)
-    hit: dict[str, Any] | None = cached
-    if hit is None and source == "live":
-        try:
-            r = await sesame.resolve_name(svc.client, svc.settings.sesame_url, name)
-            hit = {"name": r.name, "ra": r.ra, "dec": r.dec, "kind": r.kind}
-        except ExplorerError as exc:
-            ev.add("lookup", f"Looking up “{name}”", exc.message, "CDS Sesame")
-            return
+    hit: dict[str, Any] | None = svc.store.peek("resolve", resolve_key(name), source)
     if hit is None:
         return
     label = hit.get("name") or name
@@ -622,6 +698,10 @@ async def add_lookup(ev: Evidence, svc: Services, question: str, source: Source)
         f"{label}{kind} is at RA {hit['ra']:.4f}°, Dec {hit['dec']:+.4f}° according to CDS Sesame.",
         "CDS Sesame",
     )
+    _add_catalogue(
+        ev, svc, float(hit["ra"]), float(hit["dec"]), f"Catalogue facts — {label}", source
+    )
+    _add_coverage(ev, svc, float(hit["ra"]), float(hit["dec"]), str(label), source)
     ev.actions.append(
         Action(
             f"Explore {label}",
@@ -631,13 +711,139 @@ async def add_lookup(ev: Evidence, svc: Services, question: str, source: Source)
     )
 
 
+def _light_years(ly: float) -> str:
+    if ly >= 1e9:
+        return f"{ly / 1e9:.3g} billion light-years"
+    if ly >= 1e6:
+        return f"{ly / 1e6:.3g} million light-years"
+    return f"{ly:,.0f} light-years" if ly >= 100 else f"{ly:.3g} light-years"
+
+
+def catalogue_text(obj: dict[str, Any]) -> str:
+    """SIMBAD's answer for an object, as one line of evidence."""
+    display = obj.get("name") or obj["id"]
+    parts = [f"{display} is catalogued as {str(obj.get('typeLabel') or obj.get('otype')).lower()}"]
+    if obj.get("name") and obj["name"] != obj["id"]:
+        parts[0] += f" (SIMBAD main identifier {obj['id']})"
+    aliases = [a for a in obj.get("aliases", []) if a not in (obj.get("name"), obj["id"])][:4]
+    if aliases:
+        parts.append("also known as " + ", ".join(aliases))
+    if obj.get("morphology"):
+        parts.append(f"morphological type {obj['morphology']}")
+    if obj.get("spectralType"):
+        parts.append(f"spectral type {obj['spectralType']}")
+    d = obj.get("distance")
+    if d:
+        parts.append(
+            f"distance about {d['value']:g} {d['unit']} ({_light_years(float(d['lightYears']))}, "
+            f"from {d['method']})"
+        )
+    z = obj.get("redshift")
+    if z is not None and z > 0.01:
+        parts.append(f"redshift {z:g}")
+    size = obj.get("size")
+    if size and size.get("majorArcmin"):
+        minor = f" × {size['minorArcmin']:g}′" if size.get("minorArcmin") else ""
+        parts.append(f"about {size['majorArcmin']:g}′{minor} across on the sky")
+    mags = {k: v for k, v in (obj.get("magnitudes") or {}).items() if v is not None}
+    shown = [f"{band} {mags[band]:g}" for band in ("V", "G", "K") if band in mags]
+    if shown:
+        parts.append("magnitudes " + ", ".join(shown))
+    if obj.get("references"):
+        parts.append(f"{obj['references']:,} papers refer to it")
+    sep = obj.get("separationArcsec")
+    if sep is not None and sep > 6:
+        parts.append(f"its catalogued position is {sep:.0f}″ from the one asked about")
+    return "; ".join(parts) + "."
+
+
+def _add_catalogue(
+    ev: Evidence, svc: Services, ra: float, dec: float, title: str, source: Source
+) -> None:
+    obj = svc.store.peek("object", object_key(ra, dec, DEFAULT_OBJECT_RADIUS_DEG), source)
+    if obj:
+        ev.add("lookup", title, catalogue_text(obj), "SIMBAD, CDS, Strasbourg")
+
+
+def _add_coverage(
+    ev: Evidence, svc: Services, ra: float, dec: float, label: str, source: Source
+) -> None:
+    obs = svc.store.peek(
+        "observations", observations_key(ra, dec, svc.settings.wide_collections, None), source
+    )
+    if not obs:
+        return
+    s = obs["summary"]
+    text = (
+        f"{s['frames']} frames in {s['passes']} survey passes between {_date(s['first'])} and "
+        f"{_date(s['last'])} (wide survey, Quick Releases 2 and 3)."
+        if s["frames"]
+        else "no SPHEREx frames in the public Quick Releases cover this position yet."
+    )
+    ev.add("lookup", f"SPHEREx coverage of {label}", text, "IRSA image search")
+
+
 def add_knowledge(ev: Evidence, question: str, limit: int = 3) -> None:
     for entry in knowledge.search(question, limit=limit):
         ev.add("method", entry.title, entry.text, entry.source)
 
 
+_FRESHNESS = (
+    "live",
+    "real time",
+    "real-time",
+    "realtime",
+    "latest",
+    "up to date",
+    "up-to-date",
+    "current",
+    "fresh",
+    "snapshot",
+    "demo",
+    "recorded",
+    "cached",
+    "how old",
+    "how recent",
+    "coming from",
+    "where does the data",
+    "source of the data",
+)
+
+
+def add_data_mode(
+    ev: Evidence, svc: Services, question: str, view: ViewContext | None, source: Source
+) -> None:
+    """Where this answer's data came from, for questions about whether it is live."""
+    q = question.lower()
+    if not any(w in q for w in _FRESHNESS):
+        return
+    retrieved = None
+    if view is not None and view.target is not None:
+        obs = svc.store.peek(
+            "observations",
+            observations_key(view.target.ra, view.target.dec, svc.settings.wide_collections, None),
+            source,
+        )
+        retrieved = obs.get("retrievedAt") if obs else None
+    when = f" on {_date(retrieved)}" if retrieved else ""
+    if source == "snapshot":
+        text = (
+            f"this view uses the demo snapshot: real SPHEREx data recorded from IRSA{when}. "
+            "Nothing is fetched live in this mode; choose live data to query the archive now."
+        )
+    else:
+        listed = f" (this position's images were listed{when})" if when else ""
+        text = (
+            "live: the frames, JPL's predictions and the catalogue facts are fetched from IRSA, "
+            f"JPL and CDS when they are first needed{listed}, and reused from the server's cache "
+            "afterwards."
+        )
+    ev.add("view", "Data mode", text, "This app")
+
+
 async def build(svc: Services, question: str, view: ViewContext | None, source: Source) -> Evidence:
     ev = Evidence()
+    add_data_mode(ev, svc, question, view, source)
     if view is not None:
         add_view(ev, svc, view, source)
     await add_lookup(ev, svc, question, source)

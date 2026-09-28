@@ -48,7 +48,7 @@ async def ask(
     client = request.client.host if request.client else "unknown"
     svc.limiter.check(client, cost=3)
     return StreamingResponse(
-        chat.run(svc, body, source),
+        chat.run(svc, body, source, client),
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )

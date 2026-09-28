@@ -352,6 +352,30 @@ ENTRIES: tuple[Entry, ...] = (
         "docs/research §3",
     ),
     Entry(
+        "live",
+        "Live data and the demo snapshot",
+        (
+            "live",
+            "real time",
+            "real-time",
+            "realtime",
+            "latest",
+            "up to date",
+            "up-to-date",
+            "fresh",
+            "snapshot",
+            "demo",
+            "recorded",
+            "cached",
+            "how old",
+        ),
+        "By default the app is live: every search asks NASA's IRSA archive, JPL and CDS at that moment, and the "
+        "server keeps the answers in a cache. SPHEREx data are not a real-time feed: images reach IRSA within 60 "
+        "days of observation and are released weekly, so the newest are about two months old. The demo snapshot "
+        "is a labelled recording of real data for the Discover cases, used only when the visitor chooses it.",
+        "docs/research §3; README › Live data and demo mode",
+    ),
+    Entry(
         "units",
         "Units",
         (

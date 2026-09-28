@@ -2,6 +2,8 @@
 
 Event stream (``text/event-stream``), in order:
 
+- ``progress``: optional, before ``meta``, while live data the question needs is fetched (a frame,
+  catalogue facts, SPHEREx coverage, JPL's predictions, the moving-source search);
 - ``meta``: the mode (``local-model`` or ``built-in``), the model name, the numbered sources the
   answer may use, and the links (actions) the server built for the question;
 - ``notice``: optional, when the local model is unavailable and a built-in answer follows;
@@ -22,7 +24,7 @@ from pydantic import BaseModel, Field, field_validator
 
 from ..cache import Source
 from ..services import Services
-from . import builtin, grounding
+from . import builtin, grounding, live
 from .evidence import Evidence, ViewContext, build
 from .knowledge import CORE_FACTS
 from .local_model import Health, ModelUnavailable
@@ -87,10 +89,19 @@ def prompt(question: str, history: list[ChatMessage], ev: Evidence) -> list[dict
     return messages
 
 
-async def run(svc: Services, req: ChatRequest, source: Source) -> AsyncIterator[str]:
+async def run(
+    svc: Services, req: ChatRequest, source: Source, client: str = "unknown"
+) -> AsyncIterator[str]:
     question = req.messages[-1].content.strip()
     history = req.messages[:-1]
+    problems: list[str] = []
+    async for update in live.gather(svc, question, req.view, source, client):
+        if update.kind == "progress":
+            yield sse("progress", {"message": update.message})
+        else:
+            problems.append(update.message)
     ev = await build(svc, question, req.view, source)
+    ev.notes.extend(problems)
     # What an answer's numbers may come from: this question's evidence and the standing facts.
     evidence_text = f"{ev.render()}\n{CORE_FACTS}"
     tags = {i.tag for i in ev.items}
