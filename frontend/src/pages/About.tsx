@@ -65,7 +65,7 @@ export function About() {
           <p>
             SPHEREx has no filter wheel. Each of its six detectors sits behind a <strong>linear variable filter</strong>:
             the wavelength changes across the detector. As the telescope steps across the sky, each star passes through
-            many wavelengths, and a week of exposures adds up to a spectrum. That design is why, in this app, every frame
+            many wavelengths, and one to two weeks of exposures add up to a spectrum. That design is why, in this app, every frame
             is labelled with the wavelength that fell on your target.
           </p>
         </Section>
@@ -79,8 +79,8 @@ export function About() {
             </li>
             <li>
               <strong>When?</strong> The IRSA image search (SIA) lists every SPHEREx Level 2 image that contains the point,
-              from Quick Releases 2 and 3. Frames are grouped into survey passes, months apart, and pointings, a few minutes
-              apart.
+              from Quick Releases 2 and 3. They are grouped into survey passes, months apart. Within a pass, SPHEREx points
+              at the spot several times, hours apart, and takes up to four exposures a couple of minutes apart each time.
             </li>
             <li>
               <strong>What changed?</strong> Each frame is cut out, aligned and measured on the server, then shown
