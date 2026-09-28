@@ -1,6 +1,7 @@
 import { createBrowserRouter } from "react-router";
 
 import { About } from "../pages/About";
+import { Ask } from "../pages/Ask";
 import { Discover } from "../pages/Discover";
 import { Explore } from "../pages/Explore";
 import { Landing } from "../pages/Landing";
@@ -16,6 +17,7 @@ export const routes = [
       { index: true, element: <Landing /> },
       { path: "explore", element: <Explore /> },
       { path: "discover", element: <Discover /> },
+      { path: "ask", element: <Ask /> },
       { path: "about", element: <About /> },
       { path: "*", element: <NotFound /> },
     ],

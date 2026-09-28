@@ -20,3 +20,19 @@ test("the viewer works on a phone", async ({ page }) => {
   await next.click();
   await expect(page.getByText(/^11 \/ 19/)).toBeVisible();
 });
+
+test("Ask works on a phone", async ({ page }) => {
+  await page.goto("/about");
+  await page.getByRole("button", { name: "Open menu" }).click();
+  await page.getByRole("link", { name: "Ask", exact: true }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Ask about the sky" })).toBeVisible();
+  // The question box sits at the bottom of the screen, within reach of a thumb.
+  const box = await page.getByRole("textbox", { name: "Your question" }).boundingBox();
+  const height = page.viewportSize()!.height;
+  expect(box!.y + box!.height).toBeGreaterThan(height * 0.8);
+  expect(box!.y + box!.height).toBeLessThanOrEqual(height);
+  await page.getByRole("button", { name: "What is SPHEREx?" }).click();
+  await expect(page.locator("article p").filter({ hasText: /SPHEREx/ }).first()).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(page.viewportSize()!.width + 1);
+});
+

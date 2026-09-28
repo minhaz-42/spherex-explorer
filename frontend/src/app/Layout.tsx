@@ -1,21 +1,21 @@
-import { Menu, MessageSquareText, X } from "lucide-react";
-import { type RefObject, useCallback, useRef, useState } from "react";
+import { Menu, X } from "lucide-react";
+import { useState } from "react";
 import { Link, NavLink, Outlet, ScrollRestoration, useLocation } from "react-router";
 
 import { AtlasSky, type SkyMood } from "../components/space/AtlasSky";
 import { ThemeToggle } from "../components/ThemeToggle";
 import { Wordmark } from "../components/Wordmark";
-import { AssistantPanel } from "../features/assistant/AssistantPanel";
 
 const NAV = [
   { to: "/explore", label: "Explore" },
   { to: "/discover", label: "Discover" },
+  { to: "/ask", label: "Ask" },
   { to: "/about", label: "About" },
 ];
 
-/** The viewer compares faint changes between frames, so nothing moves behind it. */
+/** The viewer compares faint changes between frames, and Ask is for reading, so nothing moves behind them. */
 function skyMood(pathname: string): SkyMood | null {
-  if (pathname.startsWith("/explore")) return null;
+  if (pathname.startsWith("/explore") || pathname.startsWith("/ask")) return null;
   return pathname === "/" ? "lively" : "calm";
 }
 
@@ -25,32 +25,7 @@ function navClass(isActive: boolean): string {
   }`;
 }
 
-function AskButton({ open, onClick, buttonRef }: { open: boolean; onClick: () => void; buttonRef: RefObject<HTMLButtonElement | null> }) {
-  return (
-    <button
-      ref={buttonRef}
-      type="button"
-      className={`btn btn-ghost gap-2 px-3 max-sm:w-10 max-sm:px-0 ${open ? "bg-hover text-text" : ""}`}
-      aria-label="Ask"
-      aria-expanded={open}
-      aria-controls="assistant"
-      onClick={onClick}
-    >
-      <MessageSquareText size={18} aria-hidden />
-      <span className="hidden sm:inline">Ask</span>
-    </button>
-  );
-}
-
-function Header({
-  askOpen,
-  onAsk,
-  askRef,
-}: {
-  askOpen: boolean;
-  onAsk: () => void;
-  askRef: RefObject<HTMLButtonElement | null>;
-}) {
+function Header() {
   const [open, setOpen] = useState(false);
 
   return (
@@ -82,7 +57,6 @@ function Header({
           </ul>
         </nav>
         <span aria-hidden="true" className="mx-2 hidden h-5 w-px bg-rule sm:block" />
-        <AskButton open={askOpen} onClick={onAsk} buttonRef={askRef} />
         <ThemeToggle />
         <button
           type="button"
@@ -194,12 +168,8 @@ function Footer() {
 export function Layout() {
   const { pathname } = useLocation();
   const mood = skyMood(pathname);
-  const [askOpen, setAskOpen] = useState(false);
-  const askRef = useRef<HTMLButtonElement>(null);
-  const closeAsk = useCallback(() => {
-    setAskOpen(false);
-    askRef.current?.focus();
-  }, []);
+  // The Ask page is a full-height conversation, with its own composer where a footer would be.
+  const chat = pathname.startsWith("/ask");
 
   return (
     <div className="relative isolate flex min-h-dvh flex-col">
@@ -210,12 +180,11 @@ export function Layout() {
       >
         Skip to content
       </a>
-      <Header askOpen={askOpen} onAsk={() => setAskOpen((v) => !v)} askRef={askRef} />
+      <Header />
       <main id="main" className="flex flex-1 flex-col">
         <Outlet />
       </main>
-      <Footer />
-      <AssistantPanel open={askOpen} onClose={closeAsk} />
+      {chat ? null : <Footer />}
       <ScrollRestoration />
     </div>
   );

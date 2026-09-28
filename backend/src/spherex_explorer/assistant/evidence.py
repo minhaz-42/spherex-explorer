@@ -42,7 +42,7 @@ class ViewTarget(BaseModel):
 class ViewContext(BaseModel):
     """What the visitor has on screen. Identifiers only; the server looks up every value."""
 
-    page: Literal["landing", "explore", "discover", "about", "other"] = "other"
+    page: Literal["landing", "explore", "discover", "about", "ask", "other"] = "other"
     target: ViewTarget | None = None
     frameKey: str | None = Field(default=None, max_length=200)
     referenceKey: str | None = Field(default=None, max_length=200)

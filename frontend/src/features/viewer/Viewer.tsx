@@ -1,5 +1,6 @@
-import { AlertTriangle, ChevronRight, LocateFixed, Minus, Plus, RefreshCw } from "lucide-react";
+import { AlertTriangle, ChevronRight, LocateFixed, MessageSquareText, Minus, Plus, RefreshCw } from "lucide-react";
 import { type KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "react-router";
 
 import type { DataSource } from "../../lib/api";
 import { ApiError } from "../../lib/api";
@@ -95,13 +96,27 @@ export function Viewer({ observations, target, source, initial, onStateChange }:
     onStateChange?.({ spec, frame: frameId, reference: refId, compare, fov });
   }, [spec, frameId, refId, compare, fov, playing, onStateChange]);
 
-  // Tell the assistant what is on screen: identifiers only, the server looks up every value.
+  // Tell the Ask page what is on screen: identifiers only, the server looks up every value. The
+  // last view is kept after the viewer closes, so the visitor can ask about it there.
   const sequenceKeys = useMemo(
     () => (sequence.length <= MAX_SEQUENCE_KEYS ? sequence.map((f) => f.key) : []),
     [sequence],
   );
   const frameKey = frame?.key ?? null;
   const refKey = refFrame?.key ?? null;
+  const viewHref = useMemo(() => {
+    const p = new URLSearchParams({ ra: target.ra.toFixed(6), dec: target.dec.toFixed(6), name: target.label });
+    p.set("seq", spec.mode);
+    p.set("det", String(spec.detector));
+    if (spec.mode === "pass") p.set("pass", String(spec.passIndex));
+    else if (spec.wavelengthUm != null) p.set("wl", spec.wavelengthUm.toFixed(4));
+    if (frameId) p.set("f", frameId);
+    if (refId) p.set("fa", refId);
+    p.set("cmp", compare);
+    p.set("fov", String(fov));
+    if (source === "snapshot") p.set("source", "snapshot");
+    return `/explore?${p.toString()}`;
+  }, [target.ra, target.dec, target.label, spec, frameId, refId, compare, fov, source]);
   useEffect(() => {
     publishView({
       source,
@@ -114,9 +129,10 @@ export function Viewer({ observations, target, source, initial, onStateChange }:
       sequenceKeys,
       frameIndex: cur,
       frameCount: count,
+      detector: spec.detector,
+      href: viewHref,
     });
-  }, [source, target.ra, target.dec, target.label, frameKey, refKey, compare, fov, spec.mode, sequenceKeys, cur, count]);
-  useEffect(() => () => publishView(null), []);
+  }, [source, target.ra, target.dec, target.label, frameKey, refKey, compare, fov, spec.mode, spec.detector, sequenceKeys, cur, count, viewHref]);
 
   // One stretch for the whole sequence, taken from the reference frame (or the first to arrive).
   const stretchSource = A ?? B;
@@ -329,16 +345,21 @@ export function Viewer({ observations, target, source, initial, onStateChange }:
               </button>
             ))}
           </div>
-          <div className="flex items-center gap-1" role="group" aria-label="Zoom">
-            <button type="button" className="btn btn-ghost btn-sm btn-icon" aria-label="Zoom out" onClick={() => setView((v) => ({ ...v, zoom: Math.max(1, v.zoom / 1.5) }))}>
-              <Minus size={16} aria-hidden />
-            </button>
-            <button type="button" className="btn btn-ghost btn-sm btn-icon" aria-label="Fit to view" onClick={() => setView(fitView(size, size))}>
-              <LocateFixed size={16} aria-hidden />
-            </button>
-            <button type="button" className="btn btn-ghost btn-sm btn-icon" aria-label="Zoom in" onClick={() => setView((v) => ({ ...v, zoom: Math.min(12, v.zoom * 1.5) }))}>
-              <Plus size={16} aria-hidden />
-            </button>
+          <div className="flex items-center gap-3">
+            <Link to="/ask" className="btn btn-secondary btn-sm">
+              <MessageSquareText size={15} aria-hidden /> Ask about this view
+            </Link>
+            <div className="flex items-center gap-1" role="group" aria-label="Zoom">
+              <button type="button" className="btn btn-ghost btn-sm btn-icon" aria-label="Zoom out" onClick={() => setView((v) => ({ ...v, zoom: Math.max(1, v.zoom / 1.5) }))}>
+                <Minus size={16} aria-hidden />
+              </button>
+              <button type="button" className="btn btn-ghost btn-sm btn-icon" aria-label="Fit to view" onClick={() => setView(fitView(size, size))}>
+                <LocateFixed size={16} aria-hidden />
+              </button>
+              <button type="button" className="btn btn-ghost btn-sm btn-icon" aria-label="Zoom in" onClick={() => setView((v) => ({ ...v, zoom: Math.min(12, v.zoom * 1.5) }))}>
+                <Plus size={16} aria-hidden />
+              </button>
+            </div>
           </div>
         </div>
 

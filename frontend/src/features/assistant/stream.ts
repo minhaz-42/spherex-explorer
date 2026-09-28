@@ -4,7 +4,7 @@ import { ApiError, buildUrl, type DataSource } from "../../lib/api";
 import type { ViewContext } from "./viewContext";
 
 export type AssistantMode = "local-model" | "built-in";
-export type Page = "landing" | "explore" | "discover" | "about" | "other";
+export type Page = "landing" | "explore" | "discover" | "about" | "ask" | "other";
 
 export interface EvidenceSource {
   tag: string;
@@ -114,11 +114,11 @@ function dispatch({ event, data }: RawEvent, on: ChatHandlers): void {
   }
 }
 
-/** The request's ``view``: the page, plus the viewer's identifiers when a viewer is on screen. */
+/** The request's ``view``: the viewer's identifiers when a view is attached, else just the page. */
 export function viewPayload(page: Page, view: ViewContext | null): Record<string, unknown> {
-  if (!view || page !== "explore") return { page };
+  if (!view) return { page };
   return {
-    page,
+    page: "explore",
     target: { ...view.target, name: view.target.name?.slice(0, 120) ?? null },
     frameKey: view.frameKey,
     referenceKey: view.referenceKey,
@@ -169,7 +169,7 @@ export async function streamChat(
   }
   if (!response.ok || !response.body) {
     let code = "http_error";
-    let message = `The server answered with HTTP ${response.status}.`;
+    let message = unavailable(response.status);
     try {
       const body = (await response.json()) as { error?: { code?: string; message?: string } };
       code = body.error?.code ?? code;
@@ -193,15 +193,23 @@ export async function streamChat(
 }
 
 export async function fetchStatus(signal?: AbortSignal): Promise<AssistantStatus> {
-  const response = await fetch(buildUrl("/assistant/status"), { signal, headers: { Accept: "application/json" } });
-  if (!response.ok) throw new ApiError(response.status, "http_error", `The server answered with HTTP ${response.status}.`);
+  let response: Response;
+  try {
+    response = await fetch(buildUrl("/assistant/status"), { signal, headers: { Accept: "application/json" } });
+  } catch (err) {
+    if (isAbort(err)) throw err;
+    throw new ApiError(0, "network_error", "Could not reach the SPHEREx Explorer server. Check your connection.");
+  }
+  if (!response.ok) throw new ApiError(response.status, "http_error", unavailable(response.status));
   return (await response.json()) as AssistantStatus;
 }
 
-export function pageOf(pathname: string): Page {
-  if (pathname === "/") return "landing";
-  if (pathname.startsWith("/explore")) return "explore";
-  if (pathname.startsWith("/discover")) return "discover";
-  if (pathname.startsWith("/about")) return "about";
-  return "other";
+/** What to tell the visitor when the assistant's routes answer with an error status. */
+export function unavailable(status: number): string {
+  if (status === 404) {
+    return "The assistant is not available on this server. If you run the app yourself, restart its API server so it loads the current version.";
+  }
+  if (status === 429) return "Too many questions in a short time. Wait a few seconds and try again.";
+  if (status >= 500) return "The server had a problem answering. Try again in a moment.";
+  return `The server answered with HTTP ${status}.`;
 }
