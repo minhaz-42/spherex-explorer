@@ -29,6 +29,8 @@ export interface Turn {
   about: string | null;
   answer: string;
   status: "gathering" | "writing" | "done" | "error" | "stopped";
+  /** What the server is fetching for this answer, while it does. */
+  progress?: string | null;
   meta: ChatMeta | null;
   notice: string | null;
   error: string | null;
@@ -164,7 +166,8 @@ async function run(
       viewPayload("ask", view),
       source,
       {
-        meta: (meta) => set({ meta, mode: meta.mode, status: "writing" }),
+        progress: (message) => set({ progress: message }),
+        meta: (meta) => set({ meta, mode: meta.mode, status: "writing", progress: null }),
         notice: (message) => set({ notice: message }),
         delta: (piece) => set((t) => ({ answer: t.answer + piece })),
         done: (done) => set({ status: "done", grounding: done.grounding, mode: done.mode }, true),
@@ -191,6 +194,16 @@ export function regenerate(chatId: string, view: ViewContext | null, source: Dat
   if (!chat || !last || isBusy()) return;
   emit(chats.map((c) => (c.id === chatId ? { ...c, turns: c.turns.slice(0, -1) } : c)));
   ask(chatId, last.question, view, source);
+}
+
+/** Give a chat a name of the visitor's choosing. */
+export function renameChat(chatId: string, title: string): void {
+  const name = title.replace(/\s+/g, " ").trim().slice(0, TITLE_CHARS);
+  if (!name) return;
+  emit(
+    chats.map((c) => (c.id === chatId ? { ...c, title: name } : c)),
+    true,
+  );
 }
 
 export function stop(): void {

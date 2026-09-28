@@ -54,6 +54,8 @@ export interface AssistantStatus {
 }
 
 export interface ChatHandlers {
+  /** Live data the question needs is being fetched: a frame, catalogue facts, JPL, the search. */
+  progress: (message: string) => void;
   meta: (meta: ChatMeta) => void;
   notice: (message: string) => void;
   delta: (text: string) => void;
@@ -96,6 +98,9 @@ function dispatch({ event, data }: RawEvent, on: ChatHandlers): void {
     return;
   }
   switch (event) {
+    case "progress":
+      on.progress(String(body.message ?? ""));
+      break;
     case "meta":
       on.meta(body as unknown as ChatMeta);
       break;

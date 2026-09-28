@@ -228,11 +228,70 @@ describe("Ask, the chat app", () => {
     reloadChats();
     expect(within(sidebar()).getByRole("link", { name: "What is SPHEREx?" })).toBeInTheDocument();
 
-    await userEvent.click(within(sidebar()).getByRole("button", { name: "Delete “What is SPHEREx?”" }));
+    await userEvent.click(within(sidebar()).getByRole("button", { name: "More for “What is SPHEREx?”" }));
+    await userEvent.click(screen.getByRole("menuitem", { name: "Delete" }));
     await userEvent.click(within(sidebar()).getByRole("button", { name: "Delete" }));
     expect(within(sidebar()).queryByRole("link", { name: "What is SPHEREx?" })).not.toBeInTheDocument();
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)!)).toEqual([]);
     expect(await screen.findByRole("heading", { name: "What would you like to know?" })).toBeInTheDocument();
+  });
+
+  it("renames and finds chats", async () => {
+    mockServer({ chat: () => streamed(answer("An answer [K1].")) });
+    renderAt("/ask");
+    await userEvent.type(question(), "What is SPHEREx?{Enter}");
+    expect(await screen.findByText(/An answer/)).toBeInTheDocument();
+    await userEvent.click(within(sidebar()).getByRole("button", { name: "More for “What is SPHEREx?”" }));
+    await userEvent.click(screen.getByRole("menuitem", { name: "Rename" }));
+    const field = within(sidebar()).getByRole("textbox", { name: "New name for “What is SPHEREx?”" });
+    await userEvent.clear(field);
+    await userEvent.type(field, "About the telescope{Enter}");
+    expect(within(sidebar()).getByRole("link", { name: "About the telescope" })).toBeInTheDocument();
+    expect((JSON.parse(localStorage.getItem(STORAGE_KEY)!) as Chat[])[0]!.title).toBe("About the telescope");
+
+    const search = screen.getAllByRole("searchbox", { name: "Search chats" })[0]!;
+    await userEvent.type(search, "telescope");
+    expect(within(sidebar()).getByRole("link", { name: "About the telescope" })).toBeInTheDocument();
+    await userEvent.clear(search);
+    await userEvent.type(search, "nebula");
+    expect(within(sidebar()).getByText("No chat matches “nebula”.")).toBeInTheDocument();
+  });
+
+  it("says what live data it is fetching before it answers", async () => {
+    let release: () => void = () => undefined;
+    const gate = new Promise<void>((r) => (release = r));
+    mockServer({
+      chat: () => {
+        const head = sse([["progress", { message: "Asking JPL which catalogued asteroids and comets crossed this field…" }]]);
+        const rest = answer("Iris moved [E1].");
+        const enc = new TextEncoder();
+        let step = 0;
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({}),
+          body: {
+            getReader: () => ({
+              read: async () => {
+                step += 1;
+                if (step === 1) return { value: enc.encode(head), done: false };
+                if (step === 2) {
+                  await gate;
+                  return { value: enc.encode(rest), done: false };
+                }
+                return { value: undefined, done: true };
+              },
+            }),
+          },
+        };
+      },
+    });
+    renderAt("/ask");
+    await userEvent.type(question(), "Did anything move here?{Enter}");
+    expect(await screen.findByText("Asking JPL which catalogued asteroids and comets crossed this field…")).toBeInTheDocument();
+    release();
+    expect(await screen.findByText(/Iris moved/)).toBeInTheDocument();
+    expect(screen.queryByText(/Asking JPL/)).not.toBeInTheDocument();
   });
 
   it("starts new chats and keeps the old ones", async () => {

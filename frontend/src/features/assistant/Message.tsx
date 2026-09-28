@@ -73,9 +73,11 @@ export function AssistantMessage({
             )}
           </div>
         ) : working ? (
-          <p className="flex items-center gap-2 text-[0.975rem] text-muted">
-            <Dots />
-            {turn.status === "gathering" ? "Gathering the evidence" : "Writing"}
+          <p className="flex items-start gap-2.5 text-[0.975rem] text-muted">
+            <span className="mt-[0.6em]">
+              <Dots />
+            </span>
+            <span>{turn.progress ?? (turn.status === "gathering" ? "Gathering the evidence" : "Writing")}</span>
           </p>
         ) : null}
 
