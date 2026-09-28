@@ -238,3 +238,15 @@ def test_display_fill_closes_large_holes() -> None:
     assert np.isfinite(filled[holes]).all()
     assert filled[holes] == pytest.approx(5.0, abs=1e-4)
     assert (filled[~holes] == 5.0).all()  # real pixels are untouched
+
+
+def test_a_mostly_flagged_aperture_is_not_measured() -> None:
+    # QR3 flags a saturated galaxy core as BLOOM across the whole aperture; summing the few
+    # unflagged pixels would report a bright source as zero.
+    image = np.full((30, 30), 0.3, dtype=np.float32) + gaussian_star((30, 30), 15, 15, 50.0)
+    usable = np.ones((30, 30), dtype=bool)
+    usable[12:19, 12:19] = False
+    phot = aperture_photometry(image, None, usable, np.zeros_like(usable), 15, 15, PIXEL_SR)
+    assert phot.flux_ujy is None
+    assert not phot.reliable
+    assert "not measurable" in phot.reasons[0]

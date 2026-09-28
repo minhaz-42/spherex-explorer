@@ -56,6 +56,7 @@ export function Viewer({ observations, target, source, initial, onStateChange }:
   const [speed, setSpeed] = useState(1);
   const [stretchKind, setStretchKind] = useState<StretchKind>("asinh");
   const [contrast, setContrast] = useState(1);
+  const [showFlagged, setShowFlagged] = useState(false);
   const [showA, setShowA] = useState(false);
   const [hover, setHover] = useState<{ x: number; y: number } | null>(null);
   const [known, setKnown] = useState<KnownObjects | undefined>(undefined);
@@ -101,14 +102,15 @@ export function Viewer({ observations, target, source, initial, onStateChange }:
     [stretchKey, stretchKind, contrast],
   );
   const noData = tokenRgb("--bg-image", [20, 22, 38]);
+  const flagTint = showFlagged ? tokenRgb("--accent-on-image", [255, 179, 92]) : null;
 
   const render = (img: DecodedCutout | undefined): Rendered | null =>
-    img && stretch ? { rgba: renderGray(img, stretch, { noData, flagged: null }), width: img.width, height: img.height } : null;
+    img && stretch ? { rgba: renderGray(img, stretch, { noData, flagged: flagTint }), width: img.width, height: img.height } : null;
 
   const compat = frame && refFrame ? compatibility(refFrame, frame) : null;
 
-  const renderedB = useMemo(() => render(B), [B, stretch]); // eslint-disable-line react-hooks/exhaustive-deps
-  const renderedA = useMemo(() => render(A), [A, stretch]); // eslint-disable-line react-hooks/exhaustive-deps
+  const renderedB = useMemo(() => render(B), [B, stretch, showFlagged]); // eslint-disable-line react-hooks/exhaustive-deps
+  const renderedA = useMemo(() => render(A), [A, stretch, showFlagged]); // eslint-disable-line react-hooks/exhaustive-deps
   const renderedDiff = useMemo(() => {
     if (compare !== "diff" || !A || !B || !compat?.ok || A.width !== B.width) return null;
     const ra = A.payload.background.rmsMJySr ?? 0.01;
@@ -552,6 +554,10 @@ export function Viewer({ observations, target, source, initial, onStateChange }:
               onChange={(e) => setContrast(2 ** Number(e.target.value))}
               className="mt-2 w-full accent-[var(--accent)]"
             />
+          </label>
+          <label className="flex items-center gap-2 text-sm text-muted">
+            <input type="checkbox" checked={showFlagged} onChange={(e) => setShowFlagged(e.target.checked)} className="accent-[var(--accent)]" />
+            Show flagged pixels (filled in for display, not measured)
           </label>
           <p className="text-xs text-faint">
             Every frame uses the same stretch, taken from the reference frame, so brightness changes you see are in the data.

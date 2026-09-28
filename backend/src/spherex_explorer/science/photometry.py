@@ -20,6 +20,8 @@ ARCSEC2_TO_SR = (math.pi / (180 * 3600)) ** 2
 AB_ZERO_JY = 3631.0
 
 APERTURE_RADIUS_PX = 2.0
+# Below this fraction of usable aperture weight, no brightness is reported.
+MIN_USABLE_APERTURE = 0.5
 ANNULUS_PX = (5.0, 9.0)
 
 
@@ -145,6 +147,15 @@ def aperture_photometry(
 
     good = in_aperture & usable & np.isfinite(image)
     masked = int((in_aperture & ~usable).sum())
+    # A sum over the few unflagged pixels of a mostly flagged aperture is not a measurement: it
+    # would report a bright source as nearly zero. QR3 flags saturated cores as BLOOM, for one.
+    usable_weight = float(np.sum(np.where(good, weights, 0.0)))
+    if usable_weight < MIN_USABLE_APERTURE * float(weights.sum()):
+        return _no_measurement(
+            aperture_radius_arcsec,
+            f"{masked} of the aperture's pixels are flagged, so the target is not measurable "
+            "in this frame.",
+        )
     overflowed = bool((in_aperture & overflow).any())
     w = np.where(good, weights, 0.0)
     # Select rather than multiply: 0 × NaN is NaN, and masked pixels may hold NaN.

@@ -57,10 +57,12 @@ function transfer(s: Stretch): (v: number) => number {
 
 export interface Palette {
   noData: [number, number, number];
-  flagged: [number, number, number] | null; // null: draw the filled value
+  /** Tint mixed into flagged (filled-in) pixels, or null to draw the filled value as it is. */
+  flagged: [number, number, number] | null;
 }
 
 export const DEFAULT_PALETTE: Palette = { noData: [18, 21, 26], flagged: null };
+const FLAG_TINT = 0.55;
 
 /** Grey-scale RGBA pixels, rows flipped so that north (the last row) is at the top. */
 export function renderGray(img: DecodedCutout, stretch: Stretch, palette: Palette = DEFAULT_PALETTE): Uint8ClampedArray {
@@ -80,9 +82,11 @@ export function renderGray(img: DecodedCutout, stretch: Stretch, palette: Palett
         out[o + 1] = palette.noData[1];
         out[o + 2] = palette.noData[2];
       } else if (m & 1 && palette.flagged) {
-        out[o] = palette.flagged[0];
-        out[o + 1] = palette.flagged[1];
-        out[o + 2] = palette.flagged[2];
+        // Blend, so the filled-in structure stays visible under the tint.
+        const g = 255 * Math.min(Math.max(f(v), 0), 1);
+        out[o] = g * (1 - FLAG_TINT) + palette.flagged[0] * FLAG_TINT;
+        out[o + 1] = g * (1 - FLAG_TINT) + palette.flagged[1] * FLAG_TINT;
+        out[o + 2] = g * (1 - FLAG_TINT) + palette.flagged[2] * FLAG_TINT;
       } else {
         const g = Math.round(255 * Math.min(Math.max(f(v), 0), 1));
         out[o] = g;

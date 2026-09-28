@@ -19,6 +19,7 @@ export function FramePanel({ frame, cutout, index, count }: Props) {
   const exact = p?.wavelength.atTargetUm != null;
   const phot = p?.photometry;
   const b = band(frame.detector);
+  const flaggedHere = p ? p.target.flags.filter((f) => p.mask.maskedFlags.includes(f)) : [];
 
   return (
     <section aria-labelledby="frame-title" className="space-y-5">
@@ -42,6 +43,13 @@ export function FramePanel({ frame, cutout, index, count }: Props) {
           {!exact && " Estimated from the image footprint until the pixels load."}
         </p>
       </div>
+
+      {flaggedHere.length > 0 && (
+        <p className="note note-warn">
+          The pixels at the target are flagged {flaggedHere.join(", ")} in this frame. The image there is filled in from
+          its surroundings for display and is not a measurement; do not read a change into it.
+        </p>
+      )}
 
       <div>
         <p className="panel-title">Brightness at the target</p>

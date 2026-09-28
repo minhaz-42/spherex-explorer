@@ -132,6 +132,13 @@ export function Measurements({ mode, sequence, results, current, passFrames, tar
         </p>
       )}
 
+      {mode === "wavelength" && new Set(sequence.map((f) => f.release)).size > 1 && (
+        <p className="note note-warn">
+          These frames come from different data releases ({[...new Set(sequence.map((f) => f.release.toUpperCase()))].join(" and ")}),
+          which were calibrated differently. A small step between releases may be calibration rather than the source.
+        </p>
+      )}
+
       {sequencePoints.points.length === 0 ? (
         <p className="text-sm text-faint">Points appear here as frames load.</p>
       ) : (
