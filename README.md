@@ -127,7 +127,8 @@ frontend/                  Web app (Vite, React, TypeScript, Tailwind CSS)
   src/pages/               Landing, Explore, Discover, About
   src/features/            search, viewer, timeline, wavelength, compare, discover
   src/lib/                 API client and helpers
-  src/styles/index.css     design tokens and base styles
+  src/components/space/    pencil-drawn solar system, sky globe, spectrum and sketches (landing page)
+  src/styles/index.css     design tokens (pencil-on-paper light theme) and base styles
   tests/, e2e/             Vitest and Playwright tests
 data/                      curated Discover cases and the demo snapshot
 docs/                      research, architecture, requirements, methods, limitations, demo guide
