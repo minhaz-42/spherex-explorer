@@ -133,6 +133,16 @@ export function About() {
             those sightings on straight tracks at a constant rate. Results are called candidates and compared with JPL’s
             predictions. On the Iris field it finds Iris within 1.4 arcseconds of JPL’s positions.
           </p>
+          <p>
+            <strong>The Ask assistant.</strong> Questions are answered from evidence the server gathers itself: its own
+            measurements of the frames on screen, the comparison rules, JPL’s predictions, the moving-source search, the
+            Discover cases and short method notes. Your browser only says which target and frames are on screen, never
+            any values. A language model running on the same machine as the server (by default Qwen3 4B, through
+            Ollama) phrases that evidence and cites it by number; it never sees the images. Every number and date in an
+            answer is then looked for in its sources, and anything not found is flagged under the answer. Links in
+            answers are made by the server, not by the model. Without a model, the assistant answers from the same
+            evidence directly and says so.
+          </p>
           <p className="text-sm">
             The full notes, with every service request and check, are in the project’s documentation (
             <code className="mono">docs/scientific-methods.md</code> and <code className="mono">docs/research/</code>).
@@ -166,6 +176,11 @@ export function About() {
               Data come from IRSA and JPL at the moment you ask; when they are unavailable the app says so and shows no
               data rather than substitute data. A clearly labelled demo snapshot of real data can be chosen instead.
             </li>
+            <li>
+              The assistant’s answers are phrased by a small language model and can be wrong: it sometimes links two true
+              facts in a way the evidence does not support. Its numbers, dates and citations are checked, its reasoning
+              is not. The numbered sources under each answer are what the app actually measured.
+            </li>
           </ul>
         </Section>
 
@@ -198,6 +213,11 @@ export function About() {
             There are no accounts, no cookies and no analytics. Your searches are sent to the SPHEREx Explorer server,
             which forwards them to the public services above. The server keeps the address of each visitor in memory
             for a few minutes to limit how fast the archive is queried, and stores nothing about you.
+          </p>
+          <p>
+            Questions to the assistant go to the same server, where the language model runs; they are not sent to an AI
+            company or any other service, except an object name you ask about, which is looked up with CDS Sesame like a
+            search. The conversation exists only in your browser tab and is gone when you close it.
           </p>
           <p>
             <Link to="/explore">Start exploring</Link>
