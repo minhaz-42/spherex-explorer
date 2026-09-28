@@ -14,6 +14,7 @@ import {
   type SequenceSpec,
 } from "../../lib/sequence";
 import { tokenRgb } from "../../lib/theme";
+import { useCoarsePointer } from "../../lib/usePointer";
 import type { Candidates, DecodedCutout, Frame, KnownObjects, Observations } from "../../lib/types";
 import { formatDec, formatRa, gridToSky, skyToGrid } from "../../lib/wcs";
 import { SPEEDS } from "../timeline/speeds";
@@ -59,6 +60,7 @@ export function Viewer({ observations, target, source, initial, onStateChange }:
   const [showFlagged, setShowFlagged] = useState(false);
   const [showA, setShowA] = useState(false);
   const [hover, setHover] = useState<{ x: number; y: number } | null>(null);
+  const touch = useCoarsePointer();
   const [known, setKnown] = useState<KnownObjects | undefined>(undefined);
   const [showKnown, setShowKnown] = useState(true);
   const [moving, setMoving] = useState<Candidates | undefined>(undefined);
@@ -396,6 +398,8 @@ export function Viewer({ observations, target, source, initial, onStateChange }:
                 </>
               )}
             </>
+          ) : touch ? (
+            "Pinch to zoom, drag to pan, double-tap to zoom in."
           ) : (
             "Scroll or pinch to zoom, drag to pan. Hover for coordinates and pixel values."
           )}
@@ -423,7 +427,7 @@ export function Viewer({ observations, target, source, initial, onStateChange }:
           }} />
           <p className="text-xs text-faint">
             {plural(loaded, "frame")} of {count} loaded. Each dot’s height is the wavelength that frame saw at the target;
-            a ring marks frames at the same wavelength as A. Keys: ← → step, space play, R set reference.
+            a ring marks frames at the same wavelength as A.{touch ? "" : " Keys: ← → step, space play, R set reference."}
           </p>
         </div>
 
