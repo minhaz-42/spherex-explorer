@@ -25,20 +25,21 @@ log = logging.getLogger("spherex_explorer")
 
 MAX_BODY = 64 * 1024
 
-CSP = "; ".join(
-    [
-        "default-src 'self'",
-        "img-src 'self' data: blob:",
-        "style-src 'self'",
-        "font-src 'self'",
-        "script-src 'self'",
-        "connect-src 'self'",
-        "object-src 'none'",
-        "base-uri 'self'",
-        "frame-ancestors 'none'",
-        "form-action 'self'",
-    ]
-)
+_CSP_BASE = [
+    "default-src 'self'",
+    "img-src 'self' data: blob:",
+    "style-src 'self'",
+    "font-src 'self'",
+    "script-src 'self'",
+    "connect-src 'self'",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+]
+CSP = "; ".join([*_CSP_BASE, "frame-ancestors 'none'"])
+# Embeds (/embed…) are view-only pages meant for classroom sites, so any page may frame them. The
+# rest of the app can never be framed.
+EMBED_CSP = "; ".join([*_CSP_BASE, "frame-ancestors *"])
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -105,8 +106,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         response.headers.setdefault(
             "Permissions-Policy", "camera=(), microphone=(), geolocation=()"
         )
-        if not request.url.path.startswith("/api/docs"):
-            response.headers.setdefault("Content-Security-Policy", CSP)
+        path = request.url.path
+        if not path.startswith("/api/docs"):
+            response.headers.setdefault(
+                "Content-Security-Policy",
+                EMBED_CSP if path == "/embed" or path.startswith("/embed/") else CSP,
+            )
         return response
 
     @app.exception_handler(ExplorerError)

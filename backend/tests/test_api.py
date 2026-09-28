@@ -285,3 +285,14 @@ async def test_oversized_bodies_are_refused(api: httpx.AsyncClient) -> None:
     huge = {"ra": 10, "dec": 10, "size": 0.1, "keys": ["x" * 1000] * 100}
     response = await api.post("/api/candidates", json=huge)
     assert response.status_code == 413
+
+
+async def test_only_embeds_may_be_framed(api: httpx.AsyncClient) -> None:
+    page = await api.get("/explore")
+    assert "frame-ancestors 'none'" in page.headers["content-security-policy"]
+    for path in ("/embed", "/embed/blink"):
+        embed = await api.get(path)
+        csp = embed.headers["content-security-policy"]
+        assert "frame-ancestors *" in csp and "script-src 'self'" in csp
+    lookalike = await api.get("/embedded")
+    assert "frame-ancestors 'none'" in lookalike.headers["content-security-policy"]
