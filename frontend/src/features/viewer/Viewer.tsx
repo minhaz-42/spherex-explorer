@@ -372,7 +372,7 @@ export function Viewer({ observations, target, source, initial, onStateChange }:
   }
 
   return (
-    <section aria-label={t("viewer")} onKeyDown={onKeyDown} className="grid gap-x-8 gap-y-6 lg:grid-cols-[minmax(0,1fr)_21rem]">
+    <section aria-label={t("viewer")} onKeyDown={onKeyDown} className="grid grid-cols-[minmax(0,1fr)] gap-x-8 gap-y-6 lg:grid-cols-[minmax(0,1fr)_21rem]">
       <div className="min-w-0 space-y-4">
         {/* Toolbar */}
         <div className="flex flex-wrap items-center justify-between gap-3">
