@@ -179,8 +179,13 @@ numbered evidence → a local model phrases it → checks**, never images → mo
 5. **Without a model** (none configured, Ollama not running, or a failure before the first word),
    the assistant answers from the same evidence directly (`assistant/builtin.py`) and says so.
 
-Questions go to this server only; the status route reports whether the model URL is local. The
-conversation lives in the browser tab and is never stored.
+Questions go to this server only; the status route reports whether the model URL is local. Chats
+are kept in the browser's local storage (`spherex-explorer.chats.v1`, at most 50), never on the
+server, and the chat list deletes them one by one or all at once.
+
+The page is a chat app of its own at `/ask` and `/ask/:chatId`, outside the site's header and
+footer. It has a chat list, the conversation and a message box. The chat store lives outside React,
+so an answer keeps streaming while the visitor switches chats or follows one of its links.
 
 ## Caching and limits
 

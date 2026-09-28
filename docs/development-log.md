@@ -2,6 +2,34 @@
 
 Newest entries first. Each entry says what changed, why, and what was verified.
 
+## 2026-09-28 · Ask becomes a chat app; new fonts
+
+**Why.** Asked for by the user: the chat as a proper chat window, like the big chat apps, and
+different fonts across the site.
+
+**Ask.**
+- `/ask` and `/ask/:chatId` are a full-screen app outside the site layout: a chat list grouped by
+  date, the conversation, and a message box with send and stop.
+- Answers carry copy, ask again and a sources panel.
+- Chats are saved in the browser's local storage only, and can be deleted one by one or all at once.
+- The viewer's *Ask about this view* attaches that view to the message box.
+
+**Fonts.** Three families, one job each:
+- Sora for headings and the wordmark;
+- Plus Jakarta Sans for text, controls and numbers, with tabular figures;
+- JetBrains Mono for identifiers.
+
+They were chosen after checking each candidate for the symbols the app prints (µ, ′, ″, ±, °, −)
+and for tabular figures: DM Sans, the first choice, lacks the primes. Display sizes sit a step
+lower, because Sora is wide.
+
+**Found and fixed.** On phones the logo and the assistant's avatar lost their planet. The mark's
+gradients had fixed ids, and the first copy sat in the hidden desktop sidebar. Each mark now has its
+own ids.
+
+**Verified.** Frontend: 18 assistant tests, including reload persistence, deletion, ask again and
+copy. Playwright: 13, including the chat list surviving a reload and the drawer on a phone.
+
 ## 2026-09-28 · Ask gets its own page; the app gets new type
 
 **Why.** Asked for by the user: the chat should be its own page, the problems fixed, and the text

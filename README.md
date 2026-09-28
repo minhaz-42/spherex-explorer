@@ -30,10 +30,12 @@ it, and lets you browse those images by **observation time** and by **wavelength
   - the app's own moving-source search, whose candidates are matched against those predictions.
 - **Discover:** curated cases built from live data by a script, each with its evidence and cautions,
   such as asteroid (7) Iris caught moving past 36 Sextantis.
-- **Ask:** a chat page that answers questions about the view you had open, SPHEREx and the app's
-  methods, from the server's own measurements, JPL's predictions and method notes. A language model
-  running on the same machine phrases the answer and cites numbered sources, and every number and
-  date in it is checked against them. Without a model, it answers from the same evidence directly.
+- **Ask:** a chat app of its own at `/ask`, with a list of chats, the conversation and a message
+  box. It answers questions about the view you had open, SPHEREx and the app's methods, from the
+  server's own measurements, JPL's predictions and method notes. A language model running on the
+  same machine phrases each answer and cites numbered sources, and every number and date in it is
+  checked against them. Without a model, it answers from the same evidence directly. Chats are kept
+  only in the visitor's browser.
 
 Everything shown is real SPHEREx data. The demo snapshot is a labelled recording of real data, used
 only when the visitor chooses it. The app never claims a discovery; see
@@ -203,7 +205,8 @@ frontend/                  Web app (Vite, React, TypeScript, Tailwind CSS)
   src/lib/                 API client and helpers
   src/components/          theme toggle, wordmark; space/: lit solar system, sky globe and
                            figures for the landing page
-  src/styles/index.css     design tokens (observatory-atlas light and dark themes), base styles
+  src/styles/index.css     design tokens (light and dark themes; Sora, Plus Jakarta Sans and
+                           JetBrains Mono), base styles
   tests/, e2e/             Vitest and Playwright tests
 data/cases.json            curated Discover cases (built by backend/scripts/build_cases.py)
 data/snapshot/             demo snapshot: recorded API answers for those cases
