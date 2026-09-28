@@ -1,0 +1,123 @@
+@import "tailwindcss";
+@import "./base.css";
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* ===== Demo B: heat. Large calm type, one warm infrared horizon, and a
+   statement that lights up word by word as you scroll. ===== */
+:root,
+:root[data-theme="light"] {
+  --bg: #eceef0;
+  --panel: #f6f7f8;
+  --ink: #121318;
+  --mute: #6a6d75;
+  --dim: rgb(18 19 24 / 0.2);
+  --line: rgb(18 19 24 / 0.12);
+  --accent: #c9501c;
+  --glow-core: #ffd2a8;
+  --glow-mid: #ff9a5c;
+  --glow-far: rgb(255 120 60 / 0.18);
+  --body: #dfe2e6;
+  --star: #121318;
+  --frame-ink: #121318;
+  --frame-paper: #f6f7f8;
+  --diff-pos: #c9501c;
+  --diff-neg: #2f64c9;
+  --glitch-a: #ff5a1f;
+  --glitch-b: #2f64c9;
+  --pass-1: #121318;
+  --pass-2: #9a9da4;
+  --pass-3: #c9501c;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #09090c; --panel: #111116; --ink: #f2eee8; --mute: #97928b; --dim: rgb(242 238 232 / 0.18);
+    --line: rgb(242 238 232 / 0.1); --accent: #ff8a3d; --glow-core: #ffe0bd; --glow-mid: #ff7a2e;
+    --glow-far: rgb(255 110 40 / 0.22); --body: #060608; --star: #f2eee8; --frame-ink: #fff4e8; --frame-paper: #09090c;
+    --diff-pos: #ff8a3d; --diff-neg: #6f9cff; --glitch-a: #ff6a2a; --glitch-b: #6f9cff;
+    --pass-1: #f2eee8; --pass-2: #6b6760; --pass-3: #ff8a3d;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #09090c; --panel: #111116; --ink: #f2eee8; --mute: #97928b; --dim: rgb(242 238 232 / 0.18);
+  --line: rgb(242 238 232 / 0.1); --accent: #ff8a3d; --glow-core: #ffe0bd; --glow-mid: #ff7a2e;
+  --glow-far: rgb(255 110 40 / 0.22); --body: #060608; --star: #f2eee8; --frame-ink: #fff4e8; --frame-paper: #09090c;
+  --diff-pos: #ff8a3d; --diff-neg: #6f9cff; --glitch-a: #ff6a2a; --glitch-b: #6f9cff;
+  --pass-1: #f2eee8; --pass-2: #6b6760; --pass-3: #ff8a3d;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-panel: var(--panel);
+  --color-ink: var(--ink);
+  --color-mute: var(--mute);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --font-sans: "Geist", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, Menlo, monospace;
+}
+
+@layer components {
+
+
+body { font-family: var(--font-sans); font-size: 16px; line-height: 1.55; }
+
+.big { font-weight: 500; letter-spacing: -0.045em; line-height: 0.98; }
+.h2 { font-weight: 500; letter-spacing: -0.03em; line-height: 1.05; font-size: clamp(2rem, 1.2rem + 3vw, 4rem); }
+.num { font-variant-numeric: tabular-nums; }
+
+/* The horizon: a dark body with a warm rim, rising behind the hero */
+.horizon { position: absolute; left: 50%; top: var(--horizon-top, 76%); width: max(1700px, 190vw); aspect-ratio: 1; transform: translateX(-50%); border-radius: 50%; pointer-events: none; }
+.horizon::before {
+  content: "";
+  position: absolute;
+  inset: -18%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, var(--glow-far) 70%, transparent 100%);
+}
+.horizon::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--bg);
+  box-shadow:
+    0 -1px 0 0 var(--glow-core),
+    0 -6px 18px 0 var(--glow-mid),
+    0 -40px 120px 10px var(--glow-far);
+}
+
+
+.pill { display: inline-flex; align-items: center; gap: 12px; padding: 6px 6px 6px 16px; border-radius: 999px; border: 1px solid var(--line); background: color-mix(in oklab, var(--panel) 60%, transparent); backdrop-filter: blur(8px); font-size: 14px; }
+.pill a { border-radius: 999px; padding: 6px 12px; background: var(--ink); color: var(--bg); text-decoration: none; font-weight: 500; }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; height: 48px; padding: 0 22px; border-radius: 999px; font: 500 15px/1 var(--font-sans); text-decoration: none; cursor: pointer; border: 1px solid transparent; }
+.btn-solid { background: var(--ink); color: var(--bg); }
+.btn-ghost { border-color: var(--line); color: var(--ink); background: transparent; }
+.btn-ghost:hover { border-color: var(--ink); }
+.btn-sm { height: 36px; padding: 0 14px; font-size: 13px; }
+.btn[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+/* Statement, lit word by word by scroll position (b/main.js) */
+.lit .w { color: var(--dim); transition: color 0.25s; }
+.lit .w.on { color: var(--ink); }
+
+.card { border-radius: 20px; background: var(--panel); border: 1px solid var(--line); }
+.stat-rule { border-top: 1px solid var(--line); }
+
+.field { width: 100%; height: 56px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); padding: 0 22px; font: inherit; }
+.field::placeholder { color: var(--mute); }
+
+.milestone::before { content: ""; display: block; width: 9px; height: 9px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 5px color-mix(in oklab, var(--accent) 20%, transparent); margin-bottom: 18px; }
+.milestone.future::before { background: transparent; border: 1.5px solid var(--mute); box-shadow: none; }
+
+.ex-b [data-ex="view-a"], .ex-b [data-ex="view-b"] { border-radius: 14px; }
+.ex-b .ex-view::after { border-color: var(--accent); }
+.ex-b .ex-pass-label { font-size: 12px; color: var(--mute); }
+.ex-b .ex-tick { border-radius: 3px; width: 11px; }
+.ex-b [data-ex="notice"] { border-radius: 14px; padding: 12px 16px; background: color-mix(in oklab, var(--accent) 12%, var(--panel)); font-size: 14px; }
+
+.theme-toggle { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line); display: grid; place-items: center; background: transparent; color: var(--ink); cursor: pointer; }
+.theme-toggle[data-state="dark"] .t-moon, .theme-toggle[data-state="light"] .t-sun { display: none; }
+
+}

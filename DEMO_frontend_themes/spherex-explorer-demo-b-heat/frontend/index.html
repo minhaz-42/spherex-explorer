@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en" class="no-js" data-theme-variant="circle">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>SPHEREx Explorer · Demo B, heat</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌅</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <!-- Sets the theme before first paint, so there's no flash of the wrong one. -->
+  <script>try{var t=localStorage.getItem('spherex-theme');document.documentElement.dataset.theme=t||(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark')}catch(e){document.documentElement.dataset.theme='dark'}</script>
+</head>
+<body>
+  <div data-preloader class="grid place-items-center" data-duration="1000">
+    <div class="grid justify-items-center gap-3">
+      <span class="big text-7xl num" data-preloader-count>000</span>
+      <span class="text-mute text-sm">Loading the sky</span>
+    </div>
+  </div>
+
+  <header data-header class="fixed inset-x-0 top-0 z-50 flex items-center justify-between px-5 md:px-8 pb-3" style="padding-top: calc(env(safe-area-inset-top, 0px) + 14px)">
+    <a href="#top" class="font-medium tracking-tight text-ink no-underline text-[17px]"><span data-glitch>SPHEREx Explorer</span></a>
+    <nav class="flex items-center gap-2" aria-label="Main">
+      <ul class="hidden md:flex gap-1 list-none m-0 p-0 text-[15px]">
+        <li><a class="px-3 py-2 text-ink no-underline" href="#explore" data-roll>Explore</a></li>
+        <li><a class="px-3 py-2 text-ink no-underline" href="#how" data-roll>How it works</a></li>
+        <li><a class="px-3 py-2 text-ink no-underline" href="#releases" data-roll>Releases</a></li>
+        <li><a class="px-3 py-2 text-ink no-underline" href="#discover" data-roll>Discover</a></li>
+      </ul>
+      <button class="theme-toggle" type="button" data-theme-toggle>
+        <svg class="t-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>
+        <svg class="t-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z"/></svg>
+      </button>
+    </nav>
+  </header>
+
+  <main id="top">
+    <!-- HERO: an infrared horizon -->
+    <section class="relative min-h-[100svh] overflow-hidden grid place-items-center px-5 text-center">
+      <canvas class="absolute inset-0 w-full h-full" data-starfield data-density="0.00014" aria-hidden="true"></canvas>
+      <div class="horizon" aria-hidden="true"></div>
+      <div class="relative grid justify-items-center gap-8 -mt-[12vh]">
+        <p class="pill">Quick Release 3 is public <a href="#releases">See what's new</a></p>
+        <h1 class="big text-[clamp(3rem,1rem+8vw,8.5rem)] max-w-[12ch]">
+          <span class="block" data-scramble>The infrared sky,</span>
+          <span class="block" data-scramble>frame by frame.</span>
+        </h1>
+        <p class="text-mute text-lg max-w-[46ch]">Find every SPHEREx image of a place on the sky and step through them by date and wavelength.</p>
+        <div class="flex flex-wrap justify-center gap-3">
+          <a class="btn btn-solid" href="#explore" data-roll>Search the sky</a>
+          <a class="btn btn-ghost" href="#discover" data-roll>Open the demo snapshot</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- STATEMENT, lit on scroll -->
+    <section class="px-5 md:px-8 py-28 md:py-44">
+      <p class="lit h2 max-w-[24ch] md:max-w-[28ch] mx-auto" data-lit>Two pictures of the same star, taken months apart, rarely see the same colour of light. A star that looks brighter may only be seen at a different wavelength. SPHEREx Explorer shows the wavelength on every frame, and only compares like with like.</p>
+    </section>
+
+    <!-- STATS -->
+    <section class="px-5 md:px-8 pb-28 md:pb-40" aria-label="The survey in numbers">
+      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-12 max-w-6xl mx-auto">
+        <div class="stat-rule pt-6"><p class="big text-6xl"><span data-odometer="102">102</span></p><p class="text-mute mt-3">spectral channels</p></div>
+        <div class="stat-rule pt-6"><p class="big text-6xl num">0.75–5.0</p><p class="text-mute mt-3">microns, near to mid infrared</p></div>
+        <div class="stat-rule pt-6"><p class="big text-6xl"><span data-odometer="4">4</span></p><p class="text-mute mt-3">all-sky maps over about two years</p></div>
+        <div class="stat-rule pt-6"><p class="big text-6xl"><span data-odometer="6">6</span></p><p class="text-mute mt-3">detectors, one image each per pointing</p></div>
+      </div>
+    </section>
+
+    <!-- HOW A FRAME GETS HERE: a sequence -->
+    <section id="how" class="px-5 md:px-8 py-28 md:py-40 border-t border-line">
+      <div class="max-w-6xl mx-auto grid lg:grid-cols-[1fr_1.3fr] gap-12">
+        <div class="grid gap-5 content-start lg:sticky lg:top-28 self-start">
+          <h2 class="h2" data-scramble-view>How a frame gets to your screen</h2>
+          <p class="text-mute max-w-md">Every view asks the public archives at request time, through the server's cache. Nothing is invented and nothing outside the recorded snapshot is ever substituted.</p>
+        </div>
+        <ol class="grid gap-4 list-none m-0 p-0">
+          <li class="card p-7 md:p-9 grid gap-3">
+            <span class="text-mute num text-sm">Step 1</span>
+            <h3 class="text-2xl font-medium tracking-tight m-0">Find the images that cover your target</h3>
+            <p class="text-mute m-0">An IVOA SIA2 query to IRSA returns every Wide and Deep Survey image from QR2 and QR3 that overlaps the position.</p>
+          </li>
+          <li class="card p-7 md:p-9 grid gap-3">
+            <span class="text-mute num text-sm">Step 2</span>
+            <h3 class="text-2xl font-medium tracking-tight m-0">Cut out a small region</h3>
+            <p class="text-mute m-0">Each image is 2040 × 2040 pixels per detector, so the app asks the cutout service, or reads byte ranges from the S3 mirror, instead of downloading whole files.</p>
+          </li>
+          <li class="card p-7 md:p-9 grid gap-3">
+            <span class="text-mute num text-sm">Step 3</span>
+            <h3 class="text-2xl font-medium tracking-tight m-0">Read the wavelength at the target</h3>
+            <p class="text-mute m-0">The per-pixel wavelength comes from the image's spectral WCS, so every frame is labelled with what the target was actually seen at.</p>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- EXPLORER -->
+    <section id="explore" class="px-5 md:px-8 py-28 md:py-40 border-t border-line" aria-labelledby="ex-title">
+      <div class="max-w-6xl mx-auto grid grid-cols-[minmax(0,1fr)] gap-10">
+        <div class="grid grid-cols-[minmax(0,1fr)] md:grid-cols-[1fr_auto] gap-6 items-end">
+          <div class="grid gap-4">
+            <h2 id="ex-title" class="h2" data-scramble-view>Try the explorer</h2>
+            <p class="text-mute max-w-lg">This preview uses generated frames so you can feel the controls. The app shows real SPHEREx images for whatever you search.</p>
+          </div>
+          <div class="w-full md:w-[26rem]">
+          <form class="flex gap-2 w-full" role="search" data-search="explore">
+            <label class="sr-only" for="b-q">Object name or coordinates</label>
+            <input id="b-q" class="field" placeholder="M31 or 10.6847 +41.2690" autocomplete="off" />
+            <button class="btn btn-solid" type="submit">Search</button>
+          </form>
+          <p class="search-status" role="status" aria-live="polite"></p>
+        </div>
+        </div>
+
+        <div class="ex-b card p-4 md:p-8 grid grid-cols-[minmax(0,1fr)] gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]" data-explorer tabindex="0" aria-label="Explore preview. Arrow keys step frames, space plays, B sets frame B, 1 to 4 change the compare mode.">
+          <div class="grid gap-4 content-start">
+            <div class="flex flex-wrap gap-2" role="group" aria-label="Compare mode">
+              <button class="btn btn-ghost btn-sm" type="button" data-ex-mode="single">Single</button>
+              <button class="btn btn-ghost btn-sm" type="button" data-ex-mode="blink">Blink</button>
+              <button class="btn btn-ghost btn-sm" type="button" data-ex-mode="side">Side by side</button>
+              <button class="btn btn-ghost btn-sm" type="button" data-ex-mode="difference">Difference</button>
+            </div>
+            <div data-ex="views">
+              <figure class="grid gap-3 m-0">
+                <div class="ex-view"><canvas data-ex="view-a" aria-label="Frame A"></canvas></div>
+                <figcaption class="flex flex-wrap items-baseline gap-x-4 gap-y-1 text-sm">
+                  <span class="flex items-center gap-2 font-medium text-base"><i class="inline-block w-2.5 h-2.5 rounded-full" data-ex="a-swatch"></i><span data-ex="a-lambda"></span></span>
+                  <span class="text-mute" data-ex="a-time"></span>
+                  <span class="text-mute w-full" data-ex="a-meta"></span>
+                  <span class="text-mute" data-ex-only="blink" data-ex="blink-label"></span>
+                </figcaption>
+              </figure>
+              <figure class="grid gap-3 m-0" data-ex-only="side">
+                <div class="ex-view"><canvas data-ex="view-b" aria-label="Frame B"></canvas></div>
+                <figcaption class="flex flex-wrap items-baseline gap-x-4 text-sm">
+                  <span class="flex items-center gap-2 font-medium text-base"><i class="inline-block w-2.5 h-2.5 rounded-full" data-ex="b-swatch"></i><span data-ex="b-lambda"></span></span>
+                  <span class="text-mute" data-ex="b-time"></span>
+                </figcaption>
+              </figure>
+            </div>
+            <p data-ex="notice" role="status" hidden></p>
+          </div>
+          <div class="grid gap-6 content-start">
+            <div class="flex flex-wrap items-center gap-2">
+              <button class="btn btn-ghost btn-sm" type="button" data-ex="prev" aria-label="Previous frame">←</button>
+              <button class="btn btn-solid btn-sm" type="button" data-ex="play">Play</button>
+              <button class="btn btn-ghost btn-sm" type="button" data-ex="next" aria-label="Next frame">→</button>
+              <button class="btn btn-ghost btn-sm num" type="button" data-ex="speed" aria-label="Playback speed">1×</button>
+              <span class="ml-auto text-sm text-mute num" data-ex="count"></span>
+            </div>
+            <div data-ex="timeline" aria-label="Timeline. Click a frame to open it; shift-click to set it as frame B."></div>
+            <div class="flex flex-wrap gap-2">
+              <button class="btn btn-ghost btn-sm" type="button" data-ex="pin">Use as frame B</button>
+              <button class="btn btn-ghost btn-sm" type="button" data-ex="match">Find a frame at the same wavelength</button>
+            </div>
+            <div class="grid gap-3 border-t border-line pt-6">
+              <div class="flex gap-2" role="group" aria-label="Plot">
+                <button class="btn btn-ghost btn-sm" type="button" data-ex-plot="spectrum">Spectrum</button>
+                <button class="btn btn-ghost btn-sm" type="button" data-ex-plot="lightcurve">Light curve</button>
+              </div>
+              <div data-ex="plot"></div>
+              <p class="text-sm text-mute m-0" data-ex="plot-caption"></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RELEASES: a real timeline -->
+    <section id="releases" class="px-5 md:px-8 py-28 md:py-40 border-t border-line" aria-labelledby="rel-title">
+      <div class="max-w-6xl mx-auto grid gap-14">
+        <div class="grid md:grid-cols-2 gap-6 items-end">
+          <h2 id="rel-title" class="h2" data-scramble-view>Two releases, one timeline</h2>
+          <p class="text-mute max-w-md">Quick Releases 2 and 3 are consecutive slices of time, not reprocessings of the same data, so the app queries both. QR3 uses new calibrations, and the SPHEREx team advises caution when combining them.</p>
+        </div>
+        <ol class="grid sm:grid-cols-2 lg:grid-cols-4 gap-10 list-none m-0 p-0">
+          <li class="milestone"><p class="num text-sm text-mute m-0">2025-04-24</p><h3 class="text-xl font-medium mt-2 mb-2">QR2 coverage begins</h3><p class="text-mute text-[15px] m-0">Wide and Deep Survey spectral images.</p></li>
+          <li class="milestone"><p class="num text-sm text-mute m-0">2026-07-20</p><h3 class="text-xl font-medium mt-2 mb-2">QR3 coverage begins</h3><p class="text-mute text-[15px] m-0">Processed with pipeline R7.</p></li>
+          <li class="milestone"><p class="num text-sm text-mute m-0">2026-08-17</p><h3 class="text-xl font-medium mt-2 mb-2">QR3 coverage ends</h3><p class="text-mute text-[15px] m-0">The latest observations in the public archive.</p></li>
+          <li class="milestone"><p class="num text-sm text-mute m-0">2026-09-16</p><h3 class="text-xl font-medium mt-2 mb-2">QR3 released</h3><p class="text-mute text-[15px] m-0">New images reach the browsable directories weekly; search lags about a day.</p></li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- DISCOVER -->
+    <section id="discover" class="px-5 md:px-8 py-28 md:py-40 border-t border-line" aria-labelledby="disc-title">
+      <div class="max-w-6xl mx-auto grid gap-10">
+        <h2 id="disc-title" class="h2" data-scramble-view>Start somewhere interesting</h2>
+        <div class="grid md:grid-cols-3 gap-4">
+          <a href="#explore" class="card p-7 grid gap-10 no-underline text-ink min-h-72 content-between" data-roll-parent>
+            <span class="text-sm text-accent font-medium">Discover case</span>
+            <span class="grid gap-3"><span class="text-2xl font-medium tracking-tight">Asteroid (7) Iris caught moving past 36 Sextantis</span><span class="text-mute">Built from live data, with its evidence and cautions.</span></span>
+            <span class="text-sm font-medium" data-roll>Open the case</span>
+          </a>
+          <a href="#explore" class="card p-7 grid gap-10 no-underline text-ink min-h-72 content-between" data-roll-parent>
+            <span class="text-sm text-mute font-medium">Wide Survey</span>
+            <span class="grid gap-3"><span class="text-2xl font-medium tracking-tight">Andromeda Galaxy, M31</span><span class="text-mute">A few hundred images cover it in QR2 alone.</span></span>
+            <span class="text-sm font-medium" data-roll>Explore M31</span>
+          </a>
+          <a href="#explore" class="card p-7 grid gap-10 no-underline text-ink min-h-72 content-between" data-roll-parent>
+            <span class="text-sm text-mute font-medium">Deep Survey</span>
+            <span class="grid gap-3"><span class="text-2xl font-medium tracking-tight">North ecliptic pole</span><span class="text-mute">Many more visits near the ecliptic poles, so the longest timelines.</span></span>
+            <span class="text-sm font-medium" data-roll>Explore the pole</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="relative overflow-hidden px-5 md:px-8 py-36 md:py-52 text-center border-t border-line">
+      <div class="horizon" style="--horizon-top: 72%" aria-hidden="true"></div>
+      <div class="relative grid justify-items-center gap-8">
+        <h2 class="big text-[clamp(2.6rem,1rem+5vw,6rem)] max-w-[14ch]" data-scramble-view>Pick a point on the sky.</h2>
+        <form class="flex gap-2 w-full max-w-lg" role="search" data-search="explore">
+          <label class="sr-only" for="b-q2">Object name or coordinates</label>
+          <input id="b-q2" class="field" placeholder="Name, decimal, sexagesimal or galactic" autocomplete="off" />
+          <button class="btn btn-solid" type="submit">Search</button>
+        </form>
+        <p class="search-status" role="status" aria-live="polite"></p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="px-5 md:px-8 pt-12 pb-28 border-t border-line">
+    <div class="max-w-6xl mx-auto flex flex-wrap justify-between gap-6 text-sm text-mute">
+      <span>Data from the public SPHEREx archive at IRSA (NASA/IPAC). No account or keys needed.</span>
+      <span>SPHEREx Explorer</span>
+    </div>
+  </footer>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
