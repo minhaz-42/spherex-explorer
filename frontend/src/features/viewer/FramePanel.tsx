@@ -2,7 +2,15 @@ import { ChevronRight, ExternalLink } from "lucide-react";
 
 import { band, describeWavelength } from "../../lib/bands";
 import { formatDate, formatFlux, formatNumber, formatTime, formatWavelength } from "../../lib/format";
+import { defineMessages, useT } from "../../lib/i18n";
 import type { DecodedCutout, Frame } from "../../lib/types";
+import { whereFrom } from "../spacecraft/where";
+import { WhereDisclosure } from "../spacecraft/WhereWasSpherex";
+
+const M = defineMessages({
+  en: { where: "Where was SPHEREx for this frame?" },
+  bn: { where: "এই ফ্রেমের সময় SPHEREx কোথায় ছিল?" },
+});
 
 interface Props {
   frame: Frame;
@@ -13,6 +21,7 @@ interface Props {
 
 /** What the visitor is looking at: when, at what wavelength, and how bright the target was. */
 export function FramePanel({ frame, cutout, index, count }: Props) {
+  const t = useT(M);
   const p = cutout?.payload;
   const wavelength = p?.wavelength.atTargetUm ?? frame.wavelengthUm;
   const bandwidth = p?.wavelength.bandwidthUm ?? frame.bandwidthUm;
@@ -78,6 +87,9 @@ export function FramePanel({ frame, cutout, index, count }: Props) {
           </>
         )}
       </div>
+
+      {/* Stays open while stepping through frames, so the spacecraft can be followed along its orbit. */}
+      <WhereDisclosure where={p ? whereFrom(p, { ra: p.grid.ra, dec: p.grid.dec }) : null} label={t("where")} />
 
       <details className="disclosure">
         <summary>
