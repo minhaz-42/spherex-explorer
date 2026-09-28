@@ -2,6 +2,51 @@
 
 Newest entries first. Each entry says what changed, why, and what was verified.
 
+## 2026-09-28 · Phases 8–9: polish and validation
+
+**Automated checks (all passing).**
+- Backend: 104 unit and API tests, ruff, mypy --strict.
+- Frontend: 35 unit and component tests, tsc, ESLint.
+- End to end: 9 Playwright tests on the demo snapshot, desktop and phone.
+- Live: 3 tests against IRSA/S3, byte ranges bit-identical to IRSA cutouts for QR2 and QR3, and the
+  API end to end on M31.
+
+**Found by inspecting real results, and fixed.**
+- M31's core dropped to zero in a QR3 frame: the whole aperture was flagged BLOOM, and the
+  photometry summed nothing. Photometry now refuses mostly flagged apertures, and the panel warns
+  when the target is flagged.
+- The moving-source search missed Iris, because the pipeline flags bright movers' cores. Detection
+  now runs on the filled display image.
+- A spectrum "peak" that was only the shortest unsaturated wavelength, a brightness quoted where the
+  asteroid was not, and hand-written case summaries that disagreed with the data. The build script
+  now derives these sentences from the data.
+- A saturated star's core rendered as a black hole in the image. The display fill now widens until
+  holes close.
+- Phone: hover and keyboard hints were replaced with touch wording.
+
+**Security review.**
+- Every input is range- or pattern-checked, and archive keys match the Level 2 naming pattern.
+- Every upstream URL is built server-side from configured hosts, so there is no open proxy.
+- XML is parsed with defusedxml, and SPA serving is protected against path traversal.
+- POST bodies are capped at 64 KB, with per-client rate limits and upstream timeouts.
+- A strict CSP was checked in a production build with no violations.
+- No secrets, accounts, cookies or analytics.
+- Behind a proxy, uvicorn needs `--proxy-headers` for the rate limit (README).
+
+**Scientific-claims review.**
+- Every user-facing number is either measured (and reproducible from the snapshot) or cited.
+  Mission facts are from the Explanatory Supplement and Bock et al.; the NEP deep-survey count is
+  from our own SIA query, dated.
+- "Candidate" and "known object" are kept distinct, and no text implies a discovery.
+- Planet X is discussed only as what the app cannot find.
+
+**Known gaps.**
+- The deep survey is available through the API (windowed) but not in the viewer.
+- No brightness-variation Discover case yet: none has been verified at matched wavelengths.
+- Route-level code splitting was reverted because it broke a shell test; the bundle is 165 KB
+  gzipped.
+- The landing page is being redesigned in another session.
+
 ## 2026-09-28 · Phases 1–7: from scaffold to Discover
 
 **Foundation** (`9559473`).
