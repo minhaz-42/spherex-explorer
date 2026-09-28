@@ -259,3 +259,18 @@ async def test_rate_limit_returns_429(settings: Settings, fixtures: Path) -> Non
             ]
         await client.aclose()
     assert 429 in codes
+
+
+async def test_measure_returns_numbers_without_pixels(
+    api: httpx.AsyncClient, settings: Settings
+) -> None:
+    syn = make_level2()
+    with respx.mock:
+        respx.get(settings.s3_url + KEY).mock(side_effect=serve_ranges(syn.raw))
+        response = await api.get("/api/measure", params={"key": KEY, "ra": RA, "dec": DEC})
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert "image" not in body and "mask" not in body
+    assert body["wavelength"]["atTargetUm"] is not None
+    assert body["photometry"]["fluxMicroJy"] is not None
+    assert body["time"]["isoMid"].startswith("2025-12-02")

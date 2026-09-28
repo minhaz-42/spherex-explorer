@@ -7,11 +7,13 @@ from datetime import UTC, datetime
 from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Query, Request
+from pydantic import BaseModel, Field
 
 from .. import __version__
 from ..archive import sia
 from ..archive.frames import group_passes, normalise
 from ..archive.keys import FrameKey
+from ..archive.meta import META_TTL_S, meta_from_header
 from ..cache import cache_key
 from ..errors import InvalidQuery
 from ..resolve import coords, sesame
@@ -19,6 +21,7 @@ from ..resolve.target import deep_field_at, describe
 from ..science.cutout import build_payload, fetch_window
 from ..science.grid import make_grid
 from ..services import Services
+from ..solar_system.known import known_objects
 
 router = APIRouter()
 
@@ -184,7 +187,81 @@ async def cutout(
         window = await fetch_window(svc, frame, grid)
         payload = await asyncio.to_thread(build_payload, frame, grid, window)
         payload["retrievedAt"] = _now()
+        # The header facts the known-object check needs come free with the pixels.
+        await asyncio.to_thread(
+            svc.store.put, "meta", frame.key, meta_from_header(frame, window.header), META_TTL_S
+        )
         return payload
 
     ck = cache_key(frame.key, grid.ra, grid.dec, grid.size_px)
     return await svc.store.get_or_compute("cutout", ck, compute, ttl_s=30 * DAY, source=source)
+
+
+MEASURE_FIELD_DEG = 0.05
+
+
+@router.get("/measure")
+async def measure(
+    request: Request,
+    key: Annotated[str, Query(min_length=20, max_length=200)],
+    ra: RA,
+    dec: DEC,
+    source: Source = "live",
+) -> dict[str, Any]:
+    """Wavelength, time and aperture brightness at ``(ra, dec)`` in one frame, without pixels.
+
+    Reads only a 0.05° window (about 30 rows of the file), so a whole pass of frames across all
+    six detectors can be measured quickly to build up the target's spectrum.
+    """
+    svc = services(request)
+    frame = FrameKey.parse(key)
+    grid = make_grid(ra, dec, MEASURE_FIELD_DEG)
+
+    async def compute() -> dict[str, Any]:
+        svc.limiter.check(_client(request), cost=0.5)
+        window = await fetch_window(svc, frame, grid)
+        payload = await asyncio.to_thread(build_payload, frame, grid, window)
+        return {
+            "key": payload["key"],
+            "obsId": payload["obsId"],
+            "detector": payload["detector"],
+            "release": payload["release"],
+            "time": payload["time"],
+            "wavelength": payload["wavelength"],
+            "target": payload["target"],
+            "photometry": payload["photometry"],
+            "background": payload["background"],
+            "retrievedAt": _now(),
+        }
+
+    ck = cache_key(frame.key, grid.ra, grid.dec)
+    return await svc.store.get_or_compute("measure", ck, compute, ttl_s=30 * DAY, source=source)
+
+
+class KnownObjectsRequest(BaseModel):
+    ra: float = Field(ge=0, lt=360)
+    dec: float = Field(ge=-90, le=90)
+    size: float = Field(ge=0.03, le=0.5, description="Field of view, degrees")
+    keys: list[str] = Field(min_length=1, max_length=60)
+    vmagLimit: float = Field(default=20.0, ge=10, le=22)
+
+
+@router.post("/known-objects")
+async def known(
+    request: Request, body: KnownObjectsRequest, source: Source = "live"
+) -> dict[str, Any]:
+    """Catalogued asteroids and comets that crossed the field, with predicted positions per frame.
+
+    The first request for a field takes about a minute, because JPL integrates orbits.
+    """
+    svc = services(request)
+    keys = sorted({FrameKey.parse(k).key for k in body.keys})
+
+    async def compute() -> dict[str, Any]:
+        svc.limiter.check(_client(request), cost=10)
+        result = await known_objects(svc, body.ra, body.dec, body.size, keys, body.vmagLimit)
+        result["retrievedAt"] = _now()
+        return result
+
+    ck = cache_key(body.ra, body.dec, body.size, keys, body.vmagLimit)
+    return await svc.store.get_or_compute("known", ck, compute, ttl_s=30 * DAY, source=source)

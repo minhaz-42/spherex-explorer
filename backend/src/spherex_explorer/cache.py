@@ -99,6 +99,11 @@ class Store:
         self.snapshot = DiskStore(snapshot_dir, read_only=True)
         self._inflight: dict[str, asyncio.Future[JSON]] = {}
 
+    def put(self, namespace: str, key: str, value: JSON, ttl_s: float) -> None:
+        """Store a value computed elsewhere (for example, header facts found while cutting out)."""
+        self.memory.put(f"{namespace}:{key}", value, ttl_s)
+        self.disk.put(namespace, key, value)
+
     async def get_or_compute(
         self,
         namespace: str,
