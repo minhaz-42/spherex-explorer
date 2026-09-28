@@ -104,3 +104,16 @@ export const PALETTES: Record<ThemeName, CanvasPalette> = {
 export function usePalette(): CanvasPalette {
   return PALETTES[useTheme()];
 }
+
+/**
+ * A canvas font in the page's own typeface, read from the `--font-sans` (or `--font-mono`) token,
+ * so text drawn on canvases follows the type tokens.
+ */
+export function canvasFont(weight: number, sizePx: number, family: "sans" | "mono" = "sans"): string {
+  const fallback = family === "mono" ? "ui-monospace, monospace" : "system-ui, sans-serif";
+  const css =
+    typeof document === "undefined"
+      ? ""
+      : getComputedStyle(document.documentElement).getPropertyValue(`--font-${family}`).trim();
+  return `${weight} ${sizePx}px ${css || fallback}`;
+}
