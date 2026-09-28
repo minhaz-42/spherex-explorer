@@ -1,2 +1,112 @@
-# spherex-explorer
-An interactive web explorer for visualizing how the infrared sky changes across SPHEREx observations over time and wavelength.
+# SPHEREx Explorer
+
+An interactive web explorer for visualizing how the infrared sky changes across SPHEREx observations
+over time and wavelength.
+
+> **Status: early development.** The data-access layer is being prototyped and the app has not been
+> scaffolded yet. The [Getting started](#getting-started) section gets its install and run commands
+> in the same commit that adds them. If something here doesn't match the code, the README is out of
+> date: please fix it in your next commit.
+
+## What the project does
+
+[SPHEREx](https://spherex.caltech.edu/) is a NASA mission that images the whole sky in 102
+narrow spectral channels from 0.75 to 5.0 µm, mapping the entire sky four times over about two years.
+SPHEREx Explorer lets you pick a position on the sky, finds every SPHEREx spectral image that covers
+it, and lets you browse those images by **observation time** and by **wavelength**.
+
+## Data sources
+
+All data comes from the public SPHEREx archive at [IRSA](https://irsa.ipac.caltech.edu/) (NASA/IPAC).
+No account, API key or AWS credentials are needed.
+
+| What | Where | Used for |
+|---|---|---|
+| Image search (IVOA SIA2) | `https://irsa.ipac.caltech.edu/SIA?COLLECTION=…` | Finding the images that cover a sky position |
+| Cutout service | an image's `access_url` + `?center=RA,Dec&size=deg` | Fetching a small region instead of a full image |
+| Cloud mirror (AWS S3) | bucket `nasa-irsa-spherex`, region `us-east-1`, anonymous access | Reading full image files directly |
+| Browsable directories | `https://irsa.ipac.caltech.edu/ibe/data/spherex/qr2/` | Manual inspection and bulk downloads |
+
+SIA2 collections:
+
+- `spherex_qr2`: Wide Survey spectral images (uniform all-sky coverage)
+- `spherex_qr2_deep`: Deep Survey spectral images (many more visits near the ecliptic poles)
+- `spherex_qr2_cal`: calibration files
+
+A few facts about the data that shape the app:
+
+- **One pointing gives six images**, one per detector array (D1–D6). Each detector covers one band:
+
+  | Band | Wavelength (µm) | Resolving power R |
+  |---|---|---|
+  | 1 | 0.75–1.09 | 39 |
+  | 2 | 1.10–1.62 | 41 |
+  | 3 | 1.63–2.41 | 41 |
+  | 4 | 2.42–3.82 | 35 |
+  | 5 | 3.83–4.41 | 112 |
+  | 6 | 4.42–5.00 | 128 |
+
+- **Wavelength varies across each image.** The detectors sit behind linear variable filters, so the
+  wavelength changes along one axis of the array. The per-pixel wavelength comes from the image's
+  spectral WCS (`WCS-WAVE`) rather than a single value in the header.
+- **Images are large multi-extension FITS files** (2040 × 2040 per detector). Prefer cutouts or
+  byte-range reads over downloading whole files.
+- **The archive grows weekly.** New images show up in the browsable directories first; SIA2 lags by
+  about a day. The current public release is Quick Release 2 (QR2).
+
+### Check that you can reach the archive
+
+This query asks for Wide Survey images covering M31. It should return a few hundred rows in about
+10 seconds:
+
+```bash
+curl -s "https://irsa.ipac.caltech.edu/SIA?COLLECTION=spherex_qr2&POS=circle+10.6847+41.2690+0.01&RESPONSEFORMAT=CSV" \
+  -o m31.csv && wc -l m31.csv
+```
+
+The columns the app relies on are `access_url` (on-prem file URL), `cloud_access` (S3 location),
+`t_min` (observation start, MJD), `em_min`/`em_max` (wavelength range, metres),
+`energy_bandpassname` and `obs_id`.
+
+## Getting started
+
+Prerequisites: `git` and a GitHub account with access to this repository (SSH key added).
+
+```bash
+git clone git@github.com:minhaz-42/spherex-explorer.git
+cd spherex-explorer
+```
+
+_Install and run commands are added here when the app is scaffolded._
+
+## Working on the project
+
+- **Branch:** everyone works on `main` for now. Run `git pull --rebase` before you start and before
+  you push.
+- **Commit identity:** check that `git config user.name` and `git config user.email` are set to your
+  own identity before your first commit.
+- **Commit messages:** use [Conventional Commits](https://www.conventionalcommits.org/). The subject
+  line is `type(scope): summary`, in the imperative, at most 72 characters. The body explains *why*
+  the change was made. Types: `feat`, `fix`, `docs`, `refactor`, `perf`, `test`, `build`, `chore`.
+
+  ```text
+  feat(search): query SIA2 for images covering a sky position
+
+  Uses the spherex_qr2 collection and keeps only the columns the
+  timeline needs, which cuts the response size about tenfold.
+  ```
+
+- **One logical change per commit**, pushed soon after it is made so the remote is always current.
+- **Never force-push `main`.** If a push is rejected, run `git pull --rebase` and push again.
+- **Do not commit** downloaded FITS files, sample data dumps, virtual environments, `node_modules`,
+  build output or secrets.
+- **Keep this README accurate.** A change to setup, run commands, configuration or project layout
+  includes the README update in the same commit.
+
+## References
+
+- [SPHEREx at IRSA](https://irsa.ipac.caltech.edu/Missions/spherex.html): mission data home
+- [SPHEREx Explanatory Supplement (QR)](https://irsa.ipac.caltech.edu/data/SPHEREx/docs/SPHEREx_Expsupp_QR.pdf)
+- [IRSA SIA2 service](https://irsa.ipac.caltech.edu/ibe/sia.html) and [cutout service](https://irsa.ipac.caltech.edu/ibe/cutouts.html)
+- [IRSA cloud access](https://irsa.ipac.caltech.edu/cloud_access/#spherex)
+- [IRSA Python tutorials](https://caltech-ipac.github.io/irsa-tutorials/): SPHEREx intro, cutouts, PSF, source discovery
