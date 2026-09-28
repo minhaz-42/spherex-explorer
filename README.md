@@ -25,13 +25,18 @@ No account, API key or AWS credentials are needed.
 | Image search (IVOA SIA2) | `https://irsa.ipac.caltech.edu/SIA?COLLECTION=…` | Finding the images that cover a sky position |
 | Cutout service | an image's `access_url` + `?center=RA,Dec&size=deg` | Fetching a small region instead of a full image |
 | Cloud mirror (AWS S3) | bucket `nasa-irsa-spherex`, region `us-east-1`, anonymous access | Reading full image files directly |
-| Browsable directories | `https://irsa.ipac.caltech.edu/ibe/data/spherex/qr2/` | Manual inspection and bulk downloads |
+| Browsable directories | `https://irsa.ipac.caltech.edu/ibe/data/spherex/qr2/` and `…/qr3/` | Manual inspection and bulk downloads |
 
-SIA2 collections:
+SIA2 collections. Quick Releases 2 and 3 are consecutive time slices, not reprocessings of the same
+data, so a timeline has to query both:
 
-- `spherex_qr2`: Wide Survey spectral images (uniform all-sky coverage)
-- `spherex_qr2_deep`: Deep Survey spectral images (many more visits near the ecliptic poles)
-- `spherex_qr2_cal`: calibration files
+| Collection | Contents | Time span (UTC) |
+|---|---|---|
+| `spherex_qr2` | Wide Survey spectral images (uniform all-sky coverage) | 2025-04-24 → 2026-07-20 |
+| `spherex_qr2_deep` | Deep Survey spectral images (many more visits near the ecliptic poles) | 2025-04-24 → 2026-07-20 |
+| `spherex_qr3` | Wide Survey spectral images, pipeline R7 | 2026-07-20 → 2026-08-17 |
+| `spherex_qr3_deep` | Deep Survey spectral images, pipeline R7 | 2026-07-20 → 2026-08-17 |
+| `spherex_qr2_cal`, `spherex_qr3_cal` | calibration files | |
 
 A few facts about the data that shape the app:
 
@@ -52,7 +57,12 @@ A few facts about the data that shape the app:
 - **Images are large multi-extension FITS files** (2040 × 2040 per detector). Prefer cutouts or
   byte-range reads over downloading whole files.
 - **The archive grows weekly.** New images show up in the browsable directories first; SIA2 lags by
-  about a day. The current public release is Quick Release 2 (QR2).
+  about a day. The current public releases are Quick Release 2 (QR2) and Quick Release 3 (QR3,
+  released 2026-09-16). The SPHEREx team advises caution when combining the two, because QR3 uses
+  new calibrations.
+- **Two exposures of one place usually see different wavelengths.** A star lands on a different part
+  of the filter each time, so a brightness difference between two dates may be its spectrum, not a
+  change. The app shows the wavelength at the target on every frame for this reason.
 
 ### Check that you can reach the archive
 

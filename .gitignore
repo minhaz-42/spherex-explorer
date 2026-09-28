@@ -1,0 +1,38 @@
+# Science data and caches: never commit downloaded archive files
+*.fits
+*.fits.gz
+*.fz
+/data/cache/
+/backend/.cache/
+.cache/
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+.coverage
+htmlcov/
+
+# Node
+node_modules/
+dist/
+build/
+coverage/
+frontend/test-results/
+frontend/playwright-report/
+*.tsbuildinfo
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# OS and editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
