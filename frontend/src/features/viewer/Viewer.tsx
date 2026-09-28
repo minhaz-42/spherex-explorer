@@ -1,4 +1,5 @@
 import { AlertTriangle, ChevronRight, LocateFixed, MessageSquareText, Minus, Plus, RefreshCw } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { type KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router";
 
@@ -26,9 +27,10 @@ import { Measurements } from "../wavelength/Measurements";
 import { FramePanel } from "./FramePanel";
 import { MAX_SEQUENCE_KEYS, publishView } from "../assistant/viewContext";
 import { CandidatesPanel } from "../known/Candidates";
+import { fieldObjectsQuery } from "../objects/queries";
 import { KnownObjectsPanel } from "../known/KnownObjects";
 import { frameCount, VIEWER, type ViewerKey } from "./messages";
-import { CandidateTrack, PredictedTrack, ScaleAndCompass, TargetMarker } from "./overlays";
+import { CandidateTrack, CatalogMarkers, PredictedTrack, ScaleAndCompass, TargetMarker } from "./overlays";
 import { SkyCanvas } from "./SkyCanvas";
 import { type CompareMode, FIELDS, type ViewerState } from "./state";
 import { useSequence } from "./useSequence";
@@ -85,6 +87,12 @@ export function Viewer({ observations, target, source, initial, onStateChange }:
     return n % 2 === 0 ? n + 1 : n;
   }, [fov]);
   const [view, setView] = useState<ViewState>(() => fitView(size, size));
+  // SIMBAD's catalogued objects out to the field's corners, asked for only when switched on.
+  const [showCatalog, setShowCatalog] = useState(false);
+  const catalog = useQuery({
+    ...fieldObjectsQuery(target.ra, target.dec, Math.min(0.5, Math.round(fov * 0.71 * 100) / 100), source),
+    enabled: showCatalog,
+  });
 
   const pinned = useMemo(() => (compare === "single" ? [] : [ref]), [compare, ref]);
   const { results, loaded } = useSequence(sequence, cur, target, fov, source, pinned);
@@ -281,8 +289,33 @@ export function Viewer({ observations, target, source, initial, onStateChange }:
           .filter((p) => Number.isFinite(p.x)),
       }));
   };
+  // The most-studied objects that fall inside the image, at most 15, so the sky stays readable.
+  const catalogPoints =
+    showCatalog && catalog.data
+      ? catalog.data.objects
+          .map((o) => ({ o, p: skyToGrid(grid, o.ra, o.dec) }))
+          .filter(({ p }) => p !== null && p.x >= 0 && p.y >= 0 && p.x <= size && p.y <= size)
+          .slice(0, 15)
+          .map(({ o, p }) => {
+            const pixel = mainCutout ? sampleAt(mainCutout, p!.x, p!.y) : null;
+            const covered = pixel !== null && Number.isFinite(pixel.value);
+            return { x: p!.x, y: p!.y, name: o.name ?? o.id, type: o.typeLabel, covered };
+          })
+      : [];
+  const catalogStatus = !showCatalog
+    ? null
+    : catalog.isPending
+      ? t("catalogLoading")
+      : catalog.error
+        ? catalog.error instanceof ApiError && catalog.error.code === "not_in_snapshot"
+          ? t("catalogSnapshot")
+          : t("catalogError")
+        : catalogPoints.length === 0
+          ? t("catalogNone")
+          : t("catalogCount", { n: catalogPoints.length });
   const overlayFor = (shownFrame: Frame | undefined) => (scale: number) => (
     <>
+      {catalogPoints.length > 0 && <CatalogMarkers points={catalogPoints} scale={scale} />}
       <TargetMarker x={centre} y={centre} scale={scale} label={target.label} />
       {knownFor(shownFrame).map((t) => (
         <PredictedTrack key={t.name} name={t.name} points={t.points} scale={scale} />
@@ -631,6 +664,15 @@ export function Viewer({ observations, target, source, initial, onStateChange }:
             <input type="checkbox" checked={showFlagged} onChange={(e) => setShowFlagged(e.target.checked)} className="accent-[var(--accent)]" />
             {t("showFlagged")}
           </label>
+          <label className="flex items-center gap-2 text-sm text-muted">
+            <input type="checkbox" checked={showCatalog} onChange={(e) => setShowCatalog(e.target.checked)} className="accent-[var(--accent)]" />
+            {t("showCatalog")}
+          </label>
+          {catalogStatus && (
+            <p className="text-xs text-faint" role="status">
+              {catalogStatus}
+            </p>
+          )}
           <p className="text-xs text-faint">
             {t("sameStretch")}
           </p>

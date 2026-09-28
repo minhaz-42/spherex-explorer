@@ -58,6 +58,12 @@ export const VIEWER = defineMessages({
     log: "Logarithmic",
     contrast: "Contrast",
     showFlagged: "Show flagged pixels (filled in for display, not measured)",
+    showCatalog: "Label catalogued objects (SIMBAD)",
+    catalogLoading: "Asking SIMBAD what is catalogued in this field…",
+    catalogCount: "{n} of the most-studied catalogued objects in this field are labelled. Source: SIMBAD, CDS, Strasbourg.",
+    catalogNone: "SIMBAD catalogues nothing in this field.",
+    catalogError: "SIMBAD's list could not be fetched.",
+    catalogSnapshot: "The demo snapshot does not include SIMBAD's list for this field.",
     sameStretch:
       "Every frame uses the same stretch, taken from the reference frame, so brightness changes you see are in the data. The local background (zodiacal light and airglow) is removed from each frame.",
     fainter: "fainter",
@@ -126,6 +132,12 @@ export const VIEWER = defineMessages({
     log: "লগারিদমিক",
     contrast: "কনট্রাস্ট",
     showFlagged: "চিহ্নিত পিক্সেল দেখান (দেখানোর জন্য পূরণ করা, মাপা হয়নি)",
+    showCatalog: "ক্যাটালগভুক্ত বস্তুর নাম দেখান (SIMBAD)",
+    catalogLoading: "এই ক্ষেত্রে SIMBAD-এ কী তালিকাভুক্ত আছে, জিজ্ঞাসা করা হচ্ছে…",
+    catalogCount: "এই ক্ষেত্রের সবচেয়ে বেশি গবেষিত {n}টি ক্যাটালগভুক্ত বস্তুর নাম দেখানো হচ্ছে। উৎস: SIMBAD, CDS, স্ট্রাসবুর্গ।",
+    catalogNone: "এই ক্ষেত্রে SIMBAD-এ কোনো বস্তু তালিকাভুক্ত নেই।",
+    catalogError: "SIMBAD-এর তালিকা আনা যায়নি।",
+    catalogSnapshot: "ডেমো স্ন্যাপশটে এই ক্ষেত্রের SIMBAD তালিকা নেই।",
     sameStretch:
       "প্রতিটি ফ্রেমে একই উজ্জ্বলতার মাপ ব্যবহার করা হয়, যা নেওয়া হয় রেফারেন্স ফ্রেম থেকে; তাই উজ্জ্বলতায় যে পরিবর্তন আপনি দেখেন, তা ডেটাতেই আছে। প্রতিটি ফ্রেম থেকে স্থানীয় পটভূমি (রাশিচক্রীয় আলো ও বায়ুদীপ্তি) সরিয়ে ফেলা হয়।",
     fainter: "ম্লানতর",
@@ -156,12 +168,14 @@ export const OVERLAYS = defineMessages({
     predicted: "{name}: position predicted by JPL",
     candidate: "Candidate {id}",
     weak: " (weak)",
+    catalogued: "{name}: {type}, catalogued in SIMBAD",
   },
   bn: {
     target: "লক্ষ্য",
     predicted: "{name}: JPL-এর পূর্বাভাসিত অবস্থান",
     candidate: "সম্ভাব্য বস্তু {id}",
     weak: " (দুর্বল)",
+    catalogued: "{name}: {type}, SIMBAD-এ তালিকাভুক্ত",
   },
 });
 

@@ -146,3 +146,56 @@ export function CandidateTrack({ id, points, scale, weak }: { id: string; points
     </g>
   );
 }
+
+export interface CatalogPoint {
+  x: number;
+  y: number;
+  name: string;
+  type: string;
+  /** False where the frame on screen has no data: the position is right, but SPHEREx did not image it. */
+  covered: boolean;
+}
+
+/**
+ * Catalogued objects in the field (SIMBAD), most-studied first: a thin ring each, and a name where
+ * it does not collide with one already written. The rings are drawn in the image's own text colour,
+ * apart from the target (ember), JPL's predictions (blue) and our candidates (green).
+ */
+export function CatalogMarkers({ points, scale }: { points: CatalogPoint[]; scale: number }) {
+  const t = useT(OVERLAYS);
+  const r = 7 / scale;
+  const size = 10.5 / scale;
+  const placed: { x0: number; y0: number; x1: number; y1: number }[] = [];
+  return (
+    <g>
+      {points.map((p) => {
+        // A rough box for the label, to the right of the ring, in image pixels.
+        const box = { x0: p.x + r * 1.3, y0: p.y - size, x1: p.x + r * 1.3 + p.name.length * size * 0.56, y1: p.y + size * 0.3 };
+        const clear = !placed.some((b) => box.x0 < b.x1 && box.x1 > b.x0 && box.y0 < b.y1 && box.y1 > b.y0);
+        if (clear) placed.push(box);
+        return (
+          <g key={`${p.name}-${p.x}-${p.y}`} opacity={p.covered ? 1 : 0.45}>
+            <title>{t("catalogued", { name: p.name, type: p.type })}</title>
+            <circle cx={p.x} cy={p.y} r={r} fill="none" stroke="var(--text-on-image)" strokeOpacity={0.75} strokeWidth={1} vectorEffect="non-scaling-stroke" />
+            {clear && (
+              <text
+                x={box.x0}
+                y={p.y + size * 0.1}
+                fontSize={size}
+                fill="var(--text-on-image)"
+                fillOpacity={0.92}
+                stroke="rgb(0 0 0 / 0.65)"
+                strokeWidth={3 / scale}
+                paintOrder="stroke"
+                fontFamily="var(--font-sans)"
+              >
+                {p.name}
+              </text>
+            )}
+          </g>
+        );
+      })}
+    </g>
+  );
+}
+
