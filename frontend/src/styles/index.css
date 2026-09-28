@@ -1,5 +1,5 @@
-@import "@fontsource/architects-daughter/400.css";
-@import "@fontsource-variable/caveat/wght.css";
+@import "@fontsource/instrument-serif/400.css";
+@import "@fontsource/instrument-serif/400-italic.css";
 @import "@fontsource/ibm-plex-sans/400.css";
 @import "@fontsource/ibm-plex-sans/500.css";
 @import "@fontsource/ibm-plex-sans/600.css";
@@ -8,60 +8,64 @@
 @import "tailwindcss";
 
 /*
- * SPHEREx Explorer design tokens: a pencil sketchbook.
+ * SPHEREx Explorer design tokens: an observatory atlas.
  *
- * Graphite linework and hatching on warm paper, with coloured pencil for the planets and the six
- * wavelength bands. Text colours are checked against --bg (paper): --text 13:1, --text-muted 7.3:1,
- * --text-faint 5.1:1, and every text token stays above 4.5:1 on --bg-raised, --bg-sunk and --bg-hover.
- * --rule and --rule-strong are for lines only; --rule-control (3.3:1) outlines form controls.
+ * Porcelain pages, midnight ink, hairline linework, and colour that comes from light itself: a gold
+ * Sun, an infrared ember for actions and the current frame, and violet in the nebula glows. Text
+ * colours are checked against --bg: --text 16.6:1, --text-muted 7.9:1, --text-faint 5.3:1, and every
+ * text token stays above 4.5:1 on --bg-raised, --bg-sunk and --bg-hover. --rule and --rule-strong are
+ * for lines only; --rule-control (3.4:1) outlines form controls.
  *
- * Sky images are never filtered or tinted: they sit in an image well (--bg-image) and overlays drawn
- * on top of them use --accent-on-image.
+ * Sky images are never filtered or tinted: they sit in an image well (--bg-image) and marks drawn on
+ * top of them use the *-on-image colours.
  */
 :root {
   color-scheme: light;
 
-  --bg: #f7f3ea;
-  --bg-raised: #fffdf8;
-  --bg-sunk: #efe9dc;
-  --bg-hover: #ebe4d4;
-  --rule: #e0d8c8;
-  --rule-strong: #bdb3a0;
-  --rule-control: #8d8578;
+  --bg: #f5f6f9;
+  --bg-raised: #ffffff;
+  --bg-sunk: #eceef4;
+  --bg-hover: #e7eaf2;
+  --rule: #e2e5ee;
+  --rule-strong: #c8cedd;
+  --rule-control: #7d849f;
 
-  --text: #2a2931;
-  --text-muted: #514f5a;
-  --text-faint: #64616c;
+  --text: #0b1437;
+  --text-muted: #434b69;
+  --text-faint: #5d6583;
 
-  /* The one accent: a vermilion pencil for the current frame, the target and primary actions. */
-  --accent: #b93d12;
-  --accent-strong: #9a310c;
-  --accent-ink: #fffdf8;
-  --accent-wash: rgb(185 61 18 / 0.1);
+  /* The one accent: an infrared ember for the current frame, the target and primary actions. */
+  --accent: #b5381b;
+  --accent-strong: #962c14;
+  --accent-ink: #ffffff;
+  --accent-wash: rgb(181 56 27 / 0.08);
 
-  /* Highlighter for emphasis in running text (graphite on it is 11:1). */
-  --highlight: #ffe08a;
+  /* Light sources: sunlight gold and nebula violet, for glows and emphasis. */
+  --gold: #e8a838;
+  --gold-deep: #7f5500;
+  --violet: #5b3fd0;
+  --highlight: rgb(232 168 56 / 0.3);
 
   /* The image well behind SPHEREx cutouts, and colours for marks drawn over images. */
-  --bg-image: #1b1d33;
-  --text-on-image: #eeeaf5;
+  --bg-image: #0f1530;
+  --text-on-image: #e8ebf7;
   --accent-on-image: #ffb35c;
   /* Predicted positions of known bodies (JPL) and our own moving-source candidates, over images. */
   --track-on-image: #9cc2ff;
   --candidate-on-image: #7fe3b4;
 
-  --focus: #2f56c6;
-  --live: #1b7040;
-  --snapshot: #2f56c6;
-  --warn: #855600;
-  --danger: #b8262b;
-  --danger-wash: rgb(184 38 43 / 0.08);
-  --warn-wash: rgb(237 161 0 / 0.16);
+  --focus: #3a56d4;
+  --live: #167347;
+  --snapshot: #3a56d4;
+  --warn: #835400;
+  --danger: #b42318;
+  --danger-wash: rgb(180 35 24 / 0.07);
+  --warn-wash: rgb(232 168 56 / 0.16);
 
   /*
-   * Wavelength bands, 0.75 µm (band 1) to 5.0 µm (band 6): one blue pencil pressed harder band by
-   * band. The detectors are ordered, so this is an ordinal ramp: one hue with even lightness steps,
-   * validated on --bg (lightest step 2.34:1). Band colours always travel with a text label.
+   * Wavelength bands, 0.75 µm (band 1) to 5.0 µm (band 6): one blue deepening band by band. The
+   * detectors are ordered, so this is an ordinal ramp: one hue with even lightness steps, validated
+   * on --bg (lightest step 2.4:1). Band colours always travel with a text label.
    */
   --band-1: #6fa3ea;
   --band-2: #4f8ee2;
@@ -70,41 +74,32 @@
   --band-5: #1a4f98;
   --band-6: #113e7a;
 
-  --font-display: "Architects Daughter", "Comic Neue", "Segoe Print", cursive;
-  --font-hand: "Caveat Variable", "Caveat", "Segoe Print", cursive;
+  --font-display: "Instrument Serif", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
   --font-sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
 
-  --fs-display: clamp(2.5rem, 1.4rem + 4.6vw, 5.4rem);
-  --fs-h1: clamp(2rem, 1.5rem + 2.2vw, 3.25rem);
-  --fs-h2: clamp(1.6rem, 1.25rem + 1.4vw, 2.4rem);
+  --fs-display: clamp(3rem, 1.7rem + 5vw, 6.4rem);
+  --fs-h1: clamp(2.3rem, 1.6rem + 2.6vw, 3.8rem);
+  --fs-h2: clamp(2rem, 1.4rem + 2.1vw, 3.3rem);
 
-  /* Irregular radii read as hand-drawn boxes. */
   --radius: 10px;
-  --radius-lg: 16px;
-  --sketch-radius: 255px 14px 225px 14px / 14px 225px 14px 255px;
-  --sketch-radius-alt: 14px 225px 14px 255px / 255px 14px 225px 14px;
-  /* Large sheets need gentler corners or the wobble reads as a tilt. */
-  --sheet-radius: 22px 8px 26px 10px / 10px 26px 8px 22px;
-  --sheet-radius-alt: 8px 24px 10px 20px / 22px 8px 24px 10px;
+  --radius-lg: 18px;
   --gutter: clamp(1rem, 0.5rem + 2.5vw, 2.5rem);
-  --content: 72rem;
+  --content: 74rem;
   --header-h: 4rem;
 
-  /* A graphite smudge instead of a soft shadow. */
-  --shadow-sketch: 3px 4px 0 rgb(42 41 49 / 0.85);
-  --shadow-sketch-sm: 2px 2px 0 rgb(42 41 49 / 0.85);
-  --shadow-paper: 0 1px 0 rgb(42 41 49 / 0.04), 0 18px 40px -24px rgb(74 60 30 / 0.35);
+  --shadow-sm: 0 1px 2px rgb(11 20 55 / 0.06), 0 1px 1px rgb(11 20 55 / 0.03);
+  --shadow: 0 1px 2px rgb(11 20 55 / 0.05), 0 10px 30px -14px rgb(11 20 55 / 0.2);
+  --shadow-lg: 0 2px 6px rgb(11 20 55 / 0.04), 0 32px 80px -32px rgb(33 30 100 / 0.38);
 
-  /* Paper grain, drawn once and tiled. */
-  --paper-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .24 0 0 0 0 .2 0 0 0 0 .14 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  /* A pencil squiggle used as a hand-drawn underline. */
-  --squiggle: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='8' viewBox='0 0 80 8'%3E%3Cpath d='M1 5.2c6-2.6 11-2.9 16-.8s10 2.4 15 .2 10-2.6 16-.4 10 2.3 15 .1 8-2 16-.9' fill='none' stroke='%232a2931' stroke-width='1.4' stroke-linecap='round' opacity='.8'/%3E%3C/svg%3E");
+  /* Headlines that catch the light: ember through magenta to violet (every stop above 4.5:1). */
+  --gradient-text: linear-gradient(100deg, #b5381b 0%, #a3317a 48%, #5b3fd0 100%);
 
-  --motion-fast: 120ms;
-  --motion: 220ms;
+  --motion-fast: 140ms;
+  --motion: 240ms;
+  --motion-slow: 700ms;
   --ease: cubic-bezier(0.2, 0, 0, 1);
-  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @theme inline {
@@ -122,6 +117,9 @@
   --color-accent-strong: var(--accent-strong);
   --color-accent-ink: var(--accent-ink);
   --color-accent-wash: var(--accent-wash);
+  --color-gold: var(--gold);
+  --color-gold-deep: var(--gold-deep);
+  --color-violet: var(--violet);
   --color-highlight: var(--highlight);
   --color-image: var(--bg-image);
   --color-on-image: var(--text-on-image);
@@ -138,14 +136,12 @@
   --color-band-5: var(--band-5);
   --color-band-6: var(--band-6);
   --font-display: var(--font-display);
-  --font-hand: var(--font-hand);
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
   --radius-sm: var(--radius);
   --radius-md: var(--radius-lg);
-  --shadow-sketch: var(--shadow-sketch);
-  --shadow-sketch-sm: var(--shadow-sketch-sm);
-  --shadow-paper: var(--shadow-paper);
+  --shadow-soft: var(--shadow);
+  --shadow-float: var(--shadow-lg);
 }
 
 @layer base {
@@ -162,12 +158,11 @@
 
   body {
     min-height: 100dvh;
-    background-color: var(--bg);
-    background-image: var(--paper-grain);
+    background: var(--bg);
   }
 
   ::selection {
-    background: var(--highlight);
+    background: rgb(181 56 27 / 0.16);
     color: var(--text);
   }
 
@@ -176,8 +171,8 @@
   h3 {
     font-family: var(--font-display);
     font-weight: 400;
-    line-height: 1.12;
-    letter-spacing: -0.005em;
+    line-height: 1.04;
+    letter-spacing: -0.012em;
     text-wrap: balance;
   }
 
@@ -191,8 +186,8 @@
 
   :focus-visible {
     outline: 2px solid var(--focus);
-    outline-offset: 3px;
-    border-radius: 4px;
+    outline-offset: 2px;
+    border-radius: 6px;
   }
 
   [hidden] {
@@ -210,9 +205,9 @@
 
   .kicker {
     font-family: var(--font-mono);
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-weight: 500;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
     color: var(--text-muted);
   }
@@ -221,38 +216,18 @@
     font-family: var(--font-display);
     font-size: var(--fs-display);
     font-weight: 400;
-    line-height: 1.04;
-    letter-spacing: -0.01em;
+    line-height: 0.98;
+    letter-spacing: -0.02em;
   }
 
-  /* Handwritten margin notes. */
-  .hand {
-    font-family: var(--font-hand);
-    font-weight: 600;
-    line-height: 1.1;
-  }
-
-  /* A highlighter swipe behind a word or phrase. */
-  .highlight {
-    padding-inline: 0.12em;
-    margin-inline: -0.12em;
-    background: linear-gradient(
-      100deg,
-      transparent 0.2em,
-      var(--highlight) 0.4em,
-      var(--highlight) calc(100% - 0.4em),
-      transparent calc(100% - 0.2em)
-    );
-    background-size: 100% 0.55em;
-    background-position: 0 88%;
-    background-repeat: no-repeat;
-    box-decoration-break: clone;
-  }
-
-  /* A hand-drawn wavy underline. */
-  .squiggle {
-    background: var(--squiggle) repeat-x 0 100% / 80px 8px;
-    padding-bottom: 0.3em;
+  /* An italic phrase that catches the light. */
+  .shine {
+    font-style: italic;
+    background: var(--gradient-text);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    padding-inline-end: 0.06em;
   }
 
   .prose-body {
@@ -271,7 +246,7 @@
     color: var(--text);
     text-decoration: underline;
     text-decoration-color: var(--rule-control);
-    text-decoration-thickness: 1.5px;
+    text-decoration-thickness: 1px;
     text-underline-offset: 0.22em;
     transition: text-decoration-color var(--motion-fast) var(--ease);
   }
@@ -295,45 +270,70 @@
     border-top: 1px solid var(--rule);
   }
 
-  /* A sheet of paper lying on the page. */
-  .sheet {
-    position: relative;
-    background-color: var(--bg-raised);
-    background-image: var(--paper-grain);
-    border: 1.5px solid var(--text);
-    border-radius: var(--sheet-radius);
-    box-shadow: var(--shadow-paper);
+  /* Surfaces. */
+  .card {
+    background: var(--bg-raised);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
   }
 
-  .sheet-alt {
-    border-radius: var(--sheet-radius-alt);
+  .glass {
+    background: rgb(255 255 255 / 0.66);
+    border: 1px solid rgb(255 255 255 / 0.85);
+    box-shadow:
+      var(--shadow-sm),
+      inset 0 0 0 1px rgb(11 20 55 / 0.04);
+    backdrop-filter: blur(18px) saturate(1.5);
+    -webkit-backdrop-filter: blur(18px) saturate(1.5);
   }
 
-  /* A strip of translucent tape holding a sheet down. */
-  .tape::before {
-    content: "";
+  .panel {
+    background: rgb(255 255 255 / 0.72);
+    border: 1px solid rgb(255 255 255 / 0.9);
+    border-radius: 28px;
+    box-shadow: var(--shadow-lg);
+    backdrop-filter: blur(22px) saturate(1.4);
+    -webkit-backdrop-filter: blur(22px) saturate(1.4);
+  }
+
+  /* Soft light behind a section: gold, ember and violet glows. */
+  .nebula {
     position: absolute;
-    top: -0.8rem;
-    left: 50%;
-    width: 6.5rem;
-    height: 1.6rem;
-    translate: -50% 0;
-    rotate: -3deg;
-    background: rgb(255 224 138 / 0.62);
-    border-inline: 1px dashed rgb(42 41 49 / 0.18);
-    box-shadow: 0 1px 2px rgb(42 41 49 / 0.08);
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
   }
 
-  /* Buttons: hand-drawn boxes that lift off the paper on hover. One primary per view. */
+  .nebula > span {
+    position: absolute;
+    border-radius: 999px;
+    filter: blur(60px);
+    opacity: 0.55;
+    animation: drift 26s ease-in-out infinite alternate;
+  }
+
+  .swatch {
+    display: inline-block;
+    width: 0.7rem;
+    height: 0.7rem;
+    border-radius: 999px;
+    box-shadow:
+      inset -2px -2px 3px rgb(0 0 0 / 0.22),
+      inset 1px 1px 2px rgb(255 255 255 / 0.5);
+  }
+
+  /* Buttons: one primary per view. */
   .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
     min-height: 2.5rem;
-    padding: 0 1.05rem;
-    border: 1.5px solid transparent;
-    border-radius: var(--sketch-radius);
+    padding: 0 1.1rem;
+    border: 1px solid transparent;
+    border-radius: 999px;
     font: 500 0.9375rem/1 var(--font-sans);
     white-space: nowrap;
     cursor: pointer;
@@ -354,38 +354,30 @@
 
   .btn-primary {
     background: var(--accent);
-    border-color: var(--text);
     color: var(--accent-ink);
-    box-shadow: var(--shadow-sketch-sm);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.22),
+      0 10px 24px -12px rgb(181 56 27 / 0.8);
   }
 
   .btn-primary:hover:not(:disabled) {
     background: var(--accent-strong);
-    box-shadow: var(--shadow-sketch);
-    translate: -1px -1px;
-  }
-
-  .btn-primary:active:not(:disabled) {
-    box-shadow: 0 0 0 transparent;
-    translate: 2px 2px;
+    translate: 0 -1px;
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.22),
+      0 14px 28px -12px rgb(181 56 27 / 0.9);
   }
 
   .btn-secondary {
-    border-color: var(--text);
+    border-color: var(--rule-strong);
     color: var(--text);
     background: var(--bg-raised);
-    box-shadow: var(--shadow-sketch-sm);
+    box-shadow: var(--shadow-sm);
   }
 
   .btn-secondary:hover:not(:disabled) {
+    border-color: var(--rule-control);
     background: var(--bg-raised);
-    box-shadow: var(--shadow-sketch);
-    translate: -1px -1px;
-  }
-
-  .btn-secondary:active:not(:disabled) {
-    box-shadow: 0 0 0 transparent;
-    translate: 2px 2px;
   }
 
   .btn-ghost {
@@ -400,7 +392,7 @@
 
   .btn-sm {
     min-height: 2rem;
-    padding: 0 0.7rem;
+    padding: 0 0.8rem;
     font-size: 0.8125rem;
   }
 
@@ -422,36 +414,37 @@
     }
   }
 
-  /* A small pill that links to an example or filters a list. */
+  /* A small pill that links to an example or picks an item. */
   .chip {
     display: inline-flex;
     align-items: center;
-    gap: 0.4rem;
+    gap: 0.45rem;
     min-height: 2rem;
-    padding: 0 0.75rem;
-    border: 1.5px dashed var(--rule-control);
+    padding: 0 0.8rem;
+    border: 1px solid var(--rule-strong);
     border-radius: 999px;
     background: var(--bg-raised);
-    color: var(--text);
+    color: var(--text-muted);
     font: 500 0.8125rem/1 var(--font-sans);
     text-decoration: none;
     cursor: pointer;
     transition:
       border-color var(--motion-fast) var(--ease),
-      rotate var(--motion) var(--ease-spring),
-      background-color var(--motion-fast) var(--ease);
+      background-color var(--motion-fast) var(--ease),
+      color var(--motion-fast) var(--ease),
+      translate var(--motion-fast) var(--ease);
   }
 
   .chip:hover {
-    border-style: solid;
-    border-color: var(--text);
-    rotate: -1.5deg;
+    border-color: var(--rule-control);
+    color: var(--text);
+    translate: 0 -1px;
   }
 
   .chip[aria-pressed="true"] {
-    border-style: solid;
     border-color: var(--text);
-    background: var(--highlight);
+    background: var(--text);
+    color: #ffffff;
   }
 
   @media (pointer: coarse) {
@@ -463,36 +456,38 @@
   /* Segmented control: a row of mutually exclusive options. */
   .segmented {
     display: inline-flex;
-    border: 1.5px solid var(--text);
-    border-radius: var(--sketch-radius);
-    overflow: hidden;
-    background: var(--bg-raised);
+    gap: 2px;
+    padding: 3px;
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    background: var(--bg-sunk);
   }
 
   .segmented > button {
-    min-height: 2rem;
-    padding: 0 0.75rem;
+    min-height: 1.85rem;
+    padding: 0 0.8rem;
+    white-space: nowrap;
     font: 500 0.8125rem/1 var(--font-sans);
     color: var(--text-muted);
     background: transparent;
     border: 0;
-    border-inline-start: 1.5px solid var(--rule-strong);
+    border-radius: 999px;
     cursor: pointer;
-  }
-
-  .segmented > button:first-child {
-    border-inline-start: 0;
+    transition:
+      background-color var(--motion-fast) var(--ease),
+      color var(--motion-fast) var(--ease),
+      box-shadow var(--motion-fast) var(--ease);
   }
 
   .segmented > button:hover:not(:disabled) {
     color: var(--text);
-    background: var(--bg-hover);
   }
 
   .segmented > button[aria-pressed="true"],
   .segmented > button[aria-checked="true"] {
     color: var(--text);
-    background: linear-gradient(transparent 58%, var(--highlight) 58%, var(--highlight) 88%, transparent 88%);
+    background: var(--bg-raised);
+    box-shadow: var(--shadow-sm);
   }
 
   .segmented > button:disabled {
@@ -502,16 +497,16 @@
 
   @media (pointer: coarse) {
     .segmented > button {
-      min-height: 2.75rem;
+      min-height: 2.6rem;
     }
   }
 
   .field {
     width: 100%;
     min-height: 2.75rem;
-    padding: 0 0.95rem;
-    border: 1.5px solid var(--rule-control);
-    border-radius: var(--sketch-radius-alt);
+    padding: 0 1rem;
+    border: 1px solid var(--rule-control);
+    border-radius: 999px;
     background: var(--bg-raised);
     color: var(--text);
     font: 400 1rem/1.2 var(--font-sans);
@@ -525,13 +520,13 @@
   }
 
   .field:hover {
-    border-color: var(--text);
+    border-color: var(--text-muted);
   }
 
   .field:focus-visible {
     outline: none;
     border-color: var(--focus);
-    box-shadow: 0 0 0 1.5px var(--focus);
+    box-shadow: 0 0 0 4px rgb(58 86 212 / 0.16);
   }
 
   .field[aria-invalid="true"] {
@@ -564,8 +559,8 @@
   }
 
   .panel-title {
-    font: 600 0.75rem/1.2 var(--font-sans);
-    letter-spacing: 0.06em;
+    font: 600 0.72rem/1.2 var(--font-sans);
+    letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--text-muted);
   }
@@ -612,13 +607,12 @@
   }
 
   .skeleton {
-    background: repeating-linear-gradient(-45deg, var(--bg-sunk) 0 6px, var(--bg-hover) 6px 7px);
+    background: linear-gradient(90deg, var(--bg-sunk), var(--bg-hover), var(--bg-sunk));
     background-size: 200% 100%;
-    animation: shimmer 2.4s linear infinite;
+    animation: shimmer 1.6s linear infinite;
   }
 
-  /* Pencil lines that draw themselves when their section scrolls into view. */
-  /* Only strokes marked pathLength="1" take part, so ordinary lines stay solid. */
+  /* Hairlines that draw themselves in when their figure scrolls into view (mark them pathLength="1"). */
   .draw-on [pathLength="1"] {
     stroke-dasharray: 1;
     stroke-dashoffset: 1;
@@ -627,14 +621,29 @@
   /*
    * Chrome does not re-match the attribute selector when .is-drawn is added, so the animation keys
    * off element names. Strokes without pathLength have no dash pattern, so animating their offset
-   * changes nothing.
+   * changes nothing. Longhands, because a var() in the shorthand plus a longhand drops both.
    */
   .draw-on.is-drawn :is(path, line, circle, ellipse, polyline) {
     animation-name: draw-stroke;
-    animation-duration: 1.6s;
-    animation-timing-function: var(--ease);
+    animation-duration: 1.8s;
+    animation-timing-function: var(--ease-out);
     animation-fill-mode: forwards;
-    animation-delay: calc(var(--i, 0) * 90ms);
+    animation-delay: calc(var(--i, 0) * 110ms);
+  }
+
+  /* Content that rises into place as it scrolls into view. */
+  .reveal {
+    opacity: 0;
+    translate: 0 18px;
+    transition:
+      opacity var(--motion-slow) var(--ease-out),
+      translate var(--motion-slow) var(--ease-out);
+    transition-delay: calc(var(--i, 0) * 90ms);
+  }
+
+  .reveal.is-visible {
+    opacity: 1;
+    translate: 0 0;
   }
 
   .visually-hidden {
@@ -671,15 +680,28 @@
   }
 }
 
-@keyframes bob {
+@keyframes drift {
+  0% {
+    translate: 0 0;
+    scale: 1;
+  }
+  50% {
+    translate: 4% -3%;
+    scale: 1.08;
+  }
+  100% {
+    translate: -3% 4%;
+    scale: 0.96;
+  }
+}
+
+@keyframes float {
   0%,
   100% {
     translate: 0 0;
-    rotate: -2deg;
   }
   50% {
     translate: 0 -10px;
-    rotate: 2deg;
   }
 }
 
@@ -690,8 +712,8 @@
     opacity: 1;
   }
   50% {
-    scale: 1.2;
-    opacity: 0.7;
+    scale: 1.22;
+    opacity: 0.55;
   }
 }
 
@@ -701,7 +723,7 @@
     translate: 0 0;
   }
   50% {
-    translate: 180px 0;
+    translate: 176px 0;
   }
 }
 
@@ -723,13 +745,14 @@
   }
 }
 
-@keyframes wiggle {
-  0%,
-  100% {
-    rotate: -1deg;
+@keyframes rise {
+  from {
+    opacity: 0;
+    translate: 0 22px;
   }
-  50% {
-    rotate: 1.2deg;
+  to {
+    opacity: 1;
+    translate: 0 0;
   }
 }
 
@@ -741,6 +764,7 @@
     animation-iteration-count: 1 !important;
     animation-delay: 0ms !important;
     transition-duration: 1ms !important;
+    transition-delay: 0ms !important;
     scroll-behavior: auto !important;
   }
 }

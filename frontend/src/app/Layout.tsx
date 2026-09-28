@@ -2,8 +2,7 @@ import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import { Link, NavLink, Outlet, ScrollRestoration, useLocation } from "react-router";
 
-import { PencilDefs } from "../components/space/PencilDefs";
-import { SketchSky, type SkyMood } from "../components/space/SketchSky";
+import { AtlasSky, type SkyMood } from "../components/space/AtlasSky";
 import { Wordmark } from "../components/Wordmark";
 
 const NAV = [
@@ -19,49 +18,34 @@ function skyMood(pathname: string): SkyMood | null {
 }
 
 function navClass(isActive: boolean): string {
-  return `relative inline-flex h-10 items-center rounded-md px-3 text-[0.9375rem] no-underline transition-colors ${
+  return `group relative inline-flex h-10 items-center px-3 text-[0.9375rem] no-underline transition-colors ${
     isActive ? "text-text" : "text-muted hover:text-text"
   }`;
-}
-
-function ActiveScribble() {
-  // A highlighter stroke under the current page.
-  return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 100 12"
-      preserveAspectRatio="none"
-      className="pointer-events-none absolute inset-x-1 bottom-1 -z-10 h-3 w-[calc(100%-0.5rem)]"
-    >
-      <path
-        d="M2 7.5c18-3 40-4.2 62-3.6 12 .3 24 1.3 34 2.6"
-        fill="none"
-        stroke="var(--highlight)"
-        strokeWidth="7"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
 }
 
 function Header() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-40 bg-bg/85 backdrop-blur-sm">
-      <div className="mx-auto flex h-[var(--header-h)] max-w-[96rem] items-center justify-between px-[var(--gutter)]">
+    <header className="sticky top-0 z-40 border-b border-rule/80 bg-bg/70 backdrop-blur-xl backdrop-saturate-150">
+      <div className="mx-auto flex h-[var(--header-h)] max-w-[88rem] items-center justify-between px-[var(--gutter)]">
         <Link to="/" className="rounded-sm no-underline" aria-label="SPHEREx Explorer, home">
           <Wordmark />
         </Link>
         <nav aria-label="Main" className="hidden sm:block">
-          <ul className="isolate flex items-center gap-1">
+          <ul className="flex items-center gap-1">
             {NAV.map((item) => (
               <li key={item.to}>
                 <NavLink to={item.to} className={({ isActive }) => navClass(isActive)}>
                   {({ isActive }) => (
                     <>
                       {item.label}
-                      {isActive ? <ActiveScribble /> : null}
+                      <span
+                        aria-hidden="true"
+                        className={`absolute inset-x-3 bottom-1 h-[2px] origin-left rounded-full bg-accent transition-transform duration-300 ${
+                          isActive ? "scale-x-100" : "scale-x-0 group-hover:scale-x-50"
+                        }`}
+                      />
                     </>
                   )}
                 </NavLink>
@@ -80,8 +64,7 @@ function Header() {
           {open ? <X size={20} aria-hidden /> : <Menu size={20} aria-hidden />}
         </button>
       </div>
-      <div aria-hidden="true" className="squiggle h-2 opacity-60" />
-      <nav id="mobile-nav" aria-label="Main" hidden={!open} className="sm:hidden">
+      <nav id="mobile-nav" aria-label="Main" hidden={!open} className="border-t border-rule sm:hidden">
         <ul className="flex flex-col px-[var(--gutter)] py-2">
           {NAV.map((item) => (
             <li key={item.to}>
@@ -89,10 +72,18 @@ function Header() {
                 to={item.to}
                 onClick={() => setOpen(false)}
                 className={({ isActive }) =>
-                  `flex h-12 items-center font-display text-xl no-underline ${isActive ? "text-text" : "text-muted"}`
+                  `flex h-12 items-center gap-3 font-display text-2xl no-underline ${isActive ? "text-text" : "text-muted"}`
                 }
               >
-                {({ isActive }) => <span className={isActive ? "highlight" : undefined}>{item.label}</span>}
+                {({ isActive }) => (
+                  <>
+                    <span
+                      aria-hidden="true"
+                      className={`size-1.5 rounded-full ${isActive ? "bg-accent" : "bg-transparent"}`}
+                    />
+                    {item.label}
+                  </>
+                )}
               </NavLink>
             </li>
           ))}
@@ -104,9 +95,17 @@ function Header() {
 
 function Footer() {
   return (
-    <footer className="relative mt-auto">
-      <div aria-hidden="true" className="squiggle h-2 opacity-60" />
-      <div className="page grid gap-6 py-10 text-sm text-muted md:grid-cols-[1fr_auto]">
+    <footer className="relative mt-auto overflow-hidden border-t border-rule">
+      {/* The limb of a planet rising behind the footer. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute left-1/2 top-[70%] -z-10 aspect-square w-[160vw] -translate-x-1/2 rounded-full"
+        style={{
+          background:
+            "radial-gradient(closest-side, rgb(91 63 208 / 0.08), rgb(91 63 208 / 0.04) 70%, rgb(232 168 56 / 0.1) 96%, transparent 100%)",
+        }}
+      />
+      <div className="page grid gap-8 py-12 text-sm text-muted md:grid-cols-[1fr_auto]">
         <div className="max-w-2xl space-y-2">
           <p>
             Images and metadata from the SPHEREx Quick Release data at the{" "}
@@ -151,8 +150,8 @@ function Footer() {
               </Link>
             </li>
           </ul>
-          <p className="hand -rotate-2 text-xl text-muted" aria-hidden="true">
-            clear skies ✦
+          <p className="font-display text-lg italic text-faint" aria-hidden="true">
+            Clear skies.
           </p>
         </div>
       </div>
@@ -166,11 +165,10 @@ export function Layout() {
 
   return (
     <div className="relative isolate flex min-h-dvh flex-col">
-      <PencilDefs />
-      {mood ? <SketchSky key={mood} mood={mood} /> : null}
+      {mood ? <AtlasSky key={mood} mood={mood} /> : null}
       <a
         href="#main"
-        className="visually-hidden focus:not-sr-only focus:fixed focus:left-4 focus:top-3 focus:z-50 focus:rounded-sm focus:bg-accent focus:px-3 focus:py-2 focus:text-accent-ink"
+        className="visually-hidden focus:not-sr-only focus:fixed focus:left-4 focus:top-3 focus:z-50 focus:rounded-full focus:bg-accent focus:px-4 focus:py-2 focus:text-accent-ink"
       >
         Skip to content
       </a>

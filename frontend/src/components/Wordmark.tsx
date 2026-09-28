@@ -1,3 +1,5 @@
+import { usePrefersReducedMotion } from "./space/motion";
+
 /** The six filter bands stacked like SPHEREx's linear variable filters. */
 export function BandMark({ size = 18 }: { size?: number }) {
   const bands = ["var(--band-1)", "var(--band-2)", "var(--band-3)", "var(--band-4)", "var(--band-5)", "var(--band-6)"];
@@ -10,42 +12,58 @@ export function BandMark({ size = 18 }: { size?: number }) {
   );
 }
 
+const ORBIT = "M30.5 16A14.5 5.2 0 1 1 1.5 16A14.5 5.2 0 1 1 30.5 16";
+
 /**
- * The product mark: a pencil-sketched planet banded with the six filter colours, a ring, and a
- * small satellite on its orbit.
+ * The product mark: a planet shaded in the six filter blues inside a tilted orbit that carries a
+ * small ember satellite.
  */
-export function OrbitMark({ size = 34 }: { size?: number }) {
-  const bands = ["--band-1", "--band-2", "--band-3", "--band-4", "--band-5", "--band-6"];
+export function OrbitMark({ size = 30 }: { size?: number }) {
+  const reduced = usePrefersReducedMotion();
   return (
     <svg
       width={size}
       height={size}
-      viewBox="0 0 40 40"
+      viewBox="0 0 32 32"
       aria-hidden="true"
       focusable="false"
       className="overflow-visible"
     >
       <defs>
-        <clipPath id="orbitmark-planet">
-          <circle cx="20" cy="20" r="10.5" />
-        </clipPath>
+        <linearGradient id="mark-bands" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="var(--band-1)" />
+          <stop offset="1" stopColor="var(--band-6)" />
+        </linearGradient>
+        <radialGradient id="mark-shade" cx="0.32" cy="0.3" r="0.8">
+          <stop offset="0" stopColor="#ffffff" stopOpacity="0.55" />
+          <stop offset="0.55" stopColor="#ffffff" stopOpacity="0" />
+          <stop offset="1" stopColor="#0b1437" stopOpacity="0.45" />
+        </radialGradient>
       </defs>
-      <g clipPath="url(#orbitmark-planet)">
-        {bands.map((b, i) => (
-          <rect key={b} x="8" y={9.5 + i * 3.5} width="24" height="3.6" fill={`url(#hatch-${b.slice(2)})`} />
-        ))}
+      <g transform="rotate(-24 16 16)">
+        <ellipse
+          cx="16"
+          cy="16"
+          rx="14.5"
+          ry="5.2"
+          fill="none"
+          stroke="var(--text)"
+          strokeOpacity="0.25"
+          strokeWidth="1"
+        />
       </g>
-      <g filter="url(#pencil)" fill="none" stroke="var(--text)" strokeLinecap="round">
-        <circle cx="20" cy="20" r="10.5" strokeWidth="1.5" />
-        <path d="M4.5 25.5c-3-3.4 5.2-8.8 15.8-11.2 10.2-2.4 17.8-1.6 16.6 2.2" strokeWidth="1.3" />
-        <path d="M36.9 16.5c-.9 3.4-8.4 7.3-17.4 9.3-6.7 1.5-12.6 1.4-15-.3" strokeWidth="1.3" strokeDasharray="0" />
-      </g>
-      <g
-        className="origin-center motion-safe:animate-[spin_7s_linear_infinite]"
-        style={{ transformOrigin: "20px 20px" }}
-      >
-        <rect x="18.6" y="0.8" width="2.8" height="2.8" fill="var(--text)" />
-        <path d="M15.8 2.2h8.4" stroke="var(--focus)" strokeWidth="1.3" strokeLinecap="round" />
+      <circle cx="16" cy="16" r="8" fill="url(#mark-bands)" />
+      <circle cx="16" cy="16" r="8" fill="url(#mark-shade)" />
+      <g transform="rotate(-24 16 16)">
+        {/* The near half of the orbit passes in front of the planet. */}
+        <path d="M1.5 16A14.5 5.2 0 0 0 30.5 16" fill="none" stroke="var(--text)" strokeWidth="1.1" />
+        {reduced ? (
+          <circle cx="30.5" cy="16" r="1.9" fill="var(--accent)" />
+        ) : (
+          <circle r="1.9" fill="var(--accent)">
+            <animateMotion dur="10s" repeatCount="indefinite" path={ORBIT} />
+          </circle>
+        )}
       </g>
     </svg>
   );
@@ -55,8 +73,9 @@ export function Wordmark() {
   return (
     <span className="inline-flex items-center gap-2.5">
       <OrbitMark />
-      <span className="font-display text-[1.3rem] leading-none tracking-[0.01em]">
-        SPHEREx <span className="text-muted">Explorer</span>
+      <span className="text-[1.05rem] leading-none tracking-[-0.01em] text-text">
+        <span className="font-semibold">SPHEREx</span>{" "}
+        <span className="font-display text-[1.28rem] italic text-muted">Explorer</span>
       </span>
     </span>
   );
