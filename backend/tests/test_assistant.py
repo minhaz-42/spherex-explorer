@@ -455,6 +455,19 @@ async def test_questions_about_live_data_say_where_the_data_came_from(svc: Servi
     assert "Data mode" not in other.render()
 
 
+async def test_a_cached_nothing_catalogued_is_no_evidence_and_no_new_lookup(svc: Services) -> None:
+    view = ViewContext(target=ViewTarget(ra=RA, dec=DEC), fov=FOV)
+    svc.store.put(
+        "object",
+        object_key(RA, DEC, simbad.DEFAULT_RADIUS_DEG),
+        {"object": None, "message": "SIMBAD lists no object within 36″ of this position."},
+        60,
+    )
+    ev = await evidence.build(svc, "What am I looking at?", view, "live")
+    assert not [i for i in ev.items if i.title == "Catalogued at the target"]
+    assert [u async for u in live.gather(svc, "What am I looking at?", view, "live", "t")] == []
+
+
 async def test_the_target_s_catalogue_entry_is_evidence(svc: Services) -> None:
     view = seed_view(svc)
     ev = await evidence.build(svc, "What am I looking at?", view, "live")

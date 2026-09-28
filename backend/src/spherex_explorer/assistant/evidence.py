@@ -15,7 +15,7 @@ import math
 import re
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Literal
+from typing import Any, Literal, TypeGuard
 from urllib.parse import urlencode
 
 from pydantic import BaseModel, Field
@@ -363,7 +363,7 @@ def add_view(ev: Evidence, svc: Services, view: ViewContext, source: Source) -> 
         "Explore",
     )
     target_object = store.peek("object", object_key(t.ra, t.dec, DEFAULT_OBJECT_RADIUS_DEG), source)
-    if target_object:
+    if catalogued(target_object):
         ev.add(
             "view",
             "Catalogued at the target",
@@ -719,6 +719,12 @@ def _light_years(ly: float) -> str:
     return f"{ly:,.0f} light-years" if ly >= 100 else f"{ly:.3g} light-years"
 
 
+def catalogued(entry: dict[str, Any] | None) -> TypeGuard[dict[str, Any]]:
+    """Whether a cached SIMBAD entry names an object. An entry can also record that nothing is
+    catalogued at a position ({"object": null}), so the lookup is not repeated."""
+    return bool(entry) and isinstance(entry, dict) and bool(entry.get("id"))
+
+
 def catalogue_text(obj: dict[str, Any]) -> str:
     """SIMBAD's answer for an object, as one line of evidence."""
     display = obj.get("name") or obj["id"]
@@ -761,7 +767,7 @@ def _add_catalogue(
     ev: Evidence, svc: Services, ra: float, dec: float, title: str, source: Source
 ) -> None:
     obj = svc.store.peek("object", object_key(ra, dec, DEFAULT_OBJECT_RADIUS_DEG), source)
-    if obj:
+    if catalogued(obj):
         ev.add("lookup", title, catalogue_text(obj), "SIMBAD, CDS, Strasbourg")
 
 
