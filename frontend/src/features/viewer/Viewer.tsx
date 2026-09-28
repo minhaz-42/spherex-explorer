@@ -22,6 +22,7 @@ import { FrameStrip, PassTrack, Transport } from "../timeline/Timeline";
 import { BandPicker } from "../wavelength/BandPicker";
 import { Measurements } from "../wavelength/Measurements";
 import { FramePanel } from "./FramePanel";
+import { MAX_SEQUENCE_KEYS, publishView } from "../assistant/viewContext";
 import { CandidatesPanel } from "../known/Candidates";
 import { KnownObjectsPanel } from "../known/KnownObjects";
 import { CandidateTrack, PredictedTrack, ScaleAndCompass, TargetMarker } from "./overlays";
@@ -93,6 +94,29 @@ export function Viewer({ observations, target, source, initial, onStateChange }:
     if (playing) return; // write the URL when playback stops, not on every frame
     onStateChange?.({ spec, frame: frameId, reference: refId, compare, fov });
   }, [spec, frameId, refId, compare, fov, playing, onStateChange]);
+
+  // Tell the assistant what is on screen: identifiers only, the server looks up every value.
+  const sequenceKeys = useMemo(
+    () => (sequence.length <= MAX_SEQUENCE_KEYS ? sequence.map((f) => f.key) : []),
+    [sequence],
+  );
+  const frameKey = frame?.key ?? null;
+  const refKey = refFrame?.key ?? null;
+  useEffect(() => {
+    publishView({
+      source,
+      target: { ra: target.ra, dec: target.dec, name: target.label },
+      frameKey,
+      referenceKey: compare === "single" ? null : refKey,
+      compare,
+      fov,
+      sequenceMode: spec.mode,
+      sequenceKeys,
+      frameIndex: cur,
+      frameCount: count,
+    });
+  }, [source, target.ra, target.dec, target.label, frameKey, refKey, compare, fov, spec.mode, sequenceKeys, cur, count]);
+  useEffect(() => () => publishView(null), []);
 
   // One stretch for the whole sequence, taken from the reference frame (or the first to arrive).
   const stretchSource = A ?? B;

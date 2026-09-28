@@ -1,9 +1,11 @@
-import { Menu, X } from "lucide-react";
-import { useState } from "react";
+import { Menu, MessageSquareText, X } from "lucide-react";
+import { type RefObject, useCallback, useRef, useState } from "react";
 import { Link, NavLink, Outlet, ScrollRestoration, useLocation } from "react-router";
 
 import { AtlasSky, type SkyMood } from "../components/space/AtlasSky";
+import { ThemeToggle } from "../components/ThemeToggle";
 import { Wordmark } from "../components/Wordmark";
+import { AssistantPanel } from "../features/assistant/AssistantPanel";
 
 const NAV = [
   { to: "/explore", label: "Explore" },
@@ -23,7 +25,32 @@ function navClass(isActive: boolean): string {
   }`;
 }
 
-function Header() {
+function AskButton({ open, onClick, buttonRef }: { open: boolean; onClick: () => void; buttonRef: RefObject<HTMLButtonElement | null> }) {
+  return (
+    <button
+      ref={buttonRef}
+      type="button"
+      className={`btn btn-ghost gap-2 px-3 max-sm:w-10 max-sm:px-0 ${open ? "bg-hover text-text" : ""}`}
+      aria-label="Ask"
+      aria-expanded={open}
+      aria-controls="assistant"
+      onClick={onClick}
+    >
+      <MessageSquareText size={18} aria-hidden />
+      <span className="hidden sm:inline">Ask</span>
+    </button>
+  );
+}
+
+function Header({
+  askOpen,
+  onAsk,
+  askRef,
+}: {
+  askOpen: boolean;
+  onAsk: () => void;
+  askRef: RefObject<HTMLButtonElement | null>;
+}) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -32,6 +59,7 @@ function Header() {
         <Link to="/" className="rounded-sm no-underline" aria-label="SPHEREx Explorer, home">
           <Wordmark />
         </Link>
+        <div className="flex items-center gap-1">
         <nav aria-label="Main" className="hidden sm:block">
           <ul className="flex items-center gap-1">
             {NAV.map((item) => (
@@ -53,6 +81,9 @@ function Header() {
             ))}
           </ul>
         </nav>
+        <span aria-hidden="true" className="mx-2 hidden h-5 w-px bg-rule sm:block" />
+        <AskButton open={askOpen} onClick={onAsk} buttonRef={askRef} />
+        <ThemeToggle />
         <button
           type="button"
           className="btn btn-ghost btn-icon sm:hidden"
@@ -63,6 +94,7 @@ function Header() {
         >
           {open ? <X size={20} aria-hidden /> : <Menu size={20} aria-hidden />}
         </button>
+        </div>
       </div>
       <nav id="mobile-nav" aria-label="Main" hidden={!open} className="border-t border-rule sm:hidden">
         <ul className="flex flex-col px-[var(--gutter)] py-2">
@@ -162,6 +194,12 @@ function Footer() {
 export function Layout() {
   const { pathname } = useLocation();
   const mood = skyMood(pathname);
+  const [askOpen, setAskOpen] = useState(false);
+  const askRef = useRef<HTMLButtonElement>(null);
+  const closeAsk = useCallback(() => {
+    setAskOpen(false);
+    askRef.current?.focus();
+  }, []);
 
   return (
     <div className="relative isolate flex min-h-dvh flex-col">
@@ -172,11 +210,12 @@ export function Layout() {
       >
         Skip to content
       </a>
-      <Header />
+      <Header askOpen={askOpen} onAsk={() => setAskOpen((v) => !v)} askRef={askRef} />
       <main id="main" className="flex flex-1 flex-col">
         <Outlet />
       </main>
       <Footer />
+      <AssistantPanel open={askOpen} onClose={closeAsk} />
       <ScrollRestoration />
     </div>
   );

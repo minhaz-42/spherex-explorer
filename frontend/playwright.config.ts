@@ -38,6 +38,8 @@ export default defineConfig({
         // A throwaway cache, so tests never read a developer's cached live data.
         SPHEREX_CACHE_DIR: "../backend/.cache-e2e",
         SPHEREX_FRONTEND_DIST: "../frontend/no-dist",
+        // Built-in answers, so assistant tests do not depend on a local model being installed.
+        SPHEREX_ASSISTANT_PROVIDER: "off",
       },
     },
     {
