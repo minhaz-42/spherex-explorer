@@ -227,7 +227,7 @@ export function SkyGlobe() {
       // The deep fields at the ecliptic poles, brighter with every visit.
       const visits = Math.min(MAPS, s.progress);
       const pulse = reduced ? 0.5 : 0.5 + 0.5 * Math.sin(now / 500);
-      ctx.font = '600 11px "Inter Variable", system-ui, sans-serif';
+      ctx.font = '600 11px "Plus Jakarta Sans Variable", system-ui, sans-serif';
       for (const [lat, label] of [
         [89.9, "North deep field"],
         [-82, "South deep field"],

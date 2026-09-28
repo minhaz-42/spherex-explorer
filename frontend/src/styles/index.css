@@ -1,7 +1,7 @@
-@import "@fontsource-variable/inter/opsz.css";
-@import "@fontsource-variable/inter/opsz-italic.css";
-@import "@fontsource/ibm-plex-mono/400.css";
-@import "@fontsource/ibm-plex-mono/500.css";
+@import "@fontsource-variable/sora/wght.css";
+@import "@fontsource-variable/plus-jakarta-sans/wght.css";
+@import "@fontsource-variable/plus-jakarta-sans/wght-italic.css";
+@import "@fontsource-variable/jetbrains-mono/wght.css";
 @import "tailwindcss";
 
 /*
@@ -16,9 +16,10 @@
  * Sky images are never filtered or tinted: they sit in an image well (--bg-image) and marks drawn on
  * top of them use the *-on-image colours.
  *
- * Type: one family, Inter, for headings, text and numbers, with its optical sizes (the display cut
- * at headline sizes) and tabular figures wherever numbers line up. IBM Plex Mono is kept for
- * identifiers only: observation IDs, archive keys, model names. Text is never set in capitals with
+ * Type: three families, one job each. Sora, geometric and confident, sets headings and the
+ * wordmark. Plus Jakarta Sans sets text, controls and numbers, with tabular figures wherever numbers
+ * line up. JetBrains Mono sets identifiers only: observation IDs, archive keys, model names. All
+ * three carry the symbols the app prints (µ, ′, ″, ±, °, −). Text is never set in capitals with
  * wide tracking, and nothing smaller than 11 px.
  */
 :root {
@@ -76,13 +77,15 @@
   --band-5: #1a4f98;
   --band-6: #113e7a;
 
-  --font-sans: "Inter Variable", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --font-display: var(--font-sans);
-  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --font-sans: "Plus Jakarta Sans Variable", "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", Roboto,
+    sans-serif;
+  --font-display: "Sora Variable", "Sora", var(--font-sans);
+  --font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
 
-  --fs-display: clamp(2.6rem, 1.55rem + 4.2vw, 4.9rem);
-  --fs-h1: clamp(2rem, 1.5rem + 1.9vw, 3.1rem);
-  --fs-h2: clamp(1.6rem, 1.3rem + 1.2vw, 2.3rem);
+  /* Sora is wide, so its sizes sit a step below a narrow face's. */
+  --fs-display: clamp(2.4rem, 1.4rem + 3.4vw, 4.2rem);
+  --fs-h1: clamp(1.9rem, 1.45rem + 1.7vw, 2.9rem);
+  --fs-h2: clamp(1.5rem, 1.25rem + 1.05vw, 2.15rem);
 
   --radius: 10px;
   --radius-lg: 18px;
@@ -282,16 +285,16 @@
   h2,
   h3 {
     font-family: var(--font-display);
-    font-weight: 650;
-    line-height: 1.12;
-    letter-spacing: -0.016em;
+    font-weight: 600;
+    line-height: 1.14;
+    letter-spacing: -0.018em;
     text-wrap: balance;
   }
 
   h1 {
-    font-weight: 700;
-    line-height: 1.06;
-    letter-spacing: -0.022em;
+    font-weight: 650;
+    line-height: 1.08;
+    letter-spacing: -0.028em;
   }
 
   p {
@@ -334,9 +337,9 @@
   .display {
     font-family: var(--font-display);
     font-size: var(--fs-display);
-    font-weight: 700;
-    line-height: 1.02;
-    letter-spacing: -0.03em;
+    font-weight: 650;
+    line-height: 1.04;
+    letter-spacing: -0.04em;
   }
 
   /* The phrase of a headline that carries the accent. */
@@ -467,7 +470,7 @@
     padding: 0 1.1rem;
     border: 1px solid transparent;
     border-radius: 999px;
-    font: 550 0.9375rem/1 var(--font-sans);
+    font: 600 0.9375rem/1 var(--font-sans);
     white-space: nowrap;
     cursor: pointer;
     text-decoration: none;
@@ -688,8 +691,8 @@
   .section-title {
     font-family: var(--font-display);
     font-size: var(--fs-h2);
-    font-weight: 650;
-    letter-spacing: -0.02em;
+    font-weight: 600;
+    letter-spacing: -0.024em;
   }
 
   /* The heading of a panel or a group of controls. */

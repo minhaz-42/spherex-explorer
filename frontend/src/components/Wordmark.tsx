@@ -73,8 +73,8 @@ export function Wordmark() {
   return (
     <span className="inline-flex items-center gap-2.5">
       <OrbitMark />
-      <span className="text-[1.0625rem] leading-none tracking-[-0.012em] text-text">
-        <span className="font-bold">SPHEREx</span> <span className="font-normal text-muted">Explorer</span>
+      <span className="font-display text-[1.0625rem] leading-none tracking-[-0.02em] text-text">
+        <span className="font-semibold">SPHEREx</span> <span className="font-light text-muted">Explorer</span>
       </span>
     </span>
   );

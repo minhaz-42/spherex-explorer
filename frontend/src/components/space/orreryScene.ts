@@ -320,7 +320,7 @@ function drawLabel(
   // Sentence case keeps "SPHEREx" spelled as the mission spells it.
   const name = item.id === "earth" ? "Earth · SPHEREx" : BODIES[item.id].name;
   ctx.save();
-  ctx.font = `600 ${Math.round(11 * unit + 0.5)}px "Inter Variable", system-ui, sans-serif`;
+  ctx.font = `600 ${Math.round(11 * unit + 0.5)}px "Plus Jakarta Sans Variable", system-ui, sans-serif`;
   const w = ctx.measureText(name).width;
   const h = 13 * unit;
   const { x, y, r } = item;
