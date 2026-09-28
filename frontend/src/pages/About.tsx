@@ -1,13 +1,48 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router";
 
-const SECTIONS = [
-  { id: "mission", label: "SPHEREx" },
-  { id: "how", label: "How it works" },
-  { id: "methods", label: "Methods" },
-  { id: "limitations", label: "Limitations" },
-  { id: "credits", label: "Data and credits" },
-  { id: "privacy", label: "Privacy" },
+import { useLang, useT } from "../lib/i18n";
+import { ABOUT } from "./about.messages";
+
+type Key = keyof typeof ABOUT.en;
+
+const SECTIONS: { id: string; label: Key }[] = [
+  { id: "mission", label: "mission" },
+  { id: "how", label: "how" },
+  { id: "methods", label: "methods" },
+  { id: "limitations", label: "limitations" },
+  { id: "credits", label: "credits" },
+  { id: "privacy", label: "privacy" },
+];
+
+/** The three questions, each a bold lead-in and its answer. */
+const QUESTIONS: [Key, Key][] = [
+  ["whereLead", "where"],
+  ["whenLead", "when"],
+  ["changedLead", "changed"],
+];
+
+/** The Methods paragraphs, each a bold lead-in and its text. */
+const METHODS: [Key, Key][] = [
+  ["readingLead", "reading"],
+  ["alignmentLead", "alignment"],
+  ["backgroundLead", "background"],
+  ["wavelengthLead", "wavelength"],
+  ["brightnessLead", "brightness"],
+  ["comparisonsLead", "comparisons"],
+  ["knownLead", "known"],
+  ["movingLead", "moving"],
+  ["askLead", "ask"],
+];
+
+const LIMITATIONS: Key[] = [
+  "limitWavelength",
+  "limitSaturation",
+  "limitResiduals",
+  "limitReleases",
+  "limitSearch",
+  "limitLive",
+  "limitAssistant",
 ];
 
 function Section({ id, title, children }: { id: string; title: string; children: ReactNode }) {
@@ -30,14 +65,20 @@ function Ext({ href, children }: { href: string; children: ReactNode }) {
 }
 
 export function About() {
+  const t = useT(ABOUT);
+  const lang = useLang();
+  // The credits keep the providers' own English wording in both languages; on a Bangla page they
+  // are marked as English so screen readers read them as English.
+  const en = lang === "bn" ? "en" : undefined;
+
   return (
     <div className="page grid gap-12 py-12 md:py-16 lg:grid-cols-[12rem_minmax(0,1fr)]">
-      <nav aria-label="On this page" className="hidden lg:block">
+      <nav aria-label={t("toc")} className="hidden lg:block">
         <ul className="sticky top-24 space-y-2 text-sm">
           {SECTIONS.map((s) => (
             <li key={s.id}>
               <a href={`#${s.id}`} className="text-muted no-underline hover:text-text">
-                {s.label}
+                {t(s.label)}
               </a>
             </li>
           ))}
@@ -46,176 +87,89 @@ export function About() {
 
       <div className="min-w-0 max-w-3xl space-y-10">
         <header className="space-y-4">
-          <p className="kicker">About</p>
-          <h1 className="text-[length:var(--fs-h1)]">A time machine for the infrared sky</h1>
-          <p className="prose-body">
-            SPHEREx Explorer finds every image NASA’s SPHEREx mission has taken of a place in the sky, lines them up, and
-            lets anyone step through them to see what changed. It was built for the 2026 NASA Space Apps Challenge,
-            “Planet X and SPHEREx”. It is independent: not affiliated with or endorsed by NASA, JPL, Caltech or IPAC.
-          </p>
+          <p className="kicker">{t("kicker")}</p>
+          <h1 className="text-[length:var(--fs-h1)]">{t("title")}</h1>
+          <p className="prose-body">{t("intro")}</p>
         </header>
 
-        <Section id="mission" title="SPHEREx">
+        <Section id="mission" title={t("mission")}>
           <p>
-            SPHEREx is a NASA space telescope launched on 12 March 2025. From a polar orbit about 650 km up it maps the
-            entire sky every six months in <strong>102 colours of infrared light</strong>, from 0.75 to 5 micrometres,
-            with 6.15-arcsecond pixels. Its science goals are the first moments of the Universe, the history of galaxies,
-            and the ices from which planets form.
+            {t("orbit")}
+            <strong>{t("orbitStrong")}</strong>
+            {t("orbitEnd")}
           </p>
           <p>
-            SPHEREx has no filter wheel. Each of its six detectors sits behind a <strong>linear variable filter</strong>:
-            the wavelength changes across the detector. As the telescope steps across the sky, each star passes through
-            many wavelengths, and one to two weeks of exposures add up to a spectrum. That design is why, in this app, every frame
-            is labelled with the wavelength that fell on your target.
+            {t("filter")}
+            <strong>{t("filterStrong")}</strong>
+            {t("filterEnd")}
           </p>
         </Section>
 
-        <Section id="how" title="How it works">
-          <p>Every view answers three questions in order.</p>
+        <Section id="how" title={t("how")}>
+          <p>{t("howIntro")}</p>
           <ol className="space-y-3">
-            <li>
-              <strong>Where?</strong> A name is looked up with CDS Sesame (SIMBAD, NED, VizieR); coordinates are read
-              directly. The position is shown in equatorial, galactic and ecliptic coordinates.
-            </li>
-            <li>
-              <strong>When?</strong> The IRSA image search (SIA) lists every SPHEREx Level 2 image that contains the point,
-              from Quick Releases 2 and 3. They are grouped into survey passes, months apart. Within a pass, SPHEREx points
-              at the spot several times, hours apart, and takes up to four exposures a couple of minutes apart each time.
-            </li>
-            <li>
-              <strong>What changed?</strong> Each frame is cut out, aligned and measured on the server, then shown
-              side by side, blinked or differenced in your browser with one shared brightness scale.
-            </li>
+            {QUESTIONS.map(([lead, text]) => (
+              <li key={lead}>
+                <strong>{t(lead)}</strong> {t(text)}
+              </li>
+            ))}
           </ol>
         </Section>
 
-        <Section id="methods" title="Methods">
-          <p>
-            <strong>Reading the data.</strong> A SPHEREx image file is about 70 MB. The server reads only the rows it
-            needs from the public cloud copy (Amazon S3), using HTTP byte ranges, and decodes the compressed flag planes
-            of QR3 row by row. This was checked against IRSA’s own cutout service: the pixels are identical. If the cloud
-            copy fails, IRSA’s cutout service is used instead.
-          </p>
-          <p>
-            <strong>Alignment.</strong> Each frame is resampled onto one grid centred on the target, north up and east
-            left, at SPHEREx’s native pixel size, using the frame’s own astrometric solution (TAN-SIP). Flagged pixels
-            (cosmic rays, hot and dead pixels, ghosts, persistence; the set IRSA’s mosaic tool excludes) are masked and do
-            not leak into their neighbours. For display only, masked pixels are filled from their surroundings; the
-            mask marks them.
-          </p>
-          <p>
-            <strong>Background.</strong> The zodiacal light and airglow are not removed in SPHEREx images and change from
-            frame to frame, so each frame’s local background (a sigma-clipped median) is subtracted.
-          </p>
-          <p>
-            <strong>Wavelength at the target.</strong> Read from each frame’s spectral lookup table (WCS-WAVE) at the
-            target’s pixel. Before pixels load, it is estimated from the image footprint to within about 0.002 µm.
-          </p>
-          <p>
-            <strong>Brightness.</strong> A 12-arcsecond aperture on the native pixels, a local background from a
-            surrounding annulus, and an uncertainty from the pipeline’s variance plane. No aperture correction or PSF
-            fitting: these numbers are for comparing frames, not for precise absolute fluxes.
-          </p>
-          <p>
-            <strong>Comparisons.</strong> A difference image is shown only for two frames from the same detector that
-            saw the target within half a spectral channel of each other. Otherwise the app explains why a difference
-            would mislead, and offers blinking to compare positions.
-          </p>
-          <p>
-            <strong>Known Solar System objects.</strong> JPL’s Small-Body Identification service is asked which
-            catalogued asteroids and comets were in the field, for SPHEREx’s own position from the image header. JPL
-            Horizons then gives each one’s position at every frame time, corrected to SPHEREx’s viewpoint. Checked against
-            Horizons’ own SPHEREx-centred answer for asteroid (7) Iris, the correction agrees to 0.003 arcseconds.
-          </p>
-          <p>
-            <strong>Moving-source search.</strong> A simple, transparent search: detect sources in every frame, drop
-            those seen again at the same place in another pointing, keep what repeats within one pointing, and link
-            those sightings on straight tracks at a constant rate. Results are called candidates and compared with JPL’s
-            predictions. On the Iris field it finds Iris within 1.4 arcseconds of JPL’s positions.
-          </p>
-          <p>
-            <strong>The Ask assistant.</strong> Questions are answered from evidence the server gathers itself: its own
-            measurements of the frames on screen, the comparison rules, JPL’s predictions, the moving-source search,
-            SIMBAD’s facts about the object at the target or any object you name, SPHEREx coverage, the Discover cases
-            and short method notes. Whatever a question needs and the server does not have yet is fetched live first,
-            and the chat says what it is fetching. Your browser only says which target and frames are on screen, never
-            any values. A language model running on the same machine as the server (by default Qwen3 4B, through
-            Ollama) phrases that evidence and cites it by number; it never sees the images. Every number and date in an
-            answer is then looked for in its sources, and anything not found is flagged under the answer. Links in
-            answers are made by the server, not by the model. Without a model, the assistant answers from the same
-            evidence directly and says so.
-          </p>
+        <Section id="methods" title={t("methods")}>
+          {METHODS.map(([lead, text]) => (
+            <p key={lead}>
+              <strong>{t(lead)}</strong> {t(text)}
+            </p>
+          ))}
           <p className="text-sm">
-            The full notes, with every service request and check, are in the project’s documentation (
-            <code className="mono">docs/scientific-methods.md</code> and <code className="mono">docs/research/</code>).
+            {t("notes")}
+            <code className="mono">docs/scientific-methods.md</code>
+            {t("notesAnd")}
+            <code className="mono">docs/research/</code>
+            {t("notesEnd")}
           </p>
         </Section>
 
-        <Section id="limitations" title="Limitations">
+        <Section id="limitations" title={t("limitations")}>
           <ul className="list-disc space-y-2 pl-5">
-            <li>
-              Two frames of the same place usually saw it at different wavelengths. A brightness difference between them
-              may be the source’s colour rather than a change in time. Use a matched-wavelength sequence to compare
-              brightness.
-            </li>
-            <li>
-              Very bright stars and fast bright asteroids can saturate: their brightness is then a lower limit, and the
-              app says so.
-            </li>
-            <li>
-              Differences near bright stars show residuals, because the telescope’s point-spread function changes across
-              the detector.
-            </li>
-            <li>
-              QR2 and QR3 were processed with different calibrations; the SPHEREx team advises caution when combining
-              them.
-            </li>
-            <li>
-              The moving-source search is not a survey pipeline. It can miss faint or slow objects, and it can be fooled
-              by artefacts; an unmatched candidate is not a discovery.
-            </li>
-            <li>
-              Data come from IRSA and JPL at the moment you ask; when they are unavailable the app says so and shows no
-              data rather than substitute data. A clearly labelled demo snapshot of real data can be chosen instead.
-            </li>
-            <li>
-              The assistant’s answers are phrased by a small language model and can be wrong: it sometimes links two true
-              facts in a way the evidence does not support. Its numbers, dates and citations are checked, its reasoning
-              is not. The numbered sources under each answer are what the app actually measured.
-            </li>
+            {LIMITATIONS.map((key) => (
+              <li key={key}>{t(key)}</li>
+            ))}
           </ul>
         </Section>
 
-        <Section id="credits" title="Data and credits">
-          <p>
+        <Section id="credits" title={t("credits")}>
+          {lang === "bn" && <p className="text-sm text-faint">{t("creditsNote")}</p>}
+          <p lang={en}>
             This work makes use of data products from the Spectro-Photometer for the History of the Universe, Epoch of
             Reionization and Ices Explorer (SPHEREx), which is a joint project of the Jet Propulsion Laboratory and the
             California Institute of Technology, and is funded by the National Aeronautics and Space Administration.
             Quick Release 2 (<Ext href="https://doi.org/10.26131/IRSA652">doi:10.26131/IRSA652</Ext>) and Quick Release 3
             (<Ext href="https://doi.org/10.26131/IRSA662">doi:10.26131/IRSA662</Ext>).
           </p>
-          <p>
+          <p lang={en}>
             This research has made use of the NASA/IPAC Infrared Science Archive, which is funded by the National
             Aeronautics and Space Administration and operated by the California Institute of Technology.
           </p>
-          <p>
+          <p lang={en}>
             Solar System positions come from the{" "}
             <Ext href="https://ssd.jpl.nasa.gov/">JPL Solar System Dynamics</Ext> group’s SBIdent and Horizons services.
             Object names are resolved with <Ext href="https://cds.unistra.fr/cgi-bin/Sesame">CDS Sesame</Ext>, which
             queries SIMBAD, NED and VizieR.
           </p>
-          <p>
+          <p lang={en}>
             This research has made use of the <Ext href="https://simbad.cds.unistra.fr/simbad/">SIMBAD database</Ext>,
             operated at CDS, Strasbourg, France, for the facts about each object and the objects in each field. Images
             of the same field in other light come through the CDS{" "}
             <Ext href="https://alasky.cds.unistra.fr/hips-image-services/hips2fits">hips2fits</Ext> service.
           </p>
-          <p>
+          <p lang={en}>
             The Digitized Sky Surveys were produced at the Space Telescope Science Institute under U.S. Government grant
             NAG W-2166. The images of these surveys are based on photographic data obtained using the Oschin Schmidt
             Telescope on Palomar Mountain (POSS-I and POSS-II, Caltech) and the UK Schmidt Telescope.
           </p>
-          <p>
+          <p lang={en}>
             This publication makes use of data products from the Two Micron All Sky Survey, which is a joint project of
             the University of Massachusetts and the Infrared Processing and Analysis Center/California Institute of
             Technology, funded by the National Aeronautics and Space Administration and the National Science Foundation;
@@ -223,30 +177,21 @@ export function About() {
             California, Los Angeles, and the Jet Propulsion Laboratory/California Institute of Technology, funded by
             the National Aeronautics and Space Administration.
           </p>
-          <p>
+          <p lang={en}>
             Coastlines on the globe are from <Ext href="https://www.naturalearthdata.com/">Natural Earth</Ext>, in the
             public domain.
           </p>
-          <p>
+          <p lang={en}>
             SPHEREx Explorer is not affiliated with or endorsed by NASA, JPL, Caltech, IPAC or CDS, and uses none of
             their logos.
           </p>
         </Section>
 
-        <Section id="privacy" title="Privacy">
+        <Section id="privacy" title={t("privacy")}>
+          <p>{t("privacyData")}</p>
+          <p>{t("privacyAssistant")}</p>
           <p>
-            There are no accounts, no cookies and no analytics. Your searches are sent to the SPHEREx Explorer server,
-            which forwards them to the public services above. The server keeps the address of each visitor in memory
-            for a few minutes to limit how fast the archive is queried, and stores nothing about you.
-          </p>
-          <p>
-            Questions to the assistant go to the same server, where the language model runs; they are not sent to an AI
-            company or any other service, except an object name you ask about, which is looked up with CDS Sesame like a
-            search. Your chats are kept only in this browser, so you can come back to them; the server keeps
-            nothing, and the chat list deletes them one by one or all at once.
-          </p>
-          <p>
-            <Link to="/explore">Start exploring</Link>
+            <Link to="/explore">{t("start")}</Link>
           </p>
         </Section>
       </div>
