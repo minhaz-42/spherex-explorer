@@ -1,0 +1,172 @@
+/* Shared behaviour styles: theme reveal, text effects, preloader and the
+   explorer's structure. Colours always come from the custom properties in
+   main.css. Kept in the components layer so Tailwind utilities can override. */
+@layer components {
+
+/* ---- theme reveal (View Transitions) ---------------------------------- */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-old(root) { z-index: 1; }
+::view-transition-new(root) { z-index: 2; }
+
+html { scroll-behavior: smooth; }
+body { background: var(--bg); color: var(--ink); -webkit-font-smoothing: antialiased; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+/* ---- hover roll -------------------------------------------------------- */
+.roll { display: inline-grid; overflow: hidden; vertical-align: bottom; }
+.roll > span { grid-area: 1 / 1; transition: transform 0.5s cubic-bezier(0.76, 0, 0.24, 1); }
+.roll > span:last-child { transform: translateY(110%); }
+:is(a, button, [data-roll-parent]):is(:hover, :focus-visible) .roll > span:first-child { transform: translateY(-110%); }
+:is(a, button, [data-roll-parent]):is(:hover, :focus-visible) .roll > span:last-child { transform: translateY(0); }
+
+/* ---- rolling digits ---------------------------------------------------- */
+.odo { display: inline-flex; overflow: hidden; height: 1em; line-height: 1; font-variant-numeric: tabular-nums; }
+.odo-col { display: flex; flex-direction: column; transition: transform 1.6s cubic-bezier(0.2, 0.8, 0.1, 1); }
+.odo-col > span, .odo > span { height: 1em; display: block; }
+
+/* ---- RGB glitch -------------------------------------------------------- */
+[data-glitch] { position: relative; display: inline-block; }
+[data-glitch]::before,
+[data-glitch]::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+[data-glitch].is-glitching::before {
+  opacity: 0.85;
+  color: var(--glitch-a, #ff3b5c);
+  animation: glitch-a 0.42s steps(3, end) both;
+}
+[data-glitch].is-glitching::after {
+  opacity: 0.85;
+  color: var(--glitch-b, #35e0ff);
+  animation: glitch-b 0.42s steps(3, end) both;
+}
+[data-glitch].is-glitching { animation: glitch-shake 0.42s steps(4, end) both; }
+@keyframes glitch-a {
+  0% { clip-path: inset(12% 0 62% 0); transform: translate(-3px, 0); }
+  33% { clip-path: inset(58% 0 8% 0); transform: translate(3px, 0); }
+  66% { clip-path: inset(30% 0 40% 0); transform: translate(-2px, 1px); }
+  100% { clip-path: inset(0 0 100% 0); transform: none; }
+}
+@keyframes glitch-b {
+  0% { clip-path: inset(66% 0 4% 0); transform: translate(3px, 0); }
+  33% { clip-path: inset(6% 0 70% 0); transform: translate(-3px, 0); }
+  66% { clip-path: inset(44% 0 30% 0); transform: translate(2px, -1px); }
+  100% { clip-path: inset(100% 0 0 0); transform: none; }
+}
+@keyframes glitch-shake {
+  0%, 100% { transform: none; }
+  25% { transform: translate(1px, 0) skewX(-4deg); }
+  50% { transform: translate(-1px, 0); }
+  75% { transform: skewX(3deg); }
+}
+
+/* ---- preloader --------------------------------------------------------- */
+[data-preloader] {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: var(--bg);
+  color: var(--ink);
+  transition: clip-path 0.8s cubic-bezier(0.76, 0, 0.24, 1);
+  clip-path: inset(0 0 0 0);
+}
+[data-preloader].is-done { clip-path: inset(0 0 100% 0); }
+.no-js [data-preloader] { display: none; }
+
+/* ---- explorer structure (looks come from each demo) -------------------- */
+[data-ex="views"] { display: grid; gap: var(--ex-gap, 12px); grid-template-columns: 1fr; }
+[data-ex="views"][data-mode="side"] { grid-template-columns: 1fr 1fr; }
+[data-ex="view-a"], [data-ex="view-b"] { width: 100%; aspect-ratio: 1; display: block; image-rendering: pixelated; }
+[data-refused="true"] [data-ex="view-a"] { opacity: 0.35; filter: grayscale(1); }
+
+.ex-pass { display: grid; gap: 6px; }
+.ex-pointings { display: flex; gap: 10px; }
+.ex-pointing { display: flex; gap: 2px; }
+.ex-tick {
+  width: 10px;
+  height: 28px;
+  background: var(--c);
+  opacity: 0.45;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.2s;
+}
+.ex-tick:hover { opacity: 0.85; }
+.ex-tick[aria-current="true"] { opacity: 1; transform: scaleY(1.35); box-shadow: 0 0 0 2px var(--bg), 0 0 0 3px var(--ink); }
+.ex-tick[data-b="true"] { opacity: 1; outline: 1px dashed var(--ink); outline-offset: 3px; }
+[data-ex="timeline"] { display: flex; flex-wrap: wrap; gap: 18px 22px; padding: 10px 2px 6px; }
+
+.ex-plot-svg { width: 100%; height: auto; display: block; overflow: visible; }
+.ex-band { fill: var(--ink); opacity: 0.035; }
+.ex-band.odd { opacity: 0.07; }
+.ex-axis { fill: var(--mute); font-size: 11px; font-family: inherit; }
+.ex-grid { stroke: var(--line); stroke-dasharray: 3 4; }
+.ex-pt { cursor: pointer; stroke: var(--bg); stroke-width: 1; }
+.ex-pt.pass-1 { fill: var(--pass-1, var(--ink)); }
+.ex-pt.pass-2 { fill: var(--pass-2, var(--mute)); }
+.ex-pt.pass-3 { fill: var(--pass-3, var(--accent)); }
+.ex-pt.is-a { fill: var(--accent); stroke: var(--ink); stroke-width: 2; }
+.ex-pt.is-b { fill: var(--bg); stroke: var(--ink); stroke-width: 2; stroke-dasharray: 2 2; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}
+
+/* ---- phones draw under translucent system bars ------------------------ */
+:root { box-sizing: border-box; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+html { scroll-padding-top: calc(env(safe-area-inset-top, 0px) + 72px); }
+
+/* ---- spectral ruler (102 channels) ------------------------------------ */
+[data-ruler] { display: flex; align-items: flex-end; gap: 1px; height: var(--ruler-h, 18px); }
+[data-ruler] > i { flex: 1; background: var(--c); height: 55%; opacity: 0.8; }
+[data-ruler] > i:nth-child(17n + 1) { height: 100%; opacity: 1; }
+
+/* ---- target reticle over preview frames -------------------------------- */
+.ex-view { position: relative; }
+.ex-view::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 13%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border: 1.5px solid var(--accent);
+  border-radius: 50%;
+  pointer-events: none;
+  -webkit-mask: conic-gradient(#000 0 20deg, transparent 20deg 70deg, #000 70deg 110deg, transparent 110deg 160deg, #000 160deg 200deg, transparent 200deg 250deg, #000 250deg 290deg, transparent 290deg 340deg, #000 340deg);
+          mask: conic-gradient(#000 0 20deg, transparent 20deg 70deg, #000 70deg 110deg, transparent 110deg 160deg, #000 160deg 200deg, transparent 200deg 250deg, #000 250deg 290deg, transparent 290deg 340deg, #000 340deg);
+}
+[data-refused="true"] .ex-view::after { opacity: 0.4; }
+
+/* ---- header gains a backdrop once the page scrolls ---------------------- */
+[data-header] { transition: background-color 0.3s, backdrop-filter 0.3s, border-color 0.3s; border-bottom: 1px solid transparent; }
+[data-header][data-scrolled="true"] {
+  background: color-mix(in oklab, var(--bg) 82%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom-color: var(--line);
+}
+
+}
+
+/* Search status line under each search form */
+@layer components {
+  .search-status { margin-top: 12px; font-size: 0.9em; line-height: 1.5; color: var(--mute); max-width: 60ch; }
+  .search-status[data-kind="error"] { color: var(--accent); }
+  .search-status[data-kind="ok"] { color: var(--ink); }
+}
+
+/* Outside the layer on purpose: these must beat display utilities like .grid */
+[data-explorer]:not([data-mode="side"]) [data-ex-only="side"],
+[data-explorer]:not([data-mode="blink"]) [data-ex-only="blink"],
+[data-ex="notice"][hidden] { display: none; }

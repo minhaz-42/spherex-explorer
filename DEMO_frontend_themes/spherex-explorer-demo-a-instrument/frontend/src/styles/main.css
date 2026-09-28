@@ -1,0 +1,130 @@
+@import "tailwindcss";
+@import "./base.css";
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* ===== Demo A: instrument panel. Monochrome, bracketed controls, the
+   spectrum is the only colour. Edit the tokens below to restyle. ===== */
+:root,
+:root[data-theme="light"] {
+  --bg: #e4e4df;
+  --panel: #dadad4;
+  --ink: #0c0d0d;
+  --mute: #5c5f5a;
+  --line: rgb(12 13 13 / 0.16);
+  --accent: #1a6b80;
+  --star: #0c0d0d;
+  --frame-ink: #0c0d0d;
+  --frame-paper: #e4e4df;
+  --diff-pos: #b3401a;
+  --diff-neg: #1a6b80;
+  --glitch-a: #b3401a;
+  --glitch-b: #1a6b80;
+  --pass-1: #0c0d0d;
+  --pass-2: #8b8e88;
+  --pass-3: #1a6b80;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #050606; --panel: #0d0f0f; --ink: #e8e9e3; --mute: #868981; --line: rgb(232 233 227 / 0.14);
+    --accent: #9fd9e8; --star: #e8e9e3; --frame-ink: #f2f3ee; --frame-paper: #050606;
+    --diff-pos: #ff9b6b; --diff-neg: #7fd0e6; --glitch-a: #ff5a36; --glitch-b: #54d6ff;
+    --pass-1: #e8e9e3; --pass-2: #6f726b; --pass-3: #9fd9e8;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #050606; --panel: #0d0f0f; --ink: #e8e9e3; --mute: #868981; --line: rgb(232 233 227 / 0.14);
+  --accent: #9fd9e8; --star: #e8e9e3; --frame-ink: #f2f3ee; --frame-paper: #050606;
+  --diff-pos: #ff9b6b; --diff-neg: #7fd0e6; --glitch-a: #ff5a36; --glitch-b: #54d6ff;
+  --pass-1: #e8e9e3; --pass-2: #6f726b; --pass-3: #9fd9e8;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-panel: var(--panel);
+  --color-ink: var(--ink);
+  --color-mute: var(--mute);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --font-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+
+@layer components {
+
+
+body { font-family: var(--font-mono); font-size: 14px; line-height: 1.6; }
+
+.display {
+  font-family: var(--font-display);
+  font-stretch: 125%;
+  font-weight: 500;
+  letter-spacing: -0.035em;
+  line-height: 0.95;
+}
+.h2 {
+  font-family: var(--font-display);
+  font-stretch: 112%;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  font-size: clamp(1.9rem, 1.2rem + 2.6vw, 3.4rem);
+}
+
+/* [ bracketed ] controls: the signature of this style */
+.bracket {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6ch;
+  color: var(--ink);
+  text-decoration: none;
+  white-space: nowrap;
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+}
+.bracket::before { content: "["; color: var(--mute); transition: transform 0.35s cubic-bezier(0.76, 0, 0.24, 1); }
+.bracket::after { content: "]"; color: var(--mute); transition: transform 0.35s cubic-bezier(0.76, 0, 0.24, 1); }
+.bracket:hover::before { transform: translateX(-4px); }
+.bracket:hover::after { transform: translateX(4px); }
+.bracket[aria-pressed="true"] { color: var(--bg); background: var(--ink); }
+.bracket[aria-pressed="true"]::before,
+.bracket[aria-pressed="true"]::after { color: var(--bg); }
+
+.rule { border-top: 1px solid var(--line); }
+.label { color: var(--mute); font-size: 12px; }
+
+.hero-canvas { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0.9; }
+.hero-fade { background: linear-gradient(to top, var(--bg) 8%, transparent 55%); }
+
+.field {
+  width: 100%;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--ink);
+  color: var(--ink);
+  font: inherit;
+  padding: 10px 0;
+}
+.field::placeholder { color: var(--mute); }
+.field:focus { outline: none; border-bottom-color: var(--accent); }
+
+.table-a { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.table-a th { text-align: left; font-weight: 400; color: var(--mute); padding: 10px 12px 10px 0; border-bottom: 1px solid var(--line); font-size: 12px; }
+.table-a td { padding: 14px 12px 14px 0; border-bottom: 1px solid var(--line); }
+.table-a tr:hover td { background: color-mix(in oklab, var(--ink) 4%, transparent); }
+
+.list-row { display: grid; grid-template-columns: 1fr auto; gap: 1rem; padding: 18px 0; border-bottom: 1px solid var(--line); align-items: baseline; }
+
+/* explorer, instrument look */
+.ex-a [data-ex="view-a"], .ex-a [data-ex="view-b"] { border: 1px solid var(--line); }
+.ex-a .ex-pass-label { color: var(--mute); font-size: 11px; }
+.ex-a .ex-tick { width: 10px; height: 26px; }
+.ex-a [data-ex="notice"] { border-left: 2px solid var(--accent); padding: 8px 12px; background: color-mix(in oklab, var(--accent) 10%, transparent); }
+
+.theme-toggle[data-state="dark"] .t-dark,
+.theme-toggle[data-state="light"] .t-light { display: none; }
+
+}
