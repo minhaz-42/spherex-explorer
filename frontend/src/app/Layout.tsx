@@ -1,7 +1,9 @@
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
-import { Link, NavLink, Outlet, ScrollRestoration } from "react-router";
+import { Link, NavLink, Outlet, ScrollRestoration, useLocation } from "react-router";
 
+import { PencilDefs } from "../components/space/PencilDefs";
+import { SketchSky, type SkyMood } from "../components/space/SketchSky";
 import { Wordmark } from "../components/Wordmark";
 
 const NAV = [
@@ -10,28 +12,58 @@ const NAV = [
   { to: "/about", label: "About" },
 ];
 
+/** The viewer compares faint changes between frames, so nothing moves behind it. */
+function skyMood(pathname: string): SkyMood | null {
+  if (pathname.startsWith("/explore")) return null;
+  return pathname === "/" ? "lively" : "calm";
+}
+
+function navClass(isActive: boolean): string {
+  return `relative inline-flex h-10 items-center rounded-md px-3 text-[0.9375rem] no-underline transition-colors ${
+    isActive ? "text-text" : "text-muted hover:text-text"
+  }`;
+}
+
+function ActiveScribble() {
+  // A highlighter stroke under the current page.
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 100 12"
+      preserveAspectRatio="none"
+      className="pointer-events-none absolute inset-x-1 bottom-1 -z-10 h-3 w-[calc(100%-0.5rem)]"
+    >
+      <path
+        d="M2 7.5c18-3 40-4.2 62-3.6 12 .3 24 1.3 34 2.6"
+        fill="none"
+        stroke="var(--highlight)"
+        strokeWidth="7"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 function Header() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-rule bg-bg/95 backdrop-blur-sm">
+    <header className="sticky top-0 z-40 bg-bg/85 backdrop-blur-sm">
       <div className="mx-auto flex h-[var(--header-h)] max-w-[96rem] items-center justify-between px-[var(--gutter)]">
         <Link to="/" className="rounded-sm no-underline" aria-label="SPHEREx Explorer, home">
           <Wordmark />
         </Link>
         <nav aria-label="Main" className="hidden sm:block">
-          <ul className="flex items-center gap-1">
+          <ul className="isolate flex items-center gap-1">
             {NAV.map((item) => (
               <li key={item.to}>
-                <NavLink
-                  to={item.to}
-                  className={({ isActive }) =>
-                    `inline-flex h-9 items-center rounded-sm px-3 text-[0.9375rem] no-underline transition-colors ${
-                      isActive ? "text-text shadow-[inset_0_-2px_0_var(--accent)]" : "text-muted hover:text-text"
-                    }`
-                  }
-                >
-                  {item.label}
+                <NavLink to={item.to} className={({ isActive }) => navClass(isActive)}>
+                  {({ isActive }) => (
+                    <>
+                      {item.label}
+                      {isActive ? <ActiveScribble /> : null}
+                    </>
+                  )}
                 </NavLink>
               </li>
             ))}
@@ -48,7 +80,8 @@ function Header() {
           {open ? <X size={20} aria-hidden /> : <Menu size={20} aria-hidden />}
         </button>
       </div>
-      <nav id="mobile-nav" aria-label="Main" hidden={!open} className="border-t border-rule sm:hidden">
+      <div aria-hidden="true" className="squiggle h-2 opacity-60" />
+      <nav id="mobile-nav" aria-label="Main" hidden={!open} className="sm:hidden">
         <ul className="flex flex-col px-[var(--gutter)] py-2">
           {NAV.map((item) => (
             <li key={item.to}>
@@ -56,10 +89,10 @@ function Header() {
                 to={item.to}
                 onClick={() => setOpen(false)}
                 className={({ isActive }) =>
-                  `flex h-12 items-center text-base no-underline ${isActive ? "text-text" : "text-muted"}`
+                  `flex h-12 items-center font-display text-xl no-underline ${isActive ? "text-text" : "text-muted"}`
                 }
               >
-                {item.label}
+                {({ isActive }) => <span className={isActive ? "highlight" : undefined}>{item.label}</span>}
               </NavLink>
             </li>
           ))}
@@ -71,12 +104,18 @@ function Header() {
 
 function Footer() {
   return (
-    <footer className="mt-auto border-t border-rule">
+    <footer className="relative mt-auto">
+      <div aria-hidden="true" className="squiggle h-2 opacity-60" />
       <div className="page grid gap-6 py-10 text-sm text-muted md:grid-cols-[1fr_auto]">
         <div className="max-w-2xl space-y-2">
           <p>
             Images and metadata from the SPHEREx Quick Release data at the{" "}
-            <a className="link" href="https://irsa.ipac.caltech.edu/Missions/spherex.html" rel="noreferrer" target="_blank">
+            <a
+              className="link"
+              href="https://irsa.ipac.caltech.edu/Missions/spherex.html"
+              rel="noreferrer"
+              target="_blank"
+            >
               NASA/IPAC Infrared Science Archive
             </a>
             . Solar-system positions from{" "}
@@ -90,35 +129,45 @@ function Footer() {
             .
           </p>
           <p className="text-faint">
-            An independent project built for the 2026 NASA Space Apps Challenge. Not affiliated with or endorsed by NASA,
-            JPL, Caltech or IPAC.
+            An independent project built for the 2026 NASA Space Apps Challenge. Not affiliated with or endorsed by
+            NASA, JPL, Caltech or IPAC.
           </p>
         </div>
-        <ul className="flex gap-5 md:justify-end">
-          <li>
-            <Link className="link" to="/about">
-              About
-            </Link>
-          </li>
-          <li>
-            <Link className="link" to="/about#methods">
-              Methods
-            </Link>
-          </li>
-          <li>
-            <Link className="link" to="/about#credits">
-              Credits
-            </Link>
-          </li>
-        </ul>
+        <div className="flex flex-col gap-4 md:items-end">
+          <ul className="flex gap-5 md:justify-end">
+            <li>
+              <Link className="link" to="/about">
+                About
+              </Link>
+            </li>
+            <li>
+              <Link className="link" to="/about#methods">
+                Methods
+              </Link>
+            </li>
+            <li>
+              <Link className="link" to="/about#credits">
+                Credits
+              </Link>
+            </li>
+          </ul>
+          <p className="hand -rotate-2 text-xl text-muted" aria-hidden="true">
+            clear skies ✦
+          </p>
+        </div>
       </div>
     </footer>
   );
 }
 
 export function Layout() {
+  const { pathname } = useLocation();
+  const mood = skyMood(pathname);
+
   return (
-    <div className="flex min-h-dvh flex-col">
+    <div className="relative isolate flex min-h-dvh flex-col">
+      <PencilDefs />
+      {mood ? <SketchSky key={mood} mood={mood} /> : null}
       <a
         href="#main"
         className="visually-hidden focus:not-sr-only focus:fixed focus:left-4 focus:top-3 focus:z-50 focus:rounded-sm focus:bg-accent focus:px-3 focus:py-2 focus:text-accent-ink"
