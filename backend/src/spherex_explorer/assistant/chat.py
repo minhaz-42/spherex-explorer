@@ -24,8 +24,9 @@ from ..cache import Source
 from ..services import Services
 from . import builtin, grounding
 from .evidence import Evidence, ViewContext, build
+from .knowledge import CORE_FACTS
 from .local_model import Health, ModelUnavailable
-from .prompts import SYSTEM_PROMPT
+from .prompts import ANSWER_REMINDER, SYSTEM_PROMPT
 
 HISTORY_MESSAGES = 6
 HISTORY_CHARS = 1200
@@ -77,7 +78,10 @@ def prompt(question: str, history: list[ChatMessage], ev: Evidence) -> list[dict
     messages.append(
         {
             "role": "user",
-            "content": f"Evidence for this question:\n{ev.render()}{notes}\n\nQuestion: {question}",
+            "content": (
+                f"Evidence for this question:\n{ev.render()}{notes}\n\n"
+                f"Question: {question}\n\n{ANSWER_REMINDER}"
+            ),
         }
     )
     return messages
@@ -87,7 +91,9 @@ async def run(svc: Services, req: ChatRequest, source: Source) -> AsyncIterator[
     question = req.messages[-1].content.strip()
     history = req.messages[:-1]
     ev = await build(svc, question, req.view, source)
-    evidence_text = ev.render()
+    # What an answer's numbers may come from: this question's evidence and the standing facts.
+    evidence_text = f"{ev.render()}\n{CORE_FACTS}"
+    tags = {i.tag for i in ev.items}
     health = await model_health(svc)
     use_model = health is not None and health.reachable and health.model_installed
     model_name = svc.assistant.name if svc.assistant is not None else None
@@ -107,7 +113,7 @@ async def run(svc: Services, req: ChatRequest, source: Source) -> AsyncIterator[
         yield sse(
             "done",
             {
-                "grounding": grounding.check(text, evidence_text, question).to_json(),
+                "grounding": grounding.check(text, evidence_text, question, tags).to_json(),
                 "mode": "built-in",
             },
         )
@@ -136,7 +142,7 @@ async def run(svc: Services, req: ChatRequest, source: Source) -> AsyncIterator[
             yield sse(
                 "done",
                 {
-                    "grounding": grounding.check(text, evidence_text, question).to_json(),
+                    "grounding": grounding.check(text, evidence_text, question, tags).to_json(),
                     "mode": "built-in",
                 },
             )
@@ -149,7 +155,7 @@ async def run(svc: Services, req: ChatRequest, source: Source) -> AsyncIterator[
     yield sse(
         "done",
         {
-            "grounding": grounding.check(text, evidence_text, question).to_json(),
+            "grounding": grounding.check(text, evidence_text, question, tags).to_json(),
             "mode": "local-model",
         },
     )

@@ -60,7 +60,7 @@ _PREFIX: dict[str, str] = {
     "jpl": "E",
     "search": "E",
     "lookup": "E",
-    "case": "C",
+    "case": "E",
     "method": "K",
 }
 
@@ -182,6 +182,11 @@ def case_link(case: dict[str, Any], source: Source) -> str:
 # The view on screen
 
 
+def _lower_first(text: str) -> str:
+    """'Pixels in …' to 'pixels in …' mid-sentence; leaves 'QR3 …' alone."""
+    return text[0].lower() + text[1:] if len(text) > 1 and text[1].islower() else text
+
+
 def _frame_text(p: dict[str, Any]) -> str:
     wl, bw = p["wavelength"]["atTargetUm"], p["wavelength"]["bandwidthUm"]
     phot = p["photometry"]
@@ -199,7 +204,7 @@ def _frame_text(p: dict[str, Any]) -> str:
     else:
         parts.append("brightness at the target not measurable")
     if phot["reasons"]:
-        parts.append("caveats: " + "; ".join(r.rstrip(".") for r in phot["reasons"]))
+        parts.append("caveats: " + "; ".join(_lower_first(r.rstrip(".")) for r in phot["reasons"]))
     flagged = [f for f in p["target"]["flags"] if f in p["mask"]["maskedFlags"]]
     if flagged:
         parts.append(
@@ -212,11 +217,19 @@ def _frame_text(p: dict[str, Any]) -> str:
     return "; ".join(parts) + "."
 
 
-def _compatibility(a: dict[str, Any], b: dict[str, Any]) -> str:
+def _compatibility(a: dict[str, Any], b: dict[str, Any], motion: str | None = None) -> str:
+    """Whether frames A and B can be compared, and how.
+
+    ``motion`` is the reason the brightness at the target differs, when a known body explains it;
+    it comes first, and then the colour caveat (true for sources that stay put) is left out so
+    that it is not taken as the reason.
+    """
     wa, wb = a["wavelength"]["atTargetUm"], b["wavelength"]["atTargetUm"]
     ba, bb = a["wavelength"]["bandwidthUm"], b["wavelength"]["bandwidthUm"]
     ta, tb = a["time"]["mjdMid"], b["time"]["mjdMid"]
     parts = [f"{_gap(tb - ta)} apart"]
+    if motion:
+        parts.append(motion)
     ok = a["detector"] == b["detector"]
     if not ok:
         parts.append(
@@ -228,10 +241,15 @@ def _compatibility(a: dict[str, Any], b: dict[str, Any]) -> str:
         dl = abs(wb - wa)
         if dl > half:
             ok = False
+            colour = (
+                ""
+                if motion
+                else ": brightness differences between these frames may be the sources' colours "
+                "rather than changes in time"
+            )
             parts.append(
                 f"{dl:.3f} µm apart in wavelength, more than half a spectral channel "
-                f"({half:.3f} µm), so a difference image is not valid: brightness differences "
-                "may be the sources' colours; "
+                f"({half:.3f} µm), so a difference image is not valid{colour}; "
                 "positions can still be compared by blinking"
             )
         else:
@@ -264,6 +282,59 @@ def _match(candidate: dict[str, Any], bodies: list[dict[str, Any]]) -> tuple[str
             if median <= MATCH_ARCSEC and (best is None or median < best[1]):
                 best = (body["name"], median)
     return best
+
+
+def _angle(arcsec: float) -> str:
+    if arcsec < 60:
+        return f"{arcsec:.1f}″"
+    if arcsec < 3600:
+        return f"{arcsec / 60:.1f}′"
+    return f"{arcsec / 3600:.2f}°"
+
+
+@dataclass
+class _Offsets:
+    """How far a known body is predicted from the target in the frames on screen (B, A)."""
+
+    name: str
+    seps: dict[str, float]
+
+    @property
+    def inside(self) -> set[str]:
+        # Brightness is measured in a 2-pixel (12.3″) aperture at the target.
+        return {label for label, sep in self.seps.items() if sep <= MATCH_ARCSEC}
+
+    def where(self) -> str:
+        parts = [
+            f"{_angle(sep)} from the target in frame {label}"
+            for label, sep in sorted(self.seps.items(), reverse=True)
+        ]
+        return f"{self.name} is predicted " + " and ".join(parts)
+
+    def brightness_reason(self) -> str | None:
+        """Why the brightness at the target differs between B and A, when this body explains it."""
+        if len(self.inside) != 1 or len(self.seps) != 2:
+            return None
+        here = next(iter(self.inside))
+        other = "A" if here == "B" else "B"
+        return (
+            f"the brightness measured at the target includes the light of {self.name} in frame "
+            f"{here} but not in frame {other}: the difference comes from its motion, not from a "
+            "change in the sky"
+        )
+
+
+def _offsets(body: dict[str, Any], t: ViewTarget, frames: dict[str, str]) -> _Offsets | None:
+    seps: dict[str, float] = {}
+    for label, key in frames.items():
+        pos = next((p for p in body["positions"] if p["key"] == key), None)
+        if pos is not None:
+            seps[label] = _sep_arcsec(t.ra, t.dec, pos["ra"], pos["dec"])
+    return _Offsets(str(body["name"]), seps) if seps else None
+
+
+def _plural(n: int, one: str, many: str | None = None) -> str:
+    return f"{n} {one if n == 1 else many or one + 's'}"
 
 
 def add_view(ev: Evidence, svc: Services, view: ViewContext, source: Source) -> None:
@@ -300,61 +371,61 @@ def add_view(ev: Evidence, svc: Services, view: ViewContext, source: Source) -> 
     if view.fov is None:
         return
     grid = make_grid(t.ra, t.dec, view.fov)
-    payloads: dict[str, dict[str, Any]] = {}
+
+    # The frames on screen (B, and A when comparing), and the sequence they belong to.
+    shown: dict[str, str] = {}
     for label, key in (("B", view.frameKey), ("A", view.referenceKey)):
-        if not key:
+        if not key or (label == "A" and view.compare in (None, "single")):
             continue
         try:
-            frame = FrameKey.parse(key)
+            shown[label] = FrameKey.parse(key).key
         except ExplorerError:
             continue
-        p = store.peek("cutout", cutout_key(frame.key, grid), source)
+    parsed: set[str] = set()
+    for k in view.sequenceKeys:
+        try:
+            parsed.add(FrameKey.parse(k).key)
+        except ExplorerError:
+            continue
+    # The same key set the known-object and search routes cache under.
+    keys = sorted(parsed)
+    known = (
+        store.peek("known", known_key(t.ra, t.dec, view.fov, keys, 20.0), source) if keys else None
+    )
+    bodies: list[dict[str, Any]] = known["objects"] if known else []
+    offsets = [o for o in (_offsets(b, t, shown) for b in bodies[:3]) if o is not None]
+
+    payloads: dict[str, dict[str, Any]] = {}
+    for label, key in shown.items():
+        p = store.peek("cutout", cutout_key(key, grid), source)
         if p is None:
             ev.notes.append(f"Frame {label} has not loaded yet.")
             continue
         payloads[label] = p
-        position = ""
-        if label == "B" and view.frameIndex is not None and view.frameCount:
-            position = f" (frame {view.frameIndex + 1} of {view.frameCount} in this sequence)"
-        title = (
-            "Frame on screen (B)"
-            if label == "B" or view.compare in (None, "single")
-            else "Reference frame (A)"
-        )
-        if label == "B" and view.compare in (None, "single"):
-            title = "Frame on screen"
-        ev.add(
-            "view", title + position, _frame_text(p), "SPHEREx Level 2 image, measured by this app"
-        )
-    if (
-        "A" in payloads
-        and "B" in payloads
-        and view.compare not in (None, "single")
-        and view.referenceKey != view.frameKey
-    ):
+        if label == "B":
+            title = "Frame on screen" if "A" not in shown else "Frame on screen (B)"
+            if view.frameIndex is not None and view.frameCount:
+                title += f" (frame {view.frameIndex + 1} of {view.frameCount} in this sequence)"
+        else:
+            title = "Reference frame (A)"
+        ev.add("view", title, _frame_text(p), "SPHEREx Level 2 image, measured by this app")
+    if "A" in payloads and "B" in payloads and shown["A"] != shown["B"]:
+        reason = next((r for r in (o.brightness_reason() for o in offsets) if r), None)
         ev.add(
             "view",
             "Comparison of A and B",
-            _compatibility(payloads["A"], payloads["B"]),
+            _compatibility(payloads["A"], payloads["B"], reason),
             "Comparison rules",
         )
 
-    keys = []
-    for k in view.sequenceKeys:
-        try:
-            keys.append(FrameKey.parse(k).key)
-        except ExplorerError:
-            continue
     if not keys:
         return
-    known = store.peek("known", known_key(t.ra, t.dec, view.fov, keys, 20.0), source)
-    bodies: list[dict[str, Any]] = known["objects"] if known else []
     if known is not None:
         if bodies:
             lines = []
             for b in bodies[:5]:
                 inside = [p for p in b["positions"] if p["inField"]]
-                here = any(p["key"] == view.frameKey and p["inField"] for p in b["positions"])
+                here = any(p["key"] == shown.get("B") and p["inField"] for p in b["positions"])
                 rate = (
                     f", moving about {b['rateArcsecPerHour']:.0f}″ per hour"
                     if b.get("rateArcsecPerHour")
@@ -366,11 +437,13 @@ def add_view(ev: Evidence, svc: Services, view: ViewContext, source: Source) -> 
                     f"{len(b['positions'])} frames"
                     + (", including the frame on screen" if here else "")
                 )
+            where = "; ".join(o.where() for o in offsets)
             ev.add(
                 "jpl",
                 "JPL known objects in this field",
                 "; ".join(lines)
-                + ". These are predictions for catalogued objects, not detections.",
+                + ". These are predictions for catalogued objects, not detections."
+                + (f" {where}." if where else ""),
                 "NASA/JPL SBIdent and Horizons",
             )
         else:
@@ -389,9 +462,9 @@ def add_view(ev: Evidence, svc: Services, view: ViewContext, source: Source) -> 
         strong = [c for c in found["candidates"] if c["strength"] == "candidate"]
         weak = [c for c in found["candidates"] if c["strength"] != "candidate"]
         parts = [
-            f"{st['detections']} sources detected, {st['transient']} not seen again at the same "
-            f"place, {st['sightings']} repeated within a pointing; {len(strong)} candidates and "
-            f"{len(weak)} weak candidates"
+            f"{_plural(st['detections'], 'source')} detected, {st['transient']} not seen again at "
+            f"the same place, {st['sightings']} repeated within a pointing; "
+            f"{_plural(len(strong), 'candidate')} and {_plural(len(weak), 'weak candidate')}"
         ]
         for c in strong + weak[:2]:
             m = _match(c, bodies)
@@ -513,10 +586,13 @@ async def add_lookup(ev: Evidence, svc: Services, question: str, source: Source)
                 f"RA {info['raHms']}, Dec {info['decDms']}, in {info['constellation']}.",
                 "Coordinates",
             )
+            params = {"ra": f"{pos.ra:.6f}", "dec": f"{pos.dec:.6f}"}
+            if source == "snapshot":
+                params["source"] = "snapshot"
             ev.actions.append(
                 Action(
                     f"Explore RA {pos.ra:.4f}°, Dec {pos.dec:+.4f}°",
-                    f"/explore?ra={pos.ra:.6f}&dec={pos.dec:.6f}",
+                    "/explore?" + urlencode(params),
                 )
             )
             return

@@ -11,6 +11,7 @@ from spherex_explorer.assistant import chat, evidence, grounding, knowledge
 from spherex_explorer.assistant.chat import ChatMessage, ChatRequest
 from spherex_explorer.assistant.evidence import ViewContext, ViewTarget
 from spherex_explorer.assistant.local_model import Health, ModelUnavailable, ThinkStripper
+from spherex_explorer.assistant.prompts import ANSWER_REMINDER
 from spherex_explorer.cache import Store
 from spherex_explorer.config import Settings
 from spherex_explorer.main import create_app
@@ -103,6 +104,20 @@ def test_invented_numbers_are_reported() -> None:
         "It is 3.2 au away and moves 45″ per hour, in 2 of 4 frames.", "[E1] 40″ per hour"
     )
     assert g.unverified == ["3.2", "45"]
+
+
+def test_month_and_year_are_checked_as_a_pair() -> None:
+    ev = "[E2] 243 frames between 25 Apr 2025 and 26 May 2026."
+    g = grounding.check("Seen from April to May 2025, and again in May 2026.", ev)
+    assert g.unverified == ["May 2025"]
+    assert grounding.check("Seen in April 2025 [E2].", ev).unverified == []
+
+
+def test_citations_of_missing_sources_are_reported() -> None:
+    g = grounding.check(
+        "Iris moved [E1, E3]. The star stayed put [E8]. See [C1].", "", tags={"E1", "E3"}
+    )
+    assert g.unknown_tags == ["E8"]  # [C1] names a search candidate, not a source
 
 
 def test_tags_and_detector_names_are_not_numbers() -> None:
@@ -227,7 +242,27 @@ async def test_evidence_describes_the_view_from_the_servers_own_data(svc: Servic
     assert "more than half a spectral channel" in text and "not valid" in text
     assert "7 Iris (A847 PA) (V 10.2)" in text and "including the frame on screen" in text
     assert "matches JPL's prediction for 7 Iris (A847 PA)" in text
+    # Why the brightness at the target jumps: Iris is inside the aperture in B only.
+    assert (
+        "is predicted 0.0″ from the target in frame B and 6.6′ from the target in frame A" in text
+    )
+    comparison = next(i for i in ev.items if i.title == "Comparison of A and B").text
+    assert comparison.startswith(
+        "9.7 h apart; the brightness measured at the target includes the light of "
+        "7 Iris (A847 PA) in frame B but not in frame A"
+    )
+    # The colour caveat would read as the reason, so it is left out when motion explains it.
+    assert "colours" not in comparison
     assert ev.notes == []
+
+
+async def test_without_jpl_the_colour_caveat_stays(svc: Services) -> None:
+    view = seed_view(svc)
+    ev = await evidence.build(
+        svc, "What changed?", view.model_copy(update={"sequenceKeys": []}), "live"
+    )
+    comparison = next(i for i in ev.items if i.title == "Comparison of A and B").text
+    assert "may be the sources' colours rather than changes in time" in comparison
 
 
 async def test_frames_not_yet_loaded_are_noted_not_invented(svc: Services) -> None:
@@ -258,6 +293,7 @@ async def test_coordinates_in_a_question_become_a_link(svc: Services) -> None:
 
 async def test_moving_questions_offer_discover_cases(svc: Services) -> None:
     ev = await evidence.build(svc, "Show me something that moved", None, "snapshot")
+    assert [i.tag for i in ev.items if i.kind == "case"] == ["E1"]
     assert ev.actions and ev.actions[0].href.startswith("/explore?ra=161.29678")
     assert "source=snapshot" in ev.actions[0].href
     assert not [i for i in ev.items if i.kind == "lookup"]  # "something that moved" is not a name
@@ -447,7 +483,10 @@ async def test_invented_numbers_are_flagged_in_the_done_event(svc: Services) -> 
     svc.assistant = FakeModel(["Iris is 191 mJy here [E2] ", "and 3.2 au from the Sun."])
     ev = await turn(svc, ask("What am I looking at?", view))
     assert [e for e, _ in ev] == ["meta", "delta", "delta", "done"]
-    assert ev[-1][1] == {"grounding": {"checked": 2, "unverified": ["3.2"]}, "mode": "local-model"}
+    assert ev[-1][1] == {
+        "grounding": {"checked": 2, "unverified": ["3.2"], "unknownTags": []},
+        "mode": "local-model",
+    }
 
 
 async def test_a_model_that_stops_part_way_ends_with_an_error(svc: Services) -> None:
@@ -488,7 +527,8 @@ async def test_the_prompt_keeps_recent_history_short(svc: Services) -> None:
     assert sent[0]["role"] == "system"
     assert [m["content"][:7] for m in sent[1:-1]] == [f"turn {i} " for i in range(4, 10)]
     assert all(len(m["content"]) <= chat.HISTORY_CHARS for m in sent[1:-1])
-    assert sent[-1]["content"].endswith("Question: What is SPHEREx?")
+    assert "Question: What is SPHEREx?" in sent[-1]["content"]
+    assert sent[-1]["content"].endswith(ANSWER_REMINDER)
     assert "[K1] What SPHEREx is" in sent[-1]["content"]
 
 
@@ -526,3 +566,14 @@ async def test_status_reports_a_ready_local_model(settings: Settings) -> None:
         "local": True,
         "detail": "ready",
     }
+
+
+async def test_built_in_answers_about_the_view_start_from_the_view(svc: Services) -> None:
+    view = seed_view(svc)
+    ev = await turn(svc, ask("Did anything move here?", view))
+    text = "".join(d["text"] for e, d in ev if e == "delta")
+    assert text.startswith("Target on screen")
+    # JPL and the search come before the frame details for a question about motion.
+    assert text.index("JPL known objects") < text.index("Frame on screen")
+    assert "matches JPL's prediction for 7 Iris" in text
+    assert "Discover cases on the same theme: Asteroid (7) Iris" in text
