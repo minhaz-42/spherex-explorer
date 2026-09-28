@@ -468,6 +468,29 @@ async def test_a_cached_nothing_catalogued_is_no_evidence_and_no_new_lookup(svc:
     assert [u async for u in live.gather(svc, "What am I looking at?", view, "live", "t")] == []
 
 
+async def test_an_incomplete_jpl_answer_says_so(svc: Services) -> None:
+    view = seed_view(svc)
+    keys = sorted([KEY_A, KEY_B])
+    message = (
+        "JPL Horizons did not answer for 1 of 3 catalogued bodies near this field, "
+        "so this list may be incomplete. Try again in a moment."
+    )
+    svc.store.put(
+        "known",
+        known_key(RA, DEC, FOV, keys, 20.0),
+        {
+            "objects": [],
+            "searched": {"vmagLimit": 20.0},
+            "incomplete": {"horizonsFailed": ["x"], "message": message},
+        },
+        60,
+    )
+    ev = await evidence.build(svc, "Did anything move here?", view, "live")
+    jpl = next(i for i in ev.items if i.title == "JPL known objects in this field").text
+    assert "may be incomplete" in jpl and "whether the others did is not known" in jpl
+    assert "JPL knows no asteroid" not in jpl
+
+
 async def test_the_target_s_catalogue_entry_is_evidence(svc: Services) -> None:
     view = seed_view(svc)
     ev = await evidence.build(svc, "What am I looking at?", view, "live")

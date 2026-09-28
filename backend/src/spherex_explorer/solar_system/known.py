@@ -27,6 +27,13 @@ MAX_RATE_DEG_PER_DAY = 0.35
 MAX_BODIES = 40
 
 
+class _Failed:
+    """A body whose positions could not be fetched."""
+
+
+FAILED = _Failed()
+
+
 def tangent_offsets(ra: float, dec: float, ra0: float, dec0: float) -> tuple[float, float]:
     """Gnomonic offsets (degrees, east and north) of ``(ra, dec)`` from ``(ra0, dec0)``."""
     a, d, a0, d0 = (math.radians(v) for v in (ra, dec, ra0, dec0))
@@ -69,7 +76,7 @@ async def known_objects(
     jds = [m["mjdMid"] + 2400000.5 for m in usable]
     slots = asyncio.Semaphore(3)  # be gentle with Horizons
 
-    async def track(c: Candidate) -> dict[str, Any] | None:
+    async def track(c: Candidate) -> dict[str, Any] | _Failed | None:
         command = horizons_command(c.name)
         if command is None:
             return None
@@ -77,7 +84,9 @@ async def known_objects(
             try:
                 points = await ephemeris(svc.client, svc.settings.horizons_url, command, jds)
             except UpstreamError:
-                return None
+                # Not the same as "not in the field": the answer is unknown, and must not be
+                # reported, or cached, as an empty field.
+                return FAILED
         positions = []
         inside_any = False
         for meta, p in zip(usable, points, strict=True):
@@ -118,9 +127,18 @@ async def known_objects(
             "positions": positions,
         }
 
-    tracks = [t for t in await asyncio.gather(*(track(c) for c in candidates)) if t is not None]
+    results = await asyncio.gather(*(track(c) for c in candidates))
+    tracks = [r for r in results if isinstance(r, dict)]
+    failed = [c.name for c, r in zip(candidates, results, strict=True) if r is FAILED]
+    trackable = sum(1 for c in candidates if horizons_command(c.name) is not None)
+    if failed and len(failed) == trackable:
+        raise UpstreamError(
+            HORIZONS,
+            f"{HORIZONS} did not answer for any of the {trackable} catalogued bodies near this "
+            "field. Try again in a moment.",
+        )
     skipped = [m["key"] for m in metas if m not in usable]
-    return {
+    result = {
         "field": {"ra": ra, "dec": dec, "sizeDeg": size_deg},
         "searched": {
             "referenceKey": reference["key"],
@@ -139,3 +157,13 @@ async def known_objects(
             "predictions for catalogued objects, not detections."
         ),
     }
+    if failed:
+        # A partial list is returned so the visitor sees what is known, but is not cached.
+        result["incomplete"] = {
+            "horizonsFailed": failed,
+            "message": (
+                f"{HORIZONS} did not answer for {len(failed)} of {trackable} catalogued bodies "
+                "near this field, so this list may be incomplete. Try again in a moment."
+            ),
+        }
+    return result

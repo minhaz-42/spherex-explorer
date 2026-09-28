@@ -163,7 +163,16 @@ async def known(
         return result
 
     ck = known_key(ra, dec, size, keys, vmag_limit)
-    return await svc.store.get_or_compute("known", ck, compute, ttl_s=30 * DAY, source=source)
+    # A list with bodies whose positions could not be fetched is shown but never cached, or one
+    # failed Horizons call would read as "no known objects" for a month.
+    return await svc.store.get_or_compute(
+        "known",
+        ck,
+        compute,
+        ttl_s=30 * DAY,
+        source=source,
+        keep=lambda value: not value.get("incomplete"),
+    )
 
 
 async def candidates(

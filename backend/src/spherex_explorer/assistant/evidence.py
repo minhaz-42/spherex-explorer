@@ -460,12 +460,22 @@ def add_view(ev: Evidence, svc: Services, view: ViewContext, source: Source) -> 
                     + (", including the frame on screen" if here else "")
                 )
             where = "; ".join(o.where() for o in offsets)
+            gaps = f" {known['incomplete']['message']}" if known.get("incomplete") else ""
             ev.add(
                 "jpl",
                 "JPL known objects in this field",
                 "; ".join(lines)
                 + ". These are predictions for catalogued objects, not detections."
-                + (f" {where}." if where else ""),
+                + (f" {where}." if where else "")
+                + gaps,
+                "NASA/JPL SBIdent and Horizons",
+            )
+        elif known.get("incomplete"):
+            ev.add(
+                "jpl",
+                "JPL known objects in this field",
+                f"{known['incomplete']['message']} None of the bodies JPL did answer for crossed "
+                "the field, but whether the others did is not known.",
                 "NASA/JPL SBIdent and Horizons",
             )
         else:

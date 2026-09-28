@@ -119,6 +119,7 @@ class Store:
         ttl_s: float,
         source: Source = "live",
         persist: bool = True,
+        keep: Callable[[JSON], bool] | None = None,
     ) -> JSON:
         if source == "snapshot":
             value = self.snapshot.get(namespace, key)
@@ -154,9 +155,11 @@ class Store:
             raise
         else:
             future.set_result(value)
-            self.memory.put(full, value, ttl_s)
-            if persist:
-                await asyncio.to_thread(self.disk.put, namespace, key, value)
+            # ``keep`` can refuse an answer that should not be reused, such as a partial one.
+            if keep is None or keep(value):
+                self.memory.put(full, value, ttl_s)
+                if persist:
+                    await asyncio.to_thread(self.disk.put, namespace, key, value)
             return value
         finally:
             self._inflight.pop(full, None)

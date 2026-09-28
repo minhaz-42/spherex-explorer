@@ -117,3 +117,23 @@ def test_rate_limiter_blocks_after_burst_and_refills() -> None:
     limiter.check("b")  # other clients are unaffected
     limiter._buckets["a"].updated -= 2  # two seconds later, two tokens are back
     limiter.check("a")
+
+
+async def test_a_refused_answer_is_returned_but_not_cached(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    from spherex_explorer.cache import Store
+
+    store = Store(tmp_path / "c", tmp_path / "s")
+    calls = 0
+
+    async def compute() -> dict:  # type: ignore[type-arg]
+        nonlocal calls
+        calls += 1
+        return {"partial": True}
+
+    for _ in range(2):
+        value = await store.get_or_compute(
+            "x", "k", compute, ttl_s=60, keep=lambda v: not v.get("partial")
+        )
+        assert value == {"partial": True}
+    assert calls == 2
+    assert store.peek("x", "k") is None

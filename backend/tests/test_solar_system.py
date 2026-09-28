@@ -162,3 +162,85 @@ async def test_known_objects_validates_input(api: httpx.AsyncClient) -> None:
         "/api/known-objects", json={"ra": 10, "dec": 10, "size": 0.1, "keys": ["../x"]}
     )
     assert foreign.status_code == 400
+
+
+def _jpl_mocks(settings: Settings, fixtures, bodies: list[str], horizons):  # type: ignore[no-untyped-def]
+    """S3, SBIdent and Horizons for a synthetic frame; ``horizons`` answers each Horizons call."""
+    syn = make_level2()
+    row = ["10:45:12.00", "+02 27'00.0\"", "0", "0", "0", "10.2", "30.0", "-20.0"]
+    sbident = {
+        "signature": {"version": "1.1"},
+        "n_second_pass": len(bodies),
+        "fields_second": [
+            "Object name",
+            "Astrometric RA (hh:mm:ss)",
+            "Astrometric Dec (dd mm'ss\")",
+            'Dist. from center RA (")',
+            'Dist. from center Dec (")',
+            'Dist. from center Norm (")',
+            "Visual magnitude (V)",
+            'RA rate ("/h)',
+            'Dec rate ("/h)',
+        ],
+        "data_second_pass": [[name, *row] for name in bodies],
+    }
+
+    def ranges(request: httpx.Request) -> httpx.Response:
+        a, b = request.headers["range"].removeprefix("bytes=").split("-")
+        start, end = int(a), min(int(b), len(syn.raw) - 1)
+        return httpx.Response(
+            206,
+            content=syn.raw[start : end + 1],
+            headers={"Content-Range": f"bytes {start}-{end}/{len(syn.raw)}"},
+        )
+
+    respx.get(settings.s3_url + KEY).mock(side_effect=ranges)
+    sb = respx.get(url__startswith=settings.sbident_url).mock(
+        return_value=httpx.Response(200, json=sbident)
+    )
+    respx.get(url__startswith=settings.horizons_url).mock(side_effect=horizons)
+    return sb
+
+
+def _iris_result(fixtures) -> str:  # type: ignore[no-untyped-def]
+    text = json.loads((fixtures / "horizons_iris.json").read_text())["geocentric"]
+    return text.replace("161.204080867,   2.507409068", "161.300000000,   2.450000000")
+
+
+BODY = {"ra": 161.3, "dec": 2.45, "size": 0.1, "keys": [KEY]}
+
+
+async def test_a_failed_horizons_is_an_error_not_an_empty_field(
+    api: httpx.AsyncClient, settings: Settings, fixtures
+) -> None:
+    with respx.mock:
+        sb = _jpl_mocks(settings, fixtures, ["7 Iris (A847 PA)"], lambda r: httpx.Response(503))
+        first = await api.post("/api/known-objects", json=BODY)
+        second = await api.post("/api/known-objects", json=BODY)
+    assert first.status_code == 502
+    assert first.json()["error"]["service"] == "JPL Horizons"
+    # Nothing was cached: the second request asked JPL again.
+    assert second.status_code == 502
+    assert sb.call_count == 2
+
+
+async def test_a_partly_failed_horizons_is_shown_but_not_cached(
+    api: httpx.AsyncClient, settings: Settings, fixtures
+) -> None:
+    iris = _iris_result(fixtures)
+
+    def horizons(request: httpx.Request) -> httpx.Response:
+        if "6" in request.url.params["COMMAND"]:
+            return httpx.Response(503)
+        return httpx.Response(200, json={"result": iris})
+
+    with respx.mock:
+        sb = _jpl_mocks(settings, fixtures, ["7 Iris (A847 PA)", "6 Hebe (A847 NA)"], horizons)
+        first = await api.post("/api/known-objects", json=BODY)
+        await api.post("/api/known-objects", json=BODY)
+    assert first.status_code == 200, first.text
+    body = first.json()
+    assert [o["name"] for o in body["objects"]] == ["7 Iris (A847 PA)"]
+    assert body["incomplete"]["horizonsFailed"] == ["6 Hebe (A847 NA)"]
+    assert "may be incomplete" in body["incomplete"]["message"]
+    assert sb.call_count == 2  # not cached, so the next visitor gets a fresh answer
