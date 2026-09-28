@@ -15,16 +15,22 @@ from ..archive import sia
 from ..archive.frames import group_passes, normalise
 from ..archive.keys import FrameKey
 from ..archive.meta import META_TTL_S, meta_from_header
-from ..cache import cache_key
 from ..errors import InvalidQuery
 from ..resolve import coords, sesame
 from ..resolve.target import deep_field_at, describe
-from ..science.cutout import PIPELINE_VERSION, build_payload, fetch_window
+from ..science.cutout import build_payload, fetch_window
 from ..science.grid import Grid, make_grid
 from ..science.moving import moving_candidates
-from ..science.sources import ALGORITHM_VERSION
 from ..services import Services
 from ..solar_system.known import known_objects
+from .cachekeys import (
+    candidates_key,
+    cutout_key,
+    known_key,
+    measure_key,
+    observations_key,
+    resolve_key,
+)
 
 router = APIRouter()
 
@@ -90,7 +96,7 @@ async def resolve(
         }
 
     return await svc.store.get_or_compute(
-        "resolve", cache_key(text.lower()), compute, ttl_s=7 * DAY, source=source
+        "resolve", resolve_key(text), compute, ttl_s=7 * DAY, source=source
     )
 
 
@@ -163,7 +169,7 @@ async def observations(
             ),
         }
 
-    key = cache_key(ra, dec, settings.wide_collections, deep_window)
+    key = observations_key(ra, dec, settings.wide_collections, deep_window)
     return await svc.store.get_or_compute(
         "observations", key, compute, ttl_s=6 * 3600, source=source
     )
@@ -201,7 +207,7 @@ async def _cutout(
         )
         return payload
 
-    ck = cache_key(frame.key, grid.ra, grid.dec, grid.size_px, PIPELINE_VERSION)
+    ck = cutout_key(frame.key, grid)
     return await svc.store.get_or_compute("cutout", ck, compute, ttl_s=30 * DAY, source=source)
 
 
@@ -242,7 +248,7 @@ async def measure(
             "retrievedAt": _now(),
         }
 
-    ck = cache_key(frame.key, grid.ra, grid.dec, PIPELINE_VERSION)
+    ck = measure_key(frame.key, grid)
     return await svc.store.get_or_compute("measure", ck, compute, ttl_s=30 * DAY, source=source)
 
 
@@ -271,7 +277,7 @@ async def known(
         result["retrievedAt"] = _now()
         return result
 
-    ck = cache_key(body.ra, body.dec, body.size, keys, body.vmagLimit)
+    ck = known_key(body.ra, body.dec, body.size, keys, body.vmagLimit)
     return await svc.store.get_or_compute("known", ck, compute, ttl_s=30 * DAY, source=source)
 
 
@@ -297,14 +303,7 @@ async def candidates(
         result["retrievedAt"] = _now()
         return result
 
-    ck = cache_key(
-        body.ra,
-        body.dec,
-        grid.size_px,
-        [f.key for f in frames],
-        PIPELINE_VERSION,
-        ALGORITHM_VERSION,
-    )
+    ck = candidates_key(body.ra, body.dec, grid.size_px, [f.key for f in frames])
     return await svc.store.get_or_compute("candidates", ck, compute, ttl_s=30 * DAY, source=source)
 
 
