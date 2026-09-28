@@ -279,3 +279,9 @@ async def test_measure_returns_numbers_without_pixels(
 async def test_cases_are_served(api: httpx.AsyncClient) -> None:
     body = (await api.get("/api/cases")).json()
     assert body["cases"][0]["id"] == "demo"
+
+
+async def test_oversized_bodies_are_refused(api: httpx.AsyncClient) -> None:
+    huge = {"ra": 10, "dec": 10, "size": 0.1, "keys": ["x" * 1000] * 100}
+    response = await api.post("/api/candidates", json=huge)
+    assert response.status_code == 413

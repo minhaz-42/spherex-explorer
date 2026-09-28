@@ -144,7 +144,9 @@ with the API under `/api`. To deploy:
 
 1. Run `uv run uvicorn spherex_explorer.main:app --host 0.0.0.0 --port 8000` from `backend/`, behind
    any HTTPS reverse proxy.
-2. Give it a writable `SPHEREX_CACHE_DIR`.
+2. Add `--proxy-headers --forwarded-allow-ips=<proxy address>` so the per-visitor rate limit sees
+   visitors' addresses rather than the proxy's.
+3. Give it a writable `SPHEREX_CACHE_DIR`.
 
 It needs outbound HTTPS to irsa.ipac.caltech.edu, nasa-irsa-spherex.s3.us-east-1.amazonaws.com,
 ssd-api.jpl.nasa.gov, ssd.jpl.nasa.gov and cds.unistra.fr. A server in a US region reads frames many

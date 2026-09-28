@@ -23,6 +23,8 @@ from .services import Services
 
 log = logging.getLogger("spherex_explorer")
 
+MAX_BODY = 64 * 1024
+
 CSP = "; ".join(
     [
         "default-src 'self'",
@@ -70,6 +72,27 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         app.add_middleware(
             CORSMiddleware, allow_origins=settings.cors_origins, allow_methods=["GET"]
         )
+
+    @app.middleware("http")
+    async def limit_body_size(
+        request: Request, call_next: Callable[[Request], Awaitable[Response]]
+    ) -> Response:
+        # The largest legitimate body (60 archive keys) is under 16 KB; refuse anything far larger
+        # before it is read, so a client cannot make the server parse megabytes of JSON.
+        length = request.headers.get("content-length")
+        if request.method == "POST" and (
+            length is None or not length.isdigit() or int(length) > MAX_BODY
+        ):
+            return JSONResponse(
+                {
+                    "error": {
+                        "code": "invalid_query",
+                        "message": "Request body missing or too large.",
+                    }
+                },
+                status_code=413 if length and length.isdigit() else 411,
+            )
+        return await call_next(request)
 
     @app.middleware("http")
     async def security_headers(
