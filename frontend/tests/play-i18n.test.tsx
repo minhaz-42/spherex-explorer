@@ -14,7 +14,7 @@ import { describeSeries } from "../src/features/share/sonify";
 import { SonifyButton } from "../src/features/share/SonifyButton";
 import { earthRotationDeg, formatLatLon, julian, subPoint } from "../src/features/spacecraft/earth";
 import { WhereWasSpherex } from "../src/features/spacecraft/WhereWasSpherex";
-import { setLang } from "../src/lib/i18n";
+import { joinHyphens, setLang } from "../src/lib/i18n";
 import type { DiscoverCase } from "../src/lib/types";
 
 // SPHEREx's recorded state for the first Iris frame (as in spacecraft.test.ts).
@@ -109,7 +109,9 @@ describe("plain functions in Bangla", () => {
   it("describes a spectrum in Bangla, keeping Western digits and the units", () => {
     const text = describeSeries(SPECTRUM, "bn");
     expect(text).toBe(
-      "3টি বিন্দু, 0.55 থেকে 2.2 µm পর্যন্ত। সবচেয়ে উজ্জ্বল তরঙ্গদৈর্ঘ্য 0.55 µm-এ (4 Jy), সবচেয়ে ক্ষীণ 2.2 µm-এ। সব মিলিয়ে দীর্ঘতর তরঙ্গদৈর্ঘ্যের দিকে উজ্জ্বলতা কমে।",
+      joinHyphens(
+        "3টি বিন্দু, 0.55 থেকে 2.2 µm পর্যন্ত। সবচেয়ে উজ্জ্বল তরঙ্গদৈর্ঘ্য 0.55 µm-এ (4 Jy), সবচেয়ে ক্ষীণ 2.2 µm-এ। সব মিলিয়ে দীর্ঘতর তরঙ্গদৈর্ঘ্যের দিকে উজ্জ্বলতা কমে।",
+      ),
     );
     expect(describeSeries({ ...SPECTRUM, points: [{ x: 1, y: 1 }] }, "bn")).toBe("বর্ণনা করার মতো যথেষ্ট বিন্দু নেই।");
   });
@@ -126,7 +128,9 @@ describe("plain functions in Bangla", () => {
       xName: "time",
     };
     expect(describeSeries(series, "bn")).toBe(
-      "3টি বিন্দু, 1 থেকে 3 h পর্যন্ত। সবচেয়ে উজ্জ্বল সময় 2 h-এ (1.2 Jy), সবচেয়ে ক্ষীণ 1 h-এ। সব মিলিয়ে সময়ের সঙ্গে উজ্জ্বলতা মোটামুটি একই থাকে।",
+      joinHyphens(
+        "3টি বিন্দু, 1 থেকে 3 h পর্যন্ত। সবচেয়ে উজ্জ্বল সময় 2 h-এ (1.2 Jy), সবচেয়ে ক্ষীণ 1 h-এ। সব মিলিয়ে সময়ের সঙ্গে উজ্জ্বলতা মোটামুটি একই থাকে।",
+      ),
     );
     expect(describeSeries(series)).toBe(
       "3 points from 1 to 3 h. Brightest at time 2 h (1.2 Jy), faintest at 1 h. Overall it stays roughly level over time.",
@@ -158,7 +162,7 @@ describe("where SPHEREx was, in Bangla", () => {
     expect(screen.getByText(place)).toBeInTheDocument();
     expect(screen.getByText("652 km")).toBeInTheDocument();
     expect(screen.getByRole("img")).toHaveAccessibleName(
-      `${ISO} UTC-তে পৃথিবী। SPHEREx তখন 652 km উচ্চতায়, ঠিক নিচে ${place}; এটি লক্ষ্যবস্তুর দিকে তাকিয়ে আছে।`,
+      joinHyphens(`${ISO} UTC-তে পৃথিবী। SPHEREx তখন 652 km উচ্চতায়, ঠিক নিচে ${place}; এটি লক্ষ্যবস্তুর দিকে তাকিয়ে আছে।`),
     );
     expect(screen.getByText(/এটাই লম্বন।/)).toBeInTheDocument();
 
@@ -243,7 +247,7 @@ describe("the game in Bangla", () => {
     bangla();
     renderAt("/play");
     expect(screen.getByRole("heading", { level: 1, name: "চলমান বস্তুটি খুঁজুন" })).toBeInTheDocument();
-    expect(screen.getByText(/উত্তরটি কোথায়, তা বলে দেয় JPL-এর কক্ষপথের হিসাব।/)).toBeInTheDocument();
+    expect(screen.getByText(new RegExp(joinHyphens("উত্তরটি কোথায়, তা বলে দেয় JPL-এর কক্ষপথের হিসাব।")))).toBeInTheDocument();
     expect(await screen.findByText("রাউন্ড 1/1 · স্কোর 0/0")).toBeInTheDocument();
   });
 });
@@ -256,7 +260,7 @@ describe("across the decades, in Bangla", () => {
     expect(screen.getByText("দশকের পর দশক")).toBeInTheDocument();
     // The name is SIMBAD's, or the atlas's Bangla one if the atlas lists the star.
     const name = "(Barnard's Star|বার্নার্ডের তারা)";
-    expect(screen.getByText(new RegExp(`^1950-এর দশক থেকে SPHEREx পর্যন্ত ${name}$`))).toBeInTheDocument();
+    expect(screen.getByText(new RegExp(`^${joinHyphens("1950-এর দশক থেকে SPHEREx পর্যন্ত")} ${name}$`))).toBeInTheDocument();
     // The catalogue's proper motion marks it as fast, which opens the comparison straight away.
     expect(await screen.findByText(/এই তারাটি এত দ্রুত সরে যে ছবিগুলোতেই তা দেখা যায়।$/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "আগের জরিপ" })).toBeInTheDocument();
@@ -265,7 +269,7 @@ describe("across the decades, in Bangla", () => {
     expect(screen.getByRole("list", { name: "সময়ের ক্রমে জরিপগুলো" })).toBeInTheDocument();
     expect(screen.getByText(new RegExp(`${name} প্রতি বছর আকাশে 10.4″ সরে যায়`))).toBeInTheDocument();
     // The plates are not mocked, so the first tile reports that it could not be loaded.
-    expect(await screen.findByText("POSS-I-এর ছবিটি এখন লোড করা যাচ্ছে না।")).toBeInTheDocument();
+    expect(await screen.findByText(joinHyphens("POSS-I-এর ছবিটি এখন লোড করা যাচ্ছে না।"))).toBeInTheDocument();
   });
 });
 

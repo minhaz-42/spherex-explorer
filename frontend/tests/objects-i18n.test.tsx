@@ -22,7 +22,7 @@ import { PROFILE } from "../src/features/objects/messages";
 import { ObjectAtlas } from "../src/features/objects/ObjectAtlas";
 import { ObjectProfile, type SkyContext } from "../src/features/objects/ObjectProfile";
 import type { FieldObjects as FieldObjectsAnswer, ObjectInfo } from "../src/features/objects/types";
-import { currentLang, setLang } from "../src/lib/i18n";
+import { currentLang, joinHyphens, setLang } from "../src/lib/i18n";
 
 const BANGLA_DIGITS = /[০-৯]/;
 // In Bangla a number is joined to its word by a no-break space, "25\u00a0লক্ষ", "(774\u00a0kpc)".
@@ -158,9 +158,9 @@ describe("distances in Bangla", () => {
 describe("names and words in Bangla", () => {
   it("names galaxy shapes, wherever English does", () => {
     expect(morphologyWords("SA(s)b", "bn")).toBe("সর্পিল গ্যালাক্সি");
-    expect(morphologyWords("SB(rs)bc", "bn")).toBe("বার-যুক্ত সর্পিল গ্যালাক্সি");
-    expect(morphologyWords("SB(s)m", "bn")).toBe("বার-যুক্ত ম্যাজেলানিক ধাঁচের সর্পিল গ্যালাক্সি");
-    expect(morphologyWords("S0pec", "bn")).toBe("লেন্স-আকৃতির গ্যালাক্সি");
+    expect(morphologyWords("SB(rs)bc", "bn")).toBe(joinHyphens("বার-যুক্ত সর্পিল গ্যালাক্সি"));
+    expect(morphologyWords("SB(s)m", "bn")).toBe(joinHyphens("বার-যুক্ত ম্যাজেলানিক ধাঁচের সর্পিল গ্যালাক্সি"));
+    expect(morphologyWords("S0pec", "bn")).toBe(joinHyphens("লেন্স-আকৃতির গ্যালাক্সি"));
     expect(morphologyWords("E5pec", "bn")).toBe("উপবৃত্তাকার গ্যালাক্সি");
     for (const code of ["SAB(rs)c", "dE2", "IBm", "Irr", "Sm", "1", "", null]) {
       expect(morphologyWords(code, "bn") === null, String(code)).toBe(morphologyWords(code) === null);
@@ -356,6 +356,6 @@ describe("objects in the field, in Bangla", () => {
     const link = within(table).getByRole("link", { name: /সিগার গ্যালাক্সি/ });
     expect(link.getAttribute("href")).toContain("name=M+82");
     expect(screen.getByText("দৃষ্টিক্ষেত্রে ক্যাটালগভুক্ত বস্তু")).toBeInTheDocument();
-    expect(screen.getByText(/লক্ষ্যবস্তুর 9′-এর মধ্যে/)).toBeInTheDocument();
+    expect(screen.getByText(new RegExp(joinHyphens("লক্ষ্যবস্তুর 9′-এর মধ্যে")))).toBeInTheDocument();
   });
 });

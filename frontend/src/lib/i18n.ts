@@ -43,9 +43,22 @@ export interface Messages<K extends string> {
   bn: Record<K, string>;
 }
 
-/** A feature's messages in both languages; both tables must have exactly the same keys. */
+/**
+ * Bangla attaches case endings with a hyphen ("SPHEREx-এর", "2025-এ"), and browsers may break a line
+ * after it, stranding "এর" at the start of the next line. An invisible word joiner (U+2060) after
+ * each hyphen that runs into a Bangla letter keeps the two together.
+ */
+export function joinHyphens(text: string): string {
+  return text.replace(/-(?=[\u0980-\u09FF])/g, "-\u2060");
+}
+
+/**
+ * A feature's messages in both languages; both tables must have exactly the same keys. The Bangla
+ * table gets `joinHyphens` once, here, so every feature's line breaks behave the same.
+ */
 export function defineMessages<K extends string>(messages: Messages<K>): Messages<K> {
-  return messages;
+  const bn = Object.fromEntries(Object.entries<string>(messages.bn).map(([k, v]) => [k, joinHyphens(v)]));
+  return { en: messages.en, bn: bn as Record<K, string> };
 }
 
 /** Fills `{name}` placeholders. A missing variable is left visible, so it is caught in review. */

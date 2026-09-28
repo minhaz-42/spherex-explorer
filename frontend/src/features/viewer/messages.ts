@@ -134,7 +134,7 @@ export const VIEWER = defineMessages({
     showFlagged: "চিহ্নিত পিক্সেল দেখান (দেখানোর জন্য পূরণ করা, মাপা হয়নি)",
     showCatalog: "ক্যাটালগভুক্ত বস্তুর নাম দেখান (SIMBAD)",
     catalogLoading: "এই ক্ষেত্রে SIMBAD-এ কী তালিকাভুক্ত আছে, জিজ্ঞাসা করা হচ্ছে…",
-    catalogCount: "এই ক্ষেত্রের সবচেয়ে বেশি গবেষিত {n}টি ক্যাটালগভুক্ত বস্তুর নাম দেখানো হচ্ছে। উৎস: SIMBAD, CDS, স্ট্রাসবুর্গ।",
+    catalogCount: "এই ক্ষেত্রের সবচেয়ে বেশি গবেষিত {n}টি ক্যাটালগভুক্ত বস্তুর নাম দেখানো হচ্ছে। উৎস: SIMBAD, CDS, Strasbourg।",
     catalogNone: "এই ক্ষেত্রে SIMBAD-এ কোনো বস্তু তালিকাভুক্ত নেই।",
     catalogError: "SIMBAD-এর তালিকা আনা যায়নি।",
     catalogSnapshot: "ডেমো স্ন্যাপশটে এই ক্ষেত্রের SIMBAD তালিকা নেই।",

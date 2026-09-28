@@ -1,17 +1,13 @@
-import { defineMessages, type Lang } from "../../lib/i18n";
+import { defineMessages, joinHyphens, type Lang } from "../../lib/i18n";
 import type { Band } from "./bands";
 import { BODIES, type SelectableId } from "./bodies";
 
-/**
- * Bangla joins case endings to Latin words and units with a hyphen ("JPL-এর", "µm-এ"), and a
- * browser may break the line after that hyphen, starting the next line with "এর". A word joiner
- * (U+2060, invisible) after each hyphen that runs into Bangla keeps the two together.
- */
-export function joinHyphens(text: string): string {
-  return text.replace(/-(?=[\u0980-\u09FF])/g, "-\u2060");
-}
+export { joinHyphens };
 
-/** A Bangla message table with `joinHyphens` applied to every message. */
+/**
+ * A Bangla message table with `joinHyphens` applied to every message. `defineMessages` now does this
+ * for every table, so this is only needed for Bangla text outside a message table.
+ */
 export function bnTable<K extends string>(table: Record<K, string>): Record<K, string> {
   return Object.fromEntries(Object.entries<string>(table).map(([k, v]) => [k, joinHyphens(v)])) as Record<K, string>;
 }
