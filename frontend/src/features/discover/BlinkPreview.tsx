@@ -51,8 +51,10 @@ function Thumb({ image, alt }: { image: { rgba: Uint8ClampedArray; width: number
  * visitor prefers reduced motion (a button flips instead).
  */
 export function BlinkPreview({ ra, dec, fov, a, b, source = "live", label, interval = 900 }: Props) {
-  const qa = useQuery(cutoutQuery(a.key, ra, dec, fov, source));
-  const qb = useQuery(cutoutQuery(b.key, ra, dec, fov, source));
+  // A case file from an older build may lack keys: then there is nothing to load.
+  const hasKeys = typeof a?.key === "string" && typeof b?.key === "string";
+  const qa = useQuery({ ...cutoutQuery(a?.key ?? "", ra, dec, fov, source), enabled: hasKeys });
+  const qb = useQuery({ ...cutoutQuery(b?.key ?? "", ra, dec, fov, source), enabled: hasKeys });
   const reduced = usePrefersReducedMotion();
   const [showB, setShowB] = useState(false);
   const [paused, setPaused] = useState(false);
@@ -75,7 +77,7 @@ export function BlinkPreview({ ra, dec, fov, a, b, source = "live", label, inter
   }, [ready, reduced, paused, interval]);
 
   const shown = showB ? b : a;
-  const failed = qa.isError || qb.isError;
+  const failed = !hasKeys || qa.isError || qb.isError;
   return (
     <figure
       className="relative aspect-square w-full overflow-hidden rounded-sm bg-image"

@@ -118,6 +118,15 @@ checked (`EXTNAME`, header length) before its bytes are used. If a check fails t
 to walking the headers, and if S3 fails it falls back to the IRSA cutout service. The pixels match
 the IRSA cutout service bit for bit (verified; see the research notes).
 
+## Explanations and AI
+
+Every explanation in the app is written from the measured values: the wavelength gap between two
+frames, why a difference is refused, what JPL predicts and how far a candidate lies from it. There is
+no language-model feature. The brief makes AI optional, and here it would add a way to state things
+that were not measured, without adding anything that is not already stated plainly. If one is
+added later, it should receive the structured evidence (`ChangeResult`, candidate and known-object
+JSON) and phrase it, never the images.
+
 ## Caching and limits
 
 - SIA results: memory, 6 h. Sesame: memory, 7 days. JPL: disk, 30 days, keyed by frame set.

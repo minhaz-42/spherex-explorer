@@ -388,3 +388,20 @@ through JPL instead.
    time, corrected for parallax with that frame's spacecraft position.
 6. Sesame for names; coordinates parsed locally.
 7. A demo snapshot of real responses for the live demo, clearly labelled.
+
+## 13. Learned while building (verified on real frames)
+
+- **The pipeline flags the cores of bright moving sources.** In the (7) Iris frames, 4–17 of the 25
+  pixels around the asteroid carry TRANSIENT and SUR_ERROR, presumably because the source moved or
+  brightened during the ramp. A detector that ignores flagged pixels misses bright asteroids. The
+  moving-source search therefore runs on the filled display image.
+- **QR3 flags saturated cores as BLOOM.** M31's nucleus is flagged BLOOM across the whole aperture
+  in a QR3 (pipeline 7.0.5) frame. QR2 marks the same core only OVERFLOW (informational). Summing
+  the few unflagged pixels reported zero, so photometry now refuses apertures with less than half
+  their weight usable.
+- **Where saturation begins.** Sources of about 0.1–0.2 Jy in the near-infrared (Iris at V = 10.2;
+  M31's nucleus at 1–2 Jy) reach the overflow threshold in D1–D4. The values there still follow the
+  expected spectral shape, so they are shown with a caveat rather than dropped.
+- **Rates from SBIdent.** SBIdent's rate is instantaneous as seen from the spacecraft, and swings
+  with SPHEREx's 7.5 km/s orbit. For Iris it gave 52″/h against 39″/h averaged over 16 hours. The
+  app reports the sequence average from predicted positions.
