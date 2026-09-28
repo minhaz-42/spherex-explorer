@@ -4,7 +4,8 @@ import { Link } from "react-router";
 
 import type { DataSource } from "../../lib/api";
 import { ApiError } from "../../lib/api";
-import { formatDate, formatGap, formatNumber, formatTime, formatWavelength, plural } from "../../lib/format";
+import { formatDate, formatGap, formatNumber, formatTime, formatWavelength } from "../../lib/format";
+import { useLang, useT } from "../../lib/i18n";
 import { autoStretch, renderDifference, renderGray, sampleAt, type StretchKind } from "../../lib/pixels";
 import {
   buildSequence,
@@ -26,17 +27,18 @@ import { FramePanel } from "./FramePanel";
 import { MAX_SEQUENCE_KEYS, publishView } from "../assistant/viewContext";
 import { CandidatesPanel } from "../known/Candidates";
 import { KnownObjectsPanel } from "../known/KnownObjects";
+import { frameCount, VIEWER, type ViewerKey } from "./messages";
 import { CandidateTrack, PredictedTrack, ScaleAndCompass, TargetMarker } from "./overlays";
 import { SkyCanvas } from "./SkyCanvas";
 import { type CompareMode, FIELDS, type ViewerState } from "./state";
 import { useSequence } from "./useSequence";
 import { fitView, type Rendered, type ViewState } from "./view";
 
-const MODES: { id: CompareMode; label: string; hint: string }[] = [
-  { id: "single", label: "Single", hint: "One observation at a time" },
-  { id: "blink", label: "Blink", hint: "Flip between reference A and the current frame B" },
-  { id: "side", label: "Side by side", hint: "A and B next to each other, zoomed together" },
-  { id: "diff", label: "Difference", hint: "B minus A, where that is scientifically valid" },
+const MODES: { id: CompareMode; label: ViewerKey; hint: ViewerKey }[] = [
+  { id: "single", label: "single", hint: "singleHint" },
+  { id: "blink", label: "blink", hint: "blinkHint" },
+  { id: "side", label: "side", hint: "sideHint" },
+  { id: "diff", label: "diff", hint: "diffHint" },
 ];
 
 interface Props {
@@ -48,6 +50,8 @@ interface Props {
 }
 
 export function Viewer({ observations, target, source, initial, onStateChange }: Props) {
+  const t = useT(VIEWER);
+  const lang = useLang();
   const { frames, passes } = observations;
   const [start] = useState(() => initialPosition(frames, passes, initial));
   const [spec, setSpec] = useState<SequenceSpec>(start.spec);
@@ -149,7 +153,7 @@ export function Viewer({ observations, target, source, initial, onStateChange }:
   const render = (img: DecodedCutout | undefined): Rendered | null =>
     img && stretch ? { rgba: renderGray(img, stretch, { noData, flagged: flagTint }), width: img.width, height: img.height } : null;
 
-  const compat = frame && refFrame ? compatibility(refFrame, frame) : null;
+  const compat = frame && refFrame ? compatibility(refFrame, frame, lang) : null;
 
   const renderedB = useMemo(() => render(B), [B, stretch, showFlagged]); // eslint-disable-line react-hooks/exhaustive-deps
   const renderedA = useMemo(() => render(A), [A, stretch, showFlagged]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -308,18 +312,18 @@ export function Viewer({ observations, target, source, initial, onStateChange }:
           <div className="max-w-xs space-y-3 rounded-sm bg-black/70 p-4 text-sm text-on-image">
             <p>
               <AlertTriangle size={16} className="mr-1.5 inline text-accent-on-image" aria-hidden />
-              {error instanceof ApiError ? error.message : "This frame could not be loaded."}
+              {error instanceof ApiError ? error.message : t("frameFailed")}
             </p>
             {retry && (
               <button type="button" className="btn btn-secondary btn-sm !border-on-image !text-on-image" onClick={retry}>
-                <RefreshCw size={14} aria-hidden /> Try again
+                <RefreshCw size={14} aria-hidden /> {t("tryAgain")}
               </button>
             )}
           </div>
         ) : (
           <div className="space-y-3 text-sm text-on-image" role="status">
             <div className="mx-auto h-6 w-6 animate-spin rounded-full border-2 border-on-image/25 border-t-on-image motion-reduce:animate-none" />
-            <p>Reading this frame from the SPHEREx archive…</p>
+            <p>{t("reading")}</p>
           </div>
         )}
       </div>
@@ -328,35 +332,35 @@ export function Viewer({ observations, target, source, initial, onStateChange }:
   if (count === 0) {
     return (
       <div className="note">
-        No frames from detector {spec.detector} in this selection. Choose another band or pass.
+        {t("noFrames", { detector: spec.detector })}
       </div>
     );
   }
 
   return (
-    <section aria-label="Sky viewer" onKeyDown={onKeyDown} className="grid gap-x-8 gap-y-6 lg:grid-cols-[minmax(0,1fr)_21rem]">
+    <section aria-label={t("viewer")} onKeyDown={onKeyDown} className="grid gap-x-8 gap-y-6 lg:grid-cols-[minmax(0,1fr)_21rem]">
       <div className="min-w-0 space-y-4">
         {/* Toolbar */}
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="segmented" role="radiogroup" aria-label="Comparison">
+          <div className="segmented" role="radiogroup" aria-label={t("comparison")}>
             {MODES.map((m) => (
-              <button key={m.id} type="button" role="radio" aria-checked={compare === m.id} title={m.hint} onClick={() => setCompare(m.id)}>
-                {m.label}
+              <button key={m.id} type="button" role="radio" aria-checked={compare === m.id} title={t(m.hint)} onClick={() => setCompare(m.id)}>
+                {t(m.label)}
               </button>
             ))}
           </div>
           <div className="flex items-center gap-3">
             <Link to="/ask" className="btn btn-secondary btn-sm">
-              <MessageSquareText size={15} aria-hidden /> Ask about this view
+              <MessageSquareText size={15} aria-hidden /> {t("ask")}
             </Link>
-            <div className="flex items-center gap-1" role="group" aria-label="Zoom">
-              <button type="button" className="btn btn-ghost btn-sm btn-icon" aria-label="Zoom out" onClick={() => setView((v) => ({ ...v, zoom: Math.max(1, v.zoom / 1.5) }))}>
+            <div className="flex items-center gap-1" role="group" aria-label={t("zoom")}>
+              <button type="button" className="btn btn-ghost btn-sm btn-icon" aria-label={t("zoomOut")} onClick={() => setView((v) => ({ ...v, zoom: Math.max(1, v.zoom / 1.5) }))}>
                 <Minus size={16} aria-hidden />
               </button>
-              <button type="button" className="btn btn-ghost btn-sm btn-icon" aria-label="Fit to view" onClick={() => setView(fitView(size, size))}>
+              <button type="button" className="btn btn-ghost btn-sm btn-icon" aria-label={t("fit")} onClick={() => setView(fitView(size, size))}>
                 <LocateFixed size={16} aria-hidden />
               </button>
-              <button type="button" className="btn btn-ghost btn-sm btn-icon" aria-label="Zoom in" onClick={() => setView((v) => ({ ...v, zoom: Math.min(12, v.zoom * 1.5) }))}>
+              <button type="button" className="btn btn-ghost btn-sm btn-icon" aria-label={t("zoomIn")} onClick={() => setView((v) => ({ ...v, zoom: Math.min(12, v.zoom * 1.5) }))}>
                 <Plus size={16} aria-hidden />
               </button>
             </div>
@@ -380,7 +384,7 @@ export function Viewer({ observations, target, source, initial, onStateChange }:
                 onViewChange={setView}
                 overlay={overlayFor(f)}
                 onHover={setHover}
-                label={`Frame ${tag}: ${f ? `${formatDate(f.isoMid)} ${formatTime(f.isoMid)}` : ""}`}
+                label={t("frameLabel", { tag, when: f ? `${formatDate(f.isoMid)} ${formatTime(f.isoMid)}` : "" })}
               >
                 {caption(f, tag, cut)}
                 {loadingOverlay(st, results[i]?.error, () => results[i]?.refetch())}
@@ -398,8 +402,11 @@ export function Viewer({ observations, target, source, initial, onStateChange }:
             onHover={setHover}
             label={
               compare === "diff"
-                ? "Difference image, current frame minus reference"
-                : `SPHEREx image of ${target.label}, ${mainFrame ? `${formatDate(mainFrame.isoMid)} ${formatTime(mainFrame.isoMid)}` : ""}`
+                ? t("diffLabel")
+                : t("imageLabel", {
+                    label: target.label,
+                    when: mainFrame ? `${formatDate(mainFrame.isoMid)} ${formatTime(mainFrame.isoMid)}` : "",
+                  })
             }
           >
             {compare === "diff" ? (
@@ -415,13 +422,13 @@ export function Viewer({ observations, target, source, initial, onStateChange }:
             {compare === "diff" && compat && !compat.ok ? (
               <div className="absolute inset-0 flex items-center justify-center p-6">
                 <div className="max-w-sm space-y-2 rounded-sm bg-black/75 p-4 text-sm text-on-image">
-                  <p className="font-medium">A difference image would be misleading here.</p>
+                  <p className="font-medium">{t("misleading")}</p>
                   {compat.reasons.map((r) => (
                     <p key={r} className="text-on-image/85">
                       {r}
                     </p>
                   ))}
-                  <p className="text-on-image/85">Use Blink to compare positions, or pick a matched-wavelength sequence.</p>
+                  <p className="text-on-image/85">{t("useBlink")}</p>
                 </div>
               </div>
             ) : (
@@ -434,19 +441,19 @@ export function Viewer({ observations, target, source, initial, onStateChange }:
         <p className="num min-h-5 text-xs text-faint" aria-live="off">
           {hover && readoutSky ? (
             <>
-              RA {formatRa(readoutSky.ra)} Dec {formatDec(readoutSky.dec)}
+              {t("readout", { ra: formatRa(readoutSky.ra), dec: formatDec(readoutSky.dec) })}
               {readout && compare !== "diff" && (
                 <>
                   {"  ·  "}
-                  {readout.mask & 2 ? "no data" : `${formatNumber(readout.value, 3)} MJy/sr`}
-                  {readout.mask & 1 ? " (flagged pixel, filled for display)" : ""}
+                  {readout.mask & 2 ? t("noData") : `${formatNumber(readout.value, 3)} MJy/sr`}
+                  {readout.mask & 1 ? t("flaggedPixel") : ""}
                 </>
               )}
             </>
           ) : touch ? (
-            "Pinch to zoom, drag to pan, double-tap to zoom in."
+            t("touchHint")
           ) : (
-            "Scroll or pinch to zoom, drag to pan. Hover for coordinates and pixel values."
+            t("mouseHint")
           )}
         </p>
 
@@ -471,8 +478,8 @@ export function Viewer({ observations, target, source, initial, onStateChange }:
             setIndex(i);
           }} />
           <p className="text-xs text-faint">
-            {plural(loaded, "frame")} of {count} loaded. Each dot’s height is the wavelength that frame saw at the target;
-            a ring marks frames at the same wavelength as A.{touch ? "" : " Keys: ← → step, space play, R set reference."}
+            {t("loaded", { frames: frameCount(lang, loaded), n: loaded.toLocaleString("en-US"), count })}
+            {touch ? "" : t("keys")}
           </p>
         </div>
 
@@ -497,14 +504,14 @@ export function Viewer({ observations, target, source, initial, onStateChange }:
 
         <section aria-labelledby="seq-title" className="space-y-4 border-t border-rule pt-6">
           <h2 id="seq-title" className="panel-title">
-            Sequence
+            {t("sequence")}
           </h2>
-          <div className="segmented w-full [&>button]:flex-1" role="radiogroup" aria-label="Sequence type">
+          <div className="segmented w-full [&>button]:flex-1" role="radiogroup" aria-label={t("sequenceType")}>
             {(
               [
-                ["pass", "One survey pass"],
-                ["wavelength", "One wavelength"],
-              ] as [SequenceMode, string][]
+                ["pass", "onePass"],
+                ["wavelength", "oneWavelength"],
+              ] as [SequenceMode, ViewerKey][]
             ).map(([m, label]) => (
               <button
                 key={m}
@@ -519,25 +526,25 @@ export function Viewer({ observations, target, source, initial, onStateChange }:
                   )
                 }
               >
-                {label}
+                {t(label)}
               </button>
             ))}
           </div>
           <p className="text-sm text-muted">
             {spec.mode === "pass"
-              ? "Frames from one visit of the survey, minutes to days apart. Stars stay put; anything that moves is in the Solar System."
-              : `Frames from every pass that saw the target within half a spectral channel of ${formatWavelength(spec.wavelengthUm)}, one per pointing. This is the fair way to compare brightness over months.`}
+              ? t("passNote")
+              : t("wavelengthNote", { wavelength: formatWavelength(spec.wavelengthUm) })}
           </p>
           {spec.mode === "pass" && (
             <PassTrack passes={passes} selected={spec.passIndex} onSelect={(i) => changeSpec({ passIndex: i })} />
           )}
           <div className="space-y-2">
-            <p className="text-sm text-muted">Wavelength band</p>
+            <p className="text-sm text-muted">{t("band")}</p>
             <BandPicker counts={counts} detector={spec.detector} onChange={(d) => changeSpec({ detector: d, wavelengthUm: spec.mode === "wavelength" ? null : spec.wavelengthUm })} />
           </div>
           {spec.mode === "wavelength" && frame && (
             <button type="button" className="btn btn-secondary btn-sm" onClick={() => changeSpec({ wavelengthUm: B?.payload.wavelength.atTargetUm ?? frame.wavelengthUm })}>
-              Match this frame’s wavelength ({formatWavelength(B?.payload.wavelength.atTargetUm ?? frame.wavelengthUm)})
+              {t("matchWavelength", { wavelength: formatWavelength(B?.payload.wavelength.atTargetUm ?? frame.wavelengthUm) })}
             </button>
           )}
         </section>
@@ -570,10 +577,10 @@ export function Viewer({ observations, target, source, initial, onStateChange }:
 
         <section aria-labelledby="display-title" className="space-y-3 border-t border-rule pt-6">
           <h2 id="display-title" className="panel-title">
-            Display
+            {t("display")}
           </h2>
           <label className="flex items-center justify-between gap-3 text-sm text-muted">
-            Field of view
+            {t("fov")}
             <select className="field !min-h-9 !w-auto" value={fov} onChange={(e) => setFov(Number(e.target.value))}>
               {FIELDS.map((f) => (
                 <option key={f} value={f}>
@@ -583,16 +590,16 @@ export function Viewer({ observations, target, source, initial, onStateChange }:
             </select>
           </label>
           <label className="flex items-center justify-between gap-3 text-sm text-muted">
-            Stretch
+            {t("stretch")}
             <select className="field !min-h-9 !w-auto" value={stretchKind} onChange={(e) => setStretchKind(e.target.value as StretchKind)}>
-              <option value="asinh">Asinh (faint and bright)</option>
-              <option value="linear">Linear</option>
-              <option value="log">Logarithmic</option>
+              <option value="asinh">{t("asinh")}</option>
+              <option value="linear">{t("linear")}</option>
+              <option value="log">{t("log")}</option>
             </select>
           </label>
           <label className="block text-sm text-muted">
             <span className="flex justify-between">
-              Contrast <span className="num text-faint">{contrast.toFixed(2)}×</span>
+              {t("contrast")} <span className="num text-faint">{contrast.toFixed(2)}×</span>
             </span>
             <input
               type="range"
@@ -606,11 +613,10 @@ export function Viewer({ observations, target, source, initial, onStateChange }:
           </label>
           <label className="flex items-center gap-2 text-sm text-muted">
             <input type="checkbox" checked={showFlagged} onChange={(e) => setShowFlagged(e.target.checked)} className="accent-[var(--accent)]" />
-            Show flagged pixels (filled in for display, not measured)
+            {t("showFlagged")}
           </label>
           <p className="text-xs text-faint">
-            Every frame uses the same stretch, taken from the reference frame, so brightness changes you see are in the data.
-            The local background (zodiacal light and airglow) is removed from each frame.
+            {t("sameStretch")}
           </p>
         </section>
       </aside>
@@ -640,12 +646,13 @@ function initialPosition(
 }
 
 function DifferenceLegend({ limit }: { limit: number }) {
+  const t = useT(VIEWER);
   return (
     <div className="pointer-events-none absolute bottom-2 right-2 rounded-sm bg-black/60 px-2 py-1.5 text-[0.6875rem] text-on-image">
       <div className="flex items-center gap-2">
-        <span>fainter</span>
+        <span>{t("fainter")}</span>
         <span className="h-2 w-24 rounded-[1px]" style={{ background: "linear-gradient(90deg, rgb(80 200 255), rgb(12 14 17), rgb(255 176 70))" }} />
-        <span>brighter</span>
+        <span>{t("brighter")}</span>
       </div>
       <p className="num mt-1 text-center text-on-image/80">±{formatNumber(limit, 2)} MJy/sr</p>
     </div>
@@ -665,8 +672,10 @@ function ComparisonNote({
   onUseCurrent: () => void;
   isSame: boolean;
 }) {
+  const t = useT(VIEWER);
+  const lang = useLang();
   return (
-    <section aria-label="Comparison" className="space-y-3 rounded-sm border border-rule p-4">
+    <section aria-label={t("comparison")} className="space-y-3 rounded-sm border border-rule p-4">
       <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-sm">
         <dt className="font-semibold text-accent">A</dt>
         <dd className="num text-muted">
@@ -679,14 +688,13 @@ function ComparisonNote({
       </dl>
       <p className="text-sm text-muted">
         {isSame ? (
-          "A and B are the same frame. Step to another frame to compare."
+          t("same")
         ) : (
           <>
-            {formatGap(compat.deltaDays)} apart
-            {compat.deltaWavelengthUm != null && `, ${Math.abs(compat.deltaWavelengthUm).toFixed(3)} µm apart in wavelength`}.{" "}
-            {compat.ok
-              ? "Close enough in wavelength to compare brightness directly."
-              : "Positions can be compared (stars stay put, moving objects shift), but brightness differences may just be the sources’ colours."}
+            {t("apart", { gap: formatGap(compat.deltaDays, lang) })}
+            {compat.deltaWavelengthUm != null && t("apartWavelength", { delta: Math.abs(compat.deltaWavelengthUm).toFixed(3) })}
+            {t("stop")}{" "}
+            {compat.ok ? t("closeEnough") : t("colours")}
           </>
         )}
       </p>
@@ -698,18 +706,15 @@ function ComparisonNote({
       <details className="disclosure">
         <summary>
           <ChevronRight size={16} className="disclosure-chevron" aria-hidden />
-          How the comparison works
+          {t("how")}
         </summary>
         <p className="mt-2 text-sm text-muted">
-          Both frames are resampled onto the same north-up grid using their own astrometric solutions, flagged pixels are
-          masked, and each frame’s local background is subtracted. A difference is shown only when both saw the target
-          within half a spectral channel of each other, on the same detector. Differences near bright stars include
-          residuals from the changing shape of the telescope’s point-spread function.
+          {t("howBody")}
         </p>
       </details>
       {!isSame && (
         <button type="button" className="btn btn-ghost btn-sm" onClick={onUseCurrent}>
-          Use B as the new reference
+          {t("useB")}
         </button>
       )}
     </section>

@@ -3,9 +3,11 @@ import { ChevronRight, ScanSearch } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { ApiError, type DataSource } from "../../lib/api";
+import { useT } from "../../lib/i18n";
 import { matchCandidate } from "../../lib/matching";
 import { candidatesQuery } from "../../lib/queries";
 import type { Candidates, Frame, KnownObjects } from "../../lib/types";
+import { KNOWN } from "./messages";
 
 interface Props {
   sequence: Frame[];
@@ -19,14 +21,15 @@ interface Props {
   onResult: (result: Candidates | undefined) => void;
 }
 
-const DIRECTIONS = ["north", "north-east", "east", "south-east", "south", "south-west", "west", "north-west"];
+const DIRECTIONS = ["n", "ne", "e", "se", "s", "sw", "w", "nw"] as const;
 
-function direction(pa: number): string {
+function direction(pa: number): (typeof DIRECTIONS)[number] {
   return DIRECTIONS[Math.round(pa / 45) % 8]!;
 }
 
 /** Our own search of this pass for things that move, compared with JPL's catalogue. */
 export function CandidatesPanel({ sequence, target, fov, source, enabled, known, showWeak, onShowWeak, onResult }: Props) {
+  const t = useT(KNOWN);
   const [asked, setAsked] = useState(false);
   const keys = sequence.map((f) => f.key);
   const query = useQuery({ ...candidatesQuery(target.ra, target.dec, fov, keys, source), enabled: asked && enabled && keys.length >= 2 });
@@ -39,39 +42,41 @@ export function CandidatesPanel({ sequence, target, fov, source, enabled, known,
   return (
     <section aria-labelledby="moving-title" className="space-y-3 border-t border-rule pt-6">
       <h2 id="moving-title" className="panel-title">
-        Moving sources in this pass
+        {t("movingTitle")}
       </h2>
       {!enabled ? (
-        <p className="text-sm text-muted">Needs one survey pass with at least two pointings.</p>
+        <p className="text-sm text-muted">{t("movingDisabled")}</p>
       ) : !asked ? (
         <>
           <p className="text-sm text-muted">
-            Search every frame of this pass for sources that move from one pointing to the next, the way an asteroid or
-            a distant planet would. It reads every frame, so it waits for them to load.
+            {t("movingIntro")}
           </p>
           <button type="button" className="btn btn-secondary btn-sm" onClick={() => setAsked(true)}>
-            <ScanSearch size={15} aria-hidden /> Search for moving sources
+            <ScanSearch size={15} aria-hidden /> {t("movingButton")}
           </button>
         </>
       ) : query.isPending ? (
         <p className="text-sm text-muted" role="status">
-          Searching {keys.length} frames…
+          {t("searching", { n: keys.length })}
         </p>
       ) : query.error ? (
         <div className="space-y-2">
           <p className="text-sm text-danger" role="alert">
-            {query.error instanceof ApiError ? query.error.message : "The search failed."}
+            {query.error instanceof ApiError ? query.error.message : t("searchFailed")}
           </p>
           <button type="button" className="btn btn-ghost btn-sm" onClick={() => query.refetch()}>
-            Try again
+            {t("tryAgain")}
           </button>
         </div>
       ) : data ? (
         <>
           <p className="text-sm text-muted">
-            {data.stats.detections.toLocaleString("en-US")} sources detected; {data.stats.transient} were not seen again at
-            the same place, {data.stats.sightings} of those repeated within a pointing, and{" "}
-            {strong.length === 0 ? "none lined up" : `${strong.length} lined up`} across three or more pointings.
+            {t("stats", {
+              detections: data.stats.detections.toLocaleString("en-US"),
+              transient: data.stats.transient,
+              sightings: data.stats.sightings,
+              lined: strong.length === 0 ? t("linedNone") : t("linedSome", { n: strong.length }),
+            })}
           </p>
           {strong.length > 0 && (
             <ul className="divide-y divide-rule border-y border-rule">
@@ -82,21 +87,21 @@ export function CandidatesPanel({ sequence, target, fov, source, enabled, known,
                     <p className="flex items-baseline justify-between gap-3">
                       <span className="font-semibold text-text">{c.id}</span>
                       <span className="num text-xs text-faint">
-                        {c.rateArcsecPerHour.toFixed(0)}″/h toward the {direction(c.positionAngleDeg)}
+                        {t("rate", { rate: c.rateArcsecPerHour.toFixed(0), direction: t(direction(c.positionAngleDeg)) })}
                       </span>
                     </p>
                     <p className="text-xs text-muted">
-                      {c.sightings.length} sightings on a straight line (scatter {c.residualArcsec.toFixed(1)}″).
+                      {t("sightings", { n: c.sightings.length, scatter: c.residualArcsec.toFixed(1) })}
                     </p>
                     <p className="text-xs">
                       {match ? (
                         <span className="text-text">
-                          Matches JPL’s prediction for {match.name}, {match.medianOffsetArcsec.toFixed(1)}″ away (known object).
+                          {t("matches", { name: match.name, offset: match.medianOffsetArcsec.toFixed(1) })}
                         </span>
                       ) : known ? (
-                        <span className="text-text">No catalogued body brighter than V {known.searched.vmagLimit} matches. Unconfirmed candidate: further analysis required.</span>
+                        <span className="text-text">{t("unmatched", { vmag: known.searched.vmagLimit })}</span>
                       ) : (
-                        <span className="text-faint">Check JPL for known objects above to see whether it is catalogued.</span>
+                        <span className="text-faint">{t("checkFirst")}</span>
                       )}
                     </p>
                   </li>
@@ -107,20 +112,18 @@ export function CandidatesPanel({ sequence, target, fov, source, enabled, known,
           {weak.length > 0 && (
             <label className="flex items-center gap-2 text-sm text-muted">
               <input type="checkbox" checked={showWeak} onChange={(e) => onShowWeak(e.target.checked)} className="accent-[var(--accent)]" />
-              Also show {weak.length} weak {weak.length === 1 ? "candidate" : "candidates"} (two sightings only)
+              {t("showWeak", { n: weak.length, noun: t(weak.length === 1 ? "candidate" : "candidates") })}
             </label>
           )}
           <p className="note">{data.caution}</p>
           <details className="disclosure">
             <summary>
               <ChevronRight size={16} className="disclosure-chevron" aria-hidden />
-              How the search works
+              {t("howSearch")}
             </summary>
             <p className="mt-2 text-sm text-muted">{data.method}</p>
             <p className="mt-2 text-xs text-faint">
-              Rates between {data.limits.minRateArcsecPerHour}″ and {data.limits.maxRateArcsecPerHour}″ per hour are
-              searched. A body much slower than that, such as a distant planet, would not be separated from the fixed
-              sky within one pass.
+              {t("rates", { min: data.limits.minRateArcsecPerHour, max: data.limits.maxRateArcsecPerHour })}
             </p>
           </details>
         </>

@@ -1,6 +1,9 @@
 import { ChevronRight } from "lucide-react";
 import { type KeyboardEvent, type ReactNode, useLayoutEffect, useMemo, useRef, useState } from "react";
 
+import { useT } from "../../lib/i18n";
+import { PLOTS } from "./messages";
+
 export interface PlotPoint {
   id: string;
   x: number;
@@ -48,6 +51,7 @@ function niceTicks(lo: number, hi: number, count = 5): number[] {
  * every value.
  */
 export function ScatterPlot({ points, xLabel, yLabel, formatX, formatY, xHeading, yHeading, onSelect, xDomain, height = 220, caption }: Props) {
+  const t = useT(PLOTS);
   const wrap = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(0);
   const [active, setActive] = useState<number | null>(null);
@@ -126,7 +130,7 @@ export function ScatterPlot({ points, xLabel, yLabel, formatX, formatY, xHeading
             width={width}
             height={height}
             role="group"
-            aria-label={`${yLabel} against ${xLabel}. Use the arrow keys to read points.`}
+            aria-label={t("against", { y: yLabel, x: xLabel })}
             tabIndex={0}
             onKeyDown={onKey}
             onPointerMove={(e) => setActive(nearest(e.clientX, e.clientY))}
@@ -139,20 +143,20 @@ export function ScatterPlot({ points, xLabel, yLabel, formatX, formatY, xHeading
             className="block cursor-crosshair overflow-visible focus-visible:outline-2"
           >
             {/* Grid and axes: solid hairlines, recessive */}
-            {yTicks.map((t) => (
-              <g key={`y${t}`}>
-                <line x1={MARGIN.left} x2={width - MARGIN.right} y1={sy(t)} y2={sy(t)} stroke="var(--rule)" strokeWidth={1} />
-                <text x={MARGIN.left - 8} y={sy(t)} dy="0.32em" textAnchor="end" className="num fill-[var(--text-faint)] text-[0.75rem]">
-                  {formatY(t)}
+            {yTicks.map((tick) => (
+              <g key={`y${tick}`}>
+                <line x1={MARGIN.left} x2={width - MARGIN.right} y1={sy(tick)} y2={sy(tick)} stroke="var(--rule)" strokeWidth={1} />
+                <text x={MARGIN.left - 8} y={sy(tick)} dy="0.32em" textAnchor="end" className="num fill-[var(--text-faint)] text-[0.75rem]">
+                  {formatY(tick)}
                 </text>
               </g>
             ))}
             {y0 < 0 && y1 > 0 && (
               <line x1={MARGIN.left} x2={width - MARGIN.right} y1={sy(0)} y2={sy(0)} stroke="var(--rule-strong)" strokeWidth={1} />
             )}
-            {xTicks.map((t) => (
-              <text key={`x${t}`} x={sx(t)} y={height - MARGIN.bottom + 16} textAnchor="middle" className="num fill-[var(--text-faint)] text-[0.75rem]">
-                {formatX(t)}
+            {xTicks.map((tick) => (
+              <text key={`x${tick}`} x={sx(tick)} y={height - MARGIN.bottom + 16} textAnchor="middle" className="num fill-[var(--text-faint)] text-[0.75rem]">
+                {formatX(tick)}
               </text>
             ))}
             <line x1={MARGIN.left} x2={width - MARGIN.right} y1={MARGIN.top + innerH} y2={MARGIN.top + innerH} stroke="var(--rule-strong)" strokeWidth={1} />
@@ -213,7 +217,7 @@ export function ScatterPlot({ points, xLabel, yLabel, formatX, formatY, xHeading
       <details className="disclosure">
         <summary>
           <ChevronRight size={16} className="disclosure-chevron" aria-hidden />
-          Show the values as a table
+          {t("table")}
         </summary>
         <div className="mt-2 max-h-72 overflow-auto">
           <table className="w-full text-left text-xs">
@@ -221,7 +225,7 @@ export function ScatterPlot({ points, xLabel, yLabel, formatX, formatY, xHeading
               <tr>
                 <th className="py-1 pr-3 font-medium">{xHeading}</th>
                 <th className="py-1 pr-3 font-medium">{yHeading}</th>
-                <th className="py-1 font-medium">Notes</th>
+                <th className="py-1 font-medium">{t("notes")}</th>
               </tr>
             </thead>
             <tbody className="num text-muted">

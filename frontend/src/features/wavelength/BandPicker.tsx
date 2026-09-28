@@ -1,4 +1,6 @@
 import { BANDS } from "../../lib/bands";
+import { useT } from "../../lib/i18n";
+import { WAVELENGTH } from "./messages";
 
 interface Props {
   counts: Record<number, number>;
@@ -8,8 +10,9 @@ interface Props {
 
 /** The six detector bands, with their wavelength ranges and how many frames each has. */
 export function BandPicker({ counts, detector, onChange }: Props) {
+  const t = useT(WAVELENGTH);
   return (
-    <div role="radiogroup" aria-label="Wavelength band" className="grid grid-cols-3 gap-1.5 sm:grid-cols-6 lg:grid-cols-3">
+    <div role="radiogroup" aria-label={t("band")} className="grid grid-cols-3 gap-1.5 sm:grid-cols-6 lg:grid-cols-3">
       {BANDS.map((b) => {
         const n = counts[b.detector] ?? 0;
         const selected = b.detector === detector;
@@ -21,7 +24,7 @@ export function BandPicker({ counts, detector, onChange }: Props) {
             aria-checked={selected}
             disabled={n === 0}
             onClick={() => onChange(b.detector)}
-            aria-label={`Detector ${b.detector}, ${b.minUm} to ${b.maxUm} micrometres, ${n} frames`}
+            aria-label={t("bandLabel", { detector: b.detector, min: b.minUm, max: b.maxUm, n })}
             className={`flex min-h-12 flex-col items-start justify-center rounded-sm border px-2.5 py-1.5 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
               selected ? "border-accent bg-accent-wash" : "border-rule hover:border-rule-strong"
             }`}

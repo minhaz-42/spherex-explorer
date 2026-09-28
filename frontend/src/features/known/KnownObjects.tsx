@@ -3,9 +3,11 @@ import { ChevronRight, Orbit } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { ApiError, type DataSource } from "../../lib/api";
-import { plural } from "../../lib/format";
+import { useLang, useT } from "../../lib/i18n";
 import { knownObjectsQuery } from "../../lib/queries";
 import type { Frame, KnownObjects as KnownObjectsResult } from "../../lib/types";
+import { frameCount } from "../viewer/messages";
+import { KNOWN } from "./messages";
 
 interface Props {
   sequence: Frame[];
@@ -24,6 +26,8 @@ interface Props {
  * predicted positions are drawn on the image; they are predictions, not detections.
  */
 export function KnownObjectsPanel({ sequence, current, target, fov, source, enabled, show, onShow, onResult }: Props) {
+  const t = useT(KNOWN);
+  const lang = useLang();
   const [asked, setAsked] = useState(false);
   const keys = sequence.map((f) => f.key);
   const query = useQuery({
@@ -42,46 +46,43 @@ export function KnownObjectsPanel({ sequence, current, target, fov, source, enab
   return (
     <section aria-labelledby="known-title" className="space-y-3 border-t border-rule pt-6">
       <h2 id="known-title" className="panel-title">
-        Known Solar System objects
+        {t("knownTitle")}
       </h2>
       {!enabled ? (
         <p className="text-sm text-muted">
-          Available for one survey pass: asteroids cross a field in hours to days, so a sequence spanning months cannot
-          follow one.
+          {t("knownDisabled")}
         </p>
       ) : !asked ? (
         <>
           <p className="text-sm text-muted">
-            Ask JPL which catalogued asteroids and comets were in this field during the pass, as seen from SPHEREx, and
-            draw where each should be in every frame.
+            {t("knownIntro")}
           </p>
           <button type="button" className="btn btn-secondary btn-sm" onClick={() => setAsked(true)}>
-            <Orbit size={15} aria-hidden /> Check JPL for known objects
+            <Orbit size={15} aria-hidden /> {t("knownButton")}
           </button>
         </>
       ) : query.isPending ? (
         <p className="text-sm text-muted" role="status">
-          Asking JPL… it integrates each orbit, so the first answer for a field takes 30 seconds to 2 minutes.
+          {t("knownPending")}
         </p>
       ) : query.error ? (
         <div className="space-y-2">
           <p className="text-sm text-danger" role="alert">
-            {query.error instanceof ApiError ? query.error.message : "JPL could not be reached."}
+            {query.error instanceof ApiError ? query.error.message : t("knownFailed")}
           </p>
           <button type="button" className="btn btn-ghost btn-sm" onClick={() => query.refetch()}>
-            Try again
+            {t("tryAgain")}
           </button>
         </div>
       ) : data && data.objects.length === 0 ? (
         <p className="text-sm text-muted">
-          JPL knows no asteroid or comet brighter than V = {data.searched.vmagLimit} in this field during this pass.
-          Anything that moves here is not in its catalogue, or is fainter, or is an artefact.
+          {t("knownNone", { vmag: data.searched.vmagLimit })}
         </p>
       ) : data ? (
         <>
           <label className="flex items-center gap-2 text-sm text-muted">
             <input type="checkbox" checked={show} onChange={(e) => onShow(e.target.checked)} className="accent-[var(--accent)]" />
-            Show predicted positions on the image
+            {t("showPredicted")}
           </label>
           <ul className="divide-y divide-rule border-y border-rule">
             {data.objects.map((o) => (
@@ -91,9 +92,13 @@ export function KnownObjectsPanel({ sequence, current, target, fov, source, enab
                   {o.vmag != null && <span className="num text-xs text-faint">V {o.vmag.toFixed(1)}</span>}
                 </p>
                 <p className="text-xs text-muted">
-                  {o.rateArcsecPerHour != null && `Moves ${o.rateArcsecPerHour.toFixed(0)}″ per hour · `}
-                  in the field in {o.positions.filter((p) => p.inField).length} of {plural(o.positions.length, "frame")}
-                  {current && (inCurrent(o.name) ? " · in this frame" : " · not in this frame")}
+                  {o.rateArcsecPerHour != null && t("moves", { rate: o.rateArcsecPerHour.toFixed(0) })}
+                  {t("inField", {
+                    k: o.positions.filter((p) => p.inField).length,
+                    frames: frameCount(lang, o.positions.length),
+                    total: o.positions.length.toLocaleString("en-US"),
+                  })}
+                  {current && (inCurrent(o.name) ? t("inThisFrame") : t("notInThisFrame"))}
                 </p>
               </li>
             ))}
@@ -101,12 +106,16 @@ export function KnownObjectsPanel({ sequence, current, target, fov, source, enab
           <details className="disclosure">
             <summary>
               <ChevronRight size={16} className="disclosure-chevron" aria-hidden />
-              How these positions are predicted
+              {t("howPredicted")}
             </summary>
             <p className="mt-2 text-sm text-muted">{data.method}</p>
             <p className="mt-2 text-xs text-faint">
-              Source: {data.source}. {data.searched.candidates} catalogued bodies brighter than V {data.searched.vmagLimit}{" "}
-              were within {data.searched.halfWidthDeg.toFixed(2)}° of the field at the middle frame’s time.
+              {t("source", {
+                source: data.source,
+                n: data.searched.candidates,
+                vmag: data.searched.vmagLimit,
+                deg: data.searched.halfWidthDeg.toFixed(2),
+              })}
             </p>
           </details>
         </>

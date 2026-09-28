@@ -2,11 +2,14 @@ import type { UseQueryResult } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 
 import type { DataSource } from "../../lib/api";
-import { formatDate, formatTime, formatWavelength, mjdToDate, plural } from "../../lib/format";
+import { formatDate, formatTime, formatWavelength, mjdToDate } from "../../lib/format";
+import { type Lang, translate, useLang, useT } from "../../lib/i18n";
 import { measureQuery } from "../../lib/queries";
 import type { DecodedCutout, Frame, Measurement, Photometry } from "../../lib/types";
 import { useQueued } from "../../lib/useQueued";
 import { type PlotPoint, ScatterPlot } from "../plots/ScatterPlot";
+import { frameCount } from "../viewer/messages";
+import { WAVELENGTH } from "./messages";
 
 interface Props {
   mode: "pass" | "wavelength";
@@ -28,9 +31,9 @@ function fluxUnit(values: number[]): { unit: string; scale: number } {
   return { unit: "µJy", scale: 1 };
 }
 
-function caveats(p: Photometry): string[] {
+function caveats(p: Photometry, lang: Lang): string[] {
   const notes = [...p.reasons];
-  if (p.snr != null && p.snr < 3) notes.push("Signal-to-noise below 3");
+  if (p.snr != null && p.snr < 3) notes.push(translate(WAVELENGTH, lang, "lowSnr"));
   return notes;
 }
 
@@ -41,9 +44,10 @@ function toPoint(
   x: number,
   scale: number,
   current: boolean,
+  lang: Lang,
 ): PlotPoint | null {
   if (phot.fluxMicroJy == null) return null;
-  const notes = caveats(phot);
+  const notes = caveats(phot, lang);
   return {
     id: frame.id,
     x,
@@ -54,7 +58,7 @@ function toPoint(
     details: [
       `${formatDate(frame.isoMid)} ${formatTime(frame.isoMid, false)}`,
       `${formatWavelength(wavelengthUm)} · D${frame.detector}`,
-      ...(phot.snr != null ? [`S/N ${phot.snr.toFixed(1)}`] : []),
+      ...(phot.snr != null ? [translate(WAVELENGTH, lang, "snr", { snr: phot.snr.toFixed(1) })] : []),
       ...notes,
     ],
   };
@@ -65,6 +69,8 @@ function toPoint(
  * builds up as its filter steps across the sky), or against time for one matched wavelength.
  */
 export function Measurements({ mode, sequence, results, current, passFrames, target, source, onSelectFrame }: Props) {
+  const t = useT(WAVELENGTH);
+  const lang = useLang();
   const [fullSpectrum, setFullSpectrum] = useState(false);
   const measureOptions = useMemo(
     () => passFrames.map((f) => measureQuery(f.key, target.ra, target.dec, source)),
@@ -84,11 +90,11 @@ export function Measurements({ mode, sequence, results, current, passFrames, tar
       .map(({ f, i, p }) => {
         const wl = p.wavelength.atTargetUm ?? f.wavelengthUm;
         const x = mode === "pass" ? wl ?? 0 : f.mjdMid;
-        return toPoint(f, p.photometry, wl, x, scale, i === current);
+        return toPoint(f, p.photometry, wl, x, scale, i === current, lang);
       })
       .filter((p): p is PlotPoint => p !== null);
     return { points, unit };
-  }, [sequence, results, current, mode]);
+  }, [sequence, results, current, mode, lang]);
 
   const spectrumPoints = useMemo(() => {
     if (!fullSpectrum) return null;
@@ -98,10 +104,10 @@ export function Measurements({ mode, sequence, results, current, passFrames, tar
     const { unit, scale } = fluxUnit(rows.map((r) => r.m.photometry.fluxMicroJy!));
     const currentId = sequence[current]?.id;
     const points = rows
-      .map(({ f, m }) => toPoint(f, m.photometry, m.wavelength.atTargetUm, m.wavelength.atTargetUm ?? f.wavelengthUm ?? 0, scale, f.id === currentId))
+      .map(({ f, m }) => toPoint(f, m.photometry, m.wavelength.atTargetUm, m.wavelength.atTargetUm ?? f.wavelengthUm ?? 0, scale, f.id === currentId, lang))
       .filter((p): p is PlotPoint => p !== null);
     return { points, unit };
-  }, [fullSpectrum, passFrames, measured, sequence, current]);
+  }, [fullSpectrum, passFrames, measured, sequence, current, lang]);
 
   const done = measured.filter((m) => m.status === "success" || m.status === "error").length;
   const select = (id: string) => {
@@ -113,45 +119,44 @@ export function Measurements({ mode, sequence, results, current, passFrames, tar
     <section aria-labelledby="measure-title" className="space-y-4 border-t border-rule pt-6">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 id="measure-title" className="panel-title">
-          Brightness at the target
+          {t("title")}
         </h2>
-        <p className="text-xs text-faint">Aperture photometry, 12″ radius, background subtracted</p>
+        <p className="text-xs text-faint">{t("aperture")}</p>
       </div>
 
       {mode === "pass" ? (
         <p className="text-sm text-muted">
-          In one pass, each exposure sees the target through a different part of SPHEREx’s filter, so these points
-          trace the target’s <strong className="font-medium text-text">spectrum</strong> across this detector’s band. They
-          were taken at different times, so a source that varies within a pass would distort it.
+          {t("passBefore")}
+          <strong className="font-medium text-text">{t("passStrong")}</strong>
+          {t("passAfter")}
         </p>
       ) : (
         <p className="text-sm text-muted">
-          Every point saw the target at nearly the same wavelength, so differences between them are changes in{" "}
-          <strong className="font-medium text-text">time</strong>, within the error bars and the caveats of simple aperture
-          photometry.
+          {t("timeBefore")}
+          <strong className="font-medium text-text">{t("timeStrong")}</strong>
+          {t("timeAfter")}
         </p>
       )}
 
       {mode === "wavelength" && new Set(sequence.map((f) => f.release)).size > 1 && (
         <p className="note note-warn">
-          These frames come from different data releases ({[...new Set(sequence.map((f) => f.release.toUpperCase()))].join(" and ")}),
-          which were calibrated differently. A small step between releases may be calibration rather than the source.
+          {t("releases", { releases: [...new Set(sequence.map((f) => f.release.toUpperCase()))].join(t("and")) })}
         </p>
       )}
 
       {sequencePoints.points.length === 0 ? (
-        <p className="text-sm text-faint">Points appear here as frames load.</p>
+        <p className="text-sm text-faint">{t("pointsAppear")}</p>
       ) : (
         <ScatterPlot
           points={sequencePoints.points}
-          xLabel={mode === "pass" ? "Wavelength at the target (µm)" : "Date (UTC)"}
-          yLabel={`Brightness (${sequencePoints.unit})`}
-          xHeading={mode === "pass" ? "Wavelength" : "Date"}
-          yHeading={`Brightness (${sequencePoints.unit})`}
+          xLabel={mode === "pass" ? t("xWavelength") : t("xDate")}
+          yLabel={t("y", { unit: sequencePoints.unit })}
+          xHeading={mode === "pass" ? t("wavelength") : t("date")}
+          yHeading={t("y", { unit: sequencePoints.unit })}
           formatX={mode === "pass" ? (v) => v.toFixed(2) : (v) => formatDate(mjdToDate(v))}
           formatY={(v) => Number(v.toPrecision(3)).toLocaleString("en-US")}
           onSelect={select}
-          caption={`${plural(sequencePoints.points.length, "frame")} measured. The highlighted point is the frame on screen; hollow points carry a caveat (see the table). Click a point to show that frame.`}
+          caption={t("caption", { frames: frameCount(lang, sequencePoints.points.length) })}
         />
       )}
 
@@ -160,29 +165,29 @@ export function Measurements({ mode, sequence, results, current, passFrames, tar
           {!fullSpectrum ? (
             <div className="flex flex-wrap items-center gap-3">
               <button type="button" className="btn btn-secondary btn-sm" onClick={() => setFullSpectrum(true)} disabled={passFrames.length === 0}>
-                Measure all six bands in this pass
+                {t("measureAll")}
               </button>
               <span className="text-xs text-faint">
-                {plural(passFrames.length, "frame")}, about 0.75–5 µm. Reads a small window of each file.
+                {t("measureNote", { frames: frameCount(lang, passFrames.length) })}
               </span>
             </div>
           ) : (
             <>
               <p className="text-sm text-muted" aria-live="polite">
-                Full spectrum from this pass: {done} of {passFrames.length} frames measured.
+                {t("progress", { done, total: passFrames.length })}
               </p>
               {spectrumPoints && spectrumPoints.points.length > 0 && (
                 <ScatterPlot
                   points={spectrumPoints.points}
-                  xLabel="Wavelength at the target (µm)"
-                  yLabel={`Brightness (${spectrumPoints.unit})`}
-                  xHeading="Wavelength"
-                  yHeading={`Brightness (${spectrumPoints.unit})`}
+                  xLabel={t("xWavelength")}
+                  yLabel={t("y", { unit: spectrumPoints.unit })}
+                  xHeading={t("wavelength")}
+                  yHeading={t("y", { unit: spectrumPoints.unit })}
                   formatX={(v) => v.toFixed(2)}
                   formatY={(v) => Number(v.toPrecision(3)).toLocaleString("en-US")}
                   xDomain={[0.7, 5.05]}
                   onSelect={select}
-                  caption="Every detector’s frames from this pass. Brightness can differ between detectors because of calibration, and a moving or variable target can make neighbouring points disagree."
+                  caption={t("spectrumCaption")}
                 />
               )}
             </>

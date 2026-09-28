@@ -2,8 +2,11 @@ import { ChevronLeft, ChevronRight, Pause, Play, SkipBack } from "lucide-react";
 import { Fragment, useEffect, useRef } from "react";
 
 import { band } from "../../lib/bands";
-import { formatDate, formatGap, formatMonth, formatRange, formatTime, formatWavelength, mjdToDate, plural } from "../../lib/format";
+import { formatDate, formatGap, formatMonth, formatRange, formatTime, formatWavelength, mjdToDate } from "../../lib/format";
+import { useLang, useT } from "../../lib/i18n";
 import type { Frame, Pass } from "../../lib/types";
+import { frameCount } from "../viewer/messages";
+import { TIMELINE } from "./messages";
 import { SPEEDS } from "./speeds";
 
 /** Gap between frames above which the strip shows a labelled break. */
@@ -18,6 +21,8 @@ interface PassTrackProps {
 
 /** Survey passes placed on a real time axis, from the first to the last. */
 export function PassTrack({ passes, selected, onSelect, disabled }: PassTrackProps) {
+  const t = useT(TIMELINE);
+  const lang = useLang();
   if (passes.length === 0) return null;
   const t0 = passes[0]!.mjdStart - 10;
   const t1 = passes[passes.length - 1]!.mjdEnd + 10;
@@ -62,7 +67,7 @@ export function PassTrack({ passes, selected, onSelect, disabled }: PassTrackPro
           );
         })}
       </div>
-      <ul className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 sm:flex-wrap sm:overflow-visible" aria-label="Survey passes">
+      <ul className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 sm:flex-wrap sm:overflow-visible" aria-label={t("passes")}>
         {passes.map((p) => (
           <li key={p.index} className="shrink-0">
             <button
@@ -77,7 +82,7 @@ export function PassTrack({ passes, selected, onSelect, disabled }: PassTrackPro
               }`}
             >
               <span className="text-sm font-medium">{formatRange(p.isoStart, p.isoEnd)}</span>
-              <span className="text-xs text-faint">{plural(p.frames, "frame")}</span>
+              <span className="text-xs text-faint">{frameCount(lang, p.frames)}</span>
             </button>
           </li>
         ))}
@@ -100,6 +105,8 @@ interface FrameStripProps {
  * within half a spectral channel of the reference A carry a ring: those are the fair comparisons.
  */
 export function FrameStrip({ frames, current, reference, status, onSelect }: FrameStripProps) {
+  const t = useT(TIMELINE);
+  const lang = useLang();
   const scroller = useRef<HTMLOListElement>(null);
   // Keep the current tick in view by scrolling the strip itself, never the page.
   useEffect(() => {
@@ -131,23 +138,23 @@ export function FrameStrip({ frames, current, reference, status, onSelect }: Fra
       <ol
         ref={scroller}
         className="flex min-w-0 flex-1 items-stretch gap-[2px] overflow-x-auto pb-2 [scrollbar-width:thin]"
-        aria-label="Frames in this sequence"
+        aria-label={t("frames")}
       >
         {frames.map((f, i) => {
           const gap = i === 0 ? 0 : f.mjdMid - frames[i - 1]!.mjdMid;
           const active = i === current;
           const state = status[i] ?? "idle";
           const matched = matchesRef(f);
-          const t = f.wavelengthUm == null ? 0.5 : (f.wavelengthUm - lo) / Math.max(hi - lo, 1e-6);
+          const height = f.wavelengthUm == null ? 0.5 : (f.wavelengthUm - lo) / Math.max(hi - lo, 1e-6);
           const label =
-            `Frame ${i + 1}: ${formatDate(f.isoMid)}, ${formatTime(f.isoMid)}, ${formatWavelength(f.wavelengthUm)}` +
-            `${i === reference ? ", reference A" : ""}${matched ? ", same wavelength as A" : ""}` +
-            `${state === "error" ? ", failed to load" : state === "ready" ? "" : ", not loaded yet"}`;
+            t("frameLabel", { n: i + 1, date: formatDate(f.isoMid), time: formatTime(f.isoMid), wavelength: formatWavelength(f.wavelengthUm) }) +
+            `${i === reference ? t("referenceA") : ""}${matched ? t("sameAsA") : ""}` +
+            `${state === "error" ? t("failed") : state === "ready" ? "" : t("notLoaded")}`;
           return (
             <Fragment key={f.id}>
               {i > 0 && gap > BREAK_DAYS && (
                 <li aria-hidden="true" className="flex shrink-0 items-end px-1 pb-3">
-                  <span className="num whitespace-nowrap text-[0.6875rem] text-faint">+{formatGap(gap)}</span>
+                  <span className="num whitespace-nowrap text-[0.6875rem] text-faint">+{formatGap(gap, lang)}</span>
                 </li>
               )}
               <li className="shrink-0">
@@ -174,7 +181,7 @@ export function FrameStrip({ frames, current, reference, status, onSelect }: Fra
                               ? "h-2 w-2 bg-muted"
                               : "h-2 w-2 border border-faint"
                       } ${matched ? "ring-2 ring-accent/70 ring-offset-1 ring-offset-[var(--bg)]" : ""}`}
-                      style={{ bottom: `${t * 100}%` }}
+                      style={{ bottom: `${height * 100}%` }}
                     />
                   </span>
                   <span className={`absolute inset-x-1 bottom-0.5 block h-[2px] rounded-full ${active ? "bg-accent" : "bg-transparent"}`} aria-hidden="true" />
@@ -202,13 +209,14 @@ interface TransportProps {
 }
 
 export function Transport({ index, count, playing, speed, onPlay, onStep, onReset, onSpeed, frame, disabled }: TransportProps) {
+  const t = useT(TIMELINE);
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
-      <div className="flex items-center gap-1" role="group" aria-label="Playback">
-        <button type="button" className="btn btn-ghost btn-icon" onClick={onReset} disabled={disabled || count === 0} aria-label="First frame">
+      <div className="flex items-center gap-1" role="group" aria-label={t("playback")}>
+        <button type="button" className="btn btn-ghost btn-icon" onClick={onReset} disabled={disabled || count === 0} aria-label={t("first")}>
           <SkipBack size={18} aria-hidden />
         </button>
-        <button type="button" className="btn btn-ghost btn-icon" onClick={() => onStep(-1)} disabled={disabled || count === 0} aria-label="Previous frame">
+        <button type="button" className="btn btn-ghost btn-icon" onClick={() => onStep(-1)} disabled={disabled || count === 0} aria-label={t("previous")}>
           <ChevronLeft size={20} aria-hidden />
         </button>
         <button
@@ -216,15 +224,15 @@ export function Transport({ index, count, playing, speed, onPlay, onStep, onRese
           className="btn btn-primary btn-icon"
           onClick={onPlay}
           disabled={disabled || count < 2}
-          aria-label={playing ? "Pause" : "Play through the frames"}
+          aria-label={playing ? t("pause") : t("play")}
         >
           {playing ? <Pause size={18} aria-hidden /> : <Play size={18} aria-hidden />}
         </button>
-        <button type="button" className="btn btn-ghost btn-icon" onClick={() => onStep(1)} disabled={disabled || count === 0} aria-label="Next frame">
+        <button type="button" className="btn btn-ghost btn-icon" onClick={() => onStep(1)} disabled={disabled || count === 0} aria-label={t("next")}>
           <ChevronRight size={20} aria-hidden />
         </button>
       </div>
-      <div className="segmented" role="radiogroup" aria-label="Playback speed">
+      <div className="segmented" role="radiogroup" aria-label={t("speed")}>
         {SPEEDS.map((s, i) => (
           <button key={s.label} type="button" role="radio" aria-checked={speed === i} onClick={() => onSpeed(i)}>
             {s.label}
@@ -243,7 +251,7 @@ export function Transport({ index, count, playing, speed, onPlay, onStep, onRese
             </span>
           </>
         ) : (
-          "No frames"
+          t("noFrames")
         )}
       </p>
     </div>

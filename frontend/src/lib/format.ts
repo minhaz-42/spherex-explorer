@@ -1,5 +1,7 @@
 /** Formatting for times, positions and measurements. Everything is shown in UTC. */
 
+import { defineMessages, type Lang, translate } from "./i18n";
+
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const MJD_UNIX_EPOCH = 40587;
 
@@ -46,15 +48,21 @@ export function formatRange(startIso: string, endIso: string): string {
   return `${a.getUTCDate()} – ${b.getUTCDate()} ${MONTHS[a.getUTCMonth()]} ${a.getUTCFullYear()}`;
 }
 
+// Unit symbols (s, min, h) stay as they are in Bangla; the words "days" and "months" are translated.
+const GAP = defineMessages({
+  en: { s: "{n} s", min: "{n} min", h: "{n} h", days: "{n} days", months: "{n} months" },
+  bn: { s: "{n} s", min: "{n} min", h: "{n} h", days: "{n} দিন", months: "{n} মাস" },
+});
+
 /** A time gap in plain units: "2 min", "9.7 h", "3.2 days", "5.8 months". */
-export function formatGap(days: number): string {
+export function formatGap(days: number, lang: Lang = "en"): string {
   const minutes = days * 1440;
-  if (minutes < 1) return `${Math.round(minutes * 60)} s`;
-  if (minutes < 90) return `${Math.round(minutes)} min`;
+  if (minutes < 1) return translate(GAP, lang, "s", { n: Math.round(minutes * 60) });
+  if (minutes < 90) return translate(GAP, lang, "min", { n: Math.round(minutes) });
   const hours = minutes / 60;
-  if (hours < 48) return `${hours < 10 ? hours.toFixed(1) : Math.round(hours)} h`;
-  if (days < 60) return `${days < 10 ? days.toFixed(1) : Math.round(days)} days`;
-  return `${(days / 30.44).toFixed(1)} months`;
+  if (hours < 48) return translate(GAP, lang, "h", { n: hours < 10 ? hours.toFixed(1) : Math.round(hours) });
+  if (days < 60) return translate(GAP, lang, "days", { n: days < 10 ? days.toFixed(1) : Math.round(days) });
+  return translate(GAP, lang, "months", { n: (days / 30.44).toFixed(1) });
 }
 
 export function formatWavelength(um: number | null | undefined, digits = 3): string {

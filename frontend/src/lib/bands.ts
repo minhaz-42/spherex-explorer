@@ -1,5 +1,7 @@
 /** SPHEREx detector bands (IRSA archive user guide) and the colours used for wavelength. */
 
+import { defineMessages, type Lang, translate } from "./i18n";
+
 export interface Band {
   detector: number;
   minUm: number;
@@ -52,10 +54,25 @@ export function wavelengthColor(um: number | null | undefined): string {
   return "rgb(255 122 102)";
 }
 
+const WAVELENGTH_WORDS = defineMessages({
+  en: {
+    red: "just beyond red light",
+    near: "near-infrared, where starlight dominates",
+    water: "infrared where water ice and organic molecules absorb",
+    ices: "infrared where carbon dioxide and carbon monoxide ices absorb",
+  },
+  bn: {
+    red: "লাল আলোর ঠিক ওপারে",
+    near: "নিকট-ইনফ্রারেড, যেখানে তারার আলোই প্রধান",
+    water: "ইনফ্রারেড, যেখানে পানির বরফ ও জৈব অণু আলো শোষণ করে",
+    ices: "ইনফ্রারেড, যেখানে কার্বন ডাই-অক্সাইড ও কার্বন মনোক্সাইডের বরফ আলো শোষণ করে",
+  },
+});
+
 /** Plain description of where a wavelength sits, for visitors. */
-export function describeWavelength(um: number): string {
-  if (um < 1.0) return "just beyond red light";
-  if (um < 2.5) return "near-infrared, where starlight dominates";
-  if (um < 3.5) return "infrared where water ice and organic molecules absorb";
-  return "infrared where carbon dioxide and carbon monoxide ices absorb";
+export function describeWavelength(um: number, lang: Lang = "en"): string {
+  if (um < 1.0) return translate(WAVELENGTH_WORDS, lang, "red");
+  if (um < 2.5) return translate(WAVELENGTH_WORDS, lang, "near");
+  if (um < 3.5) return translate(WAVELENGTH_WORDS, lang, "water");
+  return translate(WAVELENGTH_WORDS, lang, "ices");
 }

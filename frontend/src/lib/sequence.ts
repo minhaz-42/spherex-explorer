@@ -6,6 +6,7 @@
  * from presenting a spectral difference as a change in time.
  */
 
+import { defineMessages, type Lang, translate } from "./i18n";
 import type { Frame, Pass } from "./types";
 
 export type SequenceMode = "pass" | "wavelength";
@@ -86,41 +87,67 @@ export interface Compatibility {
 }
 
 /**
+ * The comparison rules in words. These are the app's validity rules, so the Bangla says exactly what
+ * the English says: between frames that saw different wavelengths, a brightness difference mostly
+ * shows the sources' colours, not a change in time.
+ */
+const RULES = defineMessages({
+  en: {
+    detectors: "They come from different detectors (D{a} and D{b}), which see different wavelength ranges.",
+    unknown: "The wavelength at the target is not known for both frames.",
+    wavelengths:
+      "They saw the target at {a} µm and {b} µm, more than half a spectral channel ({half} µm) apart. A difference would mostly show how the sources' brightness varies with wavelength, not a change in time.",
+    releases:
+      "The frames come from different data releases ({a} and {b}), which were calibrated differently; small brightness differences may be calibration.",
+    minutes: "The frames are only minutes apart; only fast-moving objects will have moved.",
+  },
+  bn: {
+    detectors: "ফ্রেম দুটি ভিন্ন ডিটেক্টরের (D{a} ও D{b}), যেগুলো তরঙ্গদৈর্ঘ্যের ভিন্ন ভিন্ন পরিসর দেখে।",
+    unknown: "দুটি ফ্রেমের অন্তত একটির ক্ষেত্রে লক্ষ্যে তরঙ্গদৈর্ঘ্য জানা নেই।",
+    wavelengths:
+      "ফ্রেম দুটি লক্ষ্যকে দেখেছে {a} µm ও {b} µm-এ, অর্ধেক বর্ণালি-চ্যানেলের ({half} µm) চেয়ে বেশি ব্যবধানে। পার্থক্য নিলে মূলত দেখা যেত তরঙ্গদৈর্ঘ্যভেদে উৎসগুলোর উজ্জ্বলতার তারতম্য, সময়ের সঙ্গে পরিবর্তন নয়।",
+    releases:
+      "ফ্রেমগুলো ভিন্ন ভিন্ন ডেটা রিলিজের ({a} ও {b}), যেগুলো ভিন্নভাবে ক্যালিব্রেট করা হয়েছিল; উজ্জ্বলতার ছোট পার্থক্য হয়তো ক্যালিব্রেশনের কারণে।",
+    minutes: "ফ্রেমগুলোর মধ্যে মাত্র কয়েক মিনিটের ব্যবধান; কেবল দ্রুতগামী বস্তুই সরে থাকবে।",
+  },
+});
+
+/**
  * Can ``b − a`` be shown as a change? Only when both frames come from the same detector and saw the
  * target within half a spectral channel of each other. Everything is on one grid already.
  */
 export function compatibility(
   a: Pick<Frame, "detector" | "wavelengthUm" | "bandwidthUm" | "mjdMid" | "release">,
   b: Pick<Frame, "detector" | "wavelengthUm" | "bandwidthUm" | "mjdMid" | "release">,
+  lang: Lang = "en",
 ): Compatibility {
   const reasons: string[] = [];
   const cautions: string[] = [];
   const deltaDays = Math.abs(b.mjdMid - a.mjdMid);
   let deltaWavelengthUm: number | null = null;
   if (a.detector !== b.detector) {
-    reasons.push(`They come from different detectors (D${a.detector} and D${b.detector}), which see different wavelength ranges.`);
+    reasons.push(translate(RULES, lang, "detectors", { a: a.detector, b: b.detector }));
   }
   if (a.wavelengthUm == null || b.wavelengthUm == null || a.bandwidthUm == null || b.bandwidthUm == null) {
-    reasons.push("The wavelength at the target is not known for both frames.");
+    reasons.push(translate(RULES, lang, "unknown"));
   } else {
     deltaWavelengthUm = b.wavelengthUm - a.wavelengthUm;
     const channel = Math.min(a.bandwidthUm, b.bandwidthUm);
     if (Math.abs(deltaWavelengthUm) > 0.5 * channel) {
       reasons.push(
-        `They saw the target at ${a.wavelengthUm.toFixed(3)} µm and ${b.wavelengthUm.toFixed(3)} µm, more than half a ` +
-          `spectral channel (${(0.5 * channel).toFixed(3)} µm) apart. A difference would mostly show how the ` +
-          `sources' brightness varies with wavelength, not a change in time.`,
+        translate(RULES, lang, "wavelengths", {
+          a: a.wavelengthUm.toFixed(3),
+          b: b.wavelengthUm.toFixed(3),
+          half: (0.5 * channel).toFixed(3),
+        }),
       );
     }
   }
   if (a.release !== b.release) {
-    cautions.push(
-      `The frames come from different data releases (${a.release.toUpperCase()} and ${b.release.toUpperCase()}), ` +
-        "which were calibrated differently; small brightness differences may be calibration.",
-    );
+    cautions.push(translate(RULES, lang, "releases", { a: a.release.toUpperCase(), b: b.release.toUpperCase() }));
   }
   if (deltaDays < 0.01) {
-    cautions.push("The frames are only minutes apart; only fast-moving objects will have moved.");
+    cautions.push(translate(RULES, lang, "minutes"));
   }
   return { ok: reasons.length === 0, reasons, cautions, deltaWavelengthUm, deltaDays };
 }

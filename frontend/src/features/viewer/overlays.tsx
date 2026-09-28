@@ -1,13 +1,17 @@
 /** Overlays on the sky image. Colours come from the design tokens. */
 
+import { useT } from "../../lib/i18n";
+import { OVERLAYS } from "./messages";
+
 /** A ring with four ticks around the target, sized in screen pixels. */
-export function TargetMarker({ x, y, scale, label = "Target" }: { x: number; y: number; scale: number; label?: string }) {
+export function TargetMarker({ x, y, scale, label }: { x: number; y: number; scale: number; label?: string }) {
+  const t = useT(OVERLAYS);
   const r = 11 / scale;
   const gap = 5 / scale;
   const tick = 6 / scale;
   return (
     <g stroke="var(--accent-on-image)" strokeWidth={1.5} fill="none" vectorEffect="non-scaling-stroke">
-      <title>{label}</title>
+      <title>{label ?? t("target")}</title>
       <circle cx={x} cy={y} r={r} vectorEffect="non-scaling-stroke" opacity={0.9} />
       <line x1={x} y1={y - r - gap} x2={x} y2={y - r - gap - tick} vectorEffect="non-scaling-stroke" />
       <line x1={x} y1={y + r + gap} x2={x} y2={y + r + gap + tick} vectorEffect="non-scaling-stroke" />
@@ -64,13 +68,14 @@ export interface TrackPoint {
 
 /** A known body's predicted positions: a faint track through the sequence, a ring now. */
 export function PredictedTrack({ name, points, scale }: { name: string; points: TrackPoint[]; scale: number }) {
+  const t = useT(OVERLAYS);
   if (points.length === 0) return null;
   const now = points.find((p) => p.current);
   const path = points.map((p, i) => `${i === 0 ? "M" : "L"}${p.x} ${p.y}`).join(" ");
   const r = 8 / scale;
   return (
     <g>
-      <title>{`${name}: position predicted by JPL`}</title>
+      <title>{t("predicted", { name })}</title>
       <path d={path} fill="none" stroke="var(--track-on-image)" strokeOpacity={0.55} strokeWidth={1} vectorEffect="non-scaling-stroke" />
       {points.map((p) => (
         <circle key={`${p.x},${p.y}`} cx={p.x} cy={p.y} r={1.6 / scale} fill="var(--track-on-image)" fillOpacity={0.7} />
@@ -104,13 +109,14 @@ export interface CandidatePoint {
 
 /** One of our moving-source candidates: squares at its sightings, joined by its fitted track. */
 export function CandidateTrack({ id, points, scale, weak }: { id: string; points: CandidatePoint[]; scale: number; weak: boolean }) {
+  const t = useT(OVERLAYS);
   if (points.length === 0) return null;
   const s = 6 / scale;
   const path = points.map((p, i) => `${i === 0 ? "M" : "L"}${p.x} ${p.y}`).join(" ");
   const label = points[points.length - 1]!;
   return (
     <g opacity={weak ? 0.6 : 1}>
-      <title>{`Candidate ${id}${weak ? " (weak)" : ""}`}</title>
+      <title>{`${t("candidate", { id })}${weak ? t("weak") : ""}`}</title>
       <path d={path} fill="none" stroke="var(--candidate-on-image)" strokeWidth={1} vectorEffect="non-scaling-stroke" />
       {points.map((p) => (
         <rect
