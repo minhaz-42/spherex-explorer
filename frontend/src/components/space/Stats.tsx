@@ -59,8 +59,9 @@ function Counter({ stat, index }: { stat: Stat; index: number }) {
 export function StatRow({ stats }: { stats: Stat[] }) {
   return (
     <div className="grid gap-x-10 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Keyed by position: labels change with the language, and a new key would restart the count. */}
       {stats.map((s, i) => (
-        <Counter key={s.label} stat={s} index={i} />
+        <Counter key={i} stat={s} index={i} />
       ))}
     </div>
   );

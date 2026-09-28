@@ -1,5 +1,7 @@
 import { type CSSProperties, type ReactNode, useId, useRef } from "react";
 
+import { useT } from "../../lib/i18n";
+import { FIGURES } from "./messages";
 import { useInView } from "./motion";
 import { seeded } from "./noise";
 
@@ -65,6 +67,7 @@ const EMBER = "var(--accent)";
 /** "Where?": the sky as a sphere, with one point picked out by its coordinates. */
 export function WhereFigure() {
   const id = useId().replace(/:/g, "");
+  const t = useT(FIGURES);
   return (
     <Figure>
       <defs>
@@ -96,13 +99,13 @@ export function WhereFigure() {
       <path d="M136 50v6M136 72v6M122 64h6M144 64h6" stroke={EMBER} strokeWidth="1.1" />
       <path d="M146 55l24-24h46" stroke={INK} strokeOpacity="0.55" strokeWidth="0.8" pathLength={1} style={order(5)} />
       <text x="172" y="27" className="fill-text text-[13.5px] font-semibold">
-        Andromeda
+        {t("andromeda")}
       </text>
       <text x="172" y="43" className="num fill-muted text-[7.5px]">
-        RA 00h 42m 44s
+        {t("ra")}
       </text>
       <text x="172" y="53" className="num fill-muted text-[7.5px]">
-        Dec +41° 16′ 08″
+        {t("dec")}
       </text>
     </Figure>
   );
@@ -113,6 +116,7 @@ export function WhenFigure() {
   const passes = [52, 120, 188];
   const bands = [1, 2, 3, 4, 5, 6];
   const heights = [26, 38, 22, 44, 30, 36, 20, 40, 28, 34, 46, 24, 32, 42, 26, 38, 22, 30];
+  const t = useT(FIGURES);
   return (
     <Figure>
       <path d="M14 116H226" stroke={INK} strokeOpacity="0.5" strokeWidth="0.9" pathLength={1} style={order(0)} />
@@ -142,7 +146,7 @@ export function WhenFigure() {
             />
           ))}
           <text x={px} y="135" textAnchor="middle" className="num fill-muted text-[7.5px] font-medium">
-            Pass {p + 1}
+            {t("pass", { n: p + 1 })}
           </text>
         </g>
       ))}
@@ -155,14 +159,14 @@ export function WhenFigure() {
         style={order(2)}
       />
       <text x="86" y="46" textAnchor="middle" className="fill-text text-[13.5px] font-semibold">
-        about six months
+        {t("sixMonths")}
       </text>
       <g className="motion-safe:animate-[playhead_8s_ease-in-out_infinite]">
         <line x1="32" x2="32" y1="70" y2="124" stroke={EMBER} strokeWidth="1.2" />
         <circle cx="32" cy="70" r="3" fill={EMBER} />
       </g>
       <text x="226" y="152" textAnchor="end" className="num fill-faint text-[7px] font-medium">
-        Time →
+        {t("time")}
       </text>
     </Figure>
   );
@@ -171,6 +175,7 @@ export function WhenFigure() {
 /** "What changed?": the same field on two visits, and a point of light that moved. */
 export function ChangeFigure() {
   const id = useId().replace(/:/g, "");
+  const t = useT(FIGURES);
   return (
     <Figure>
       <defs>
@@ -208,17 +213,17 @@ export function ChangeFigure() {
       <g className="motion-safe:animate-[blink-a_1.8s_steps(1)_infinite]">
         <circle cx="98" cy="118" r="4" fill={EMBER} />
         <text x="70" y="161" className="num fill-muted text-[7.5px] font-medium">
-          Visit 1
+          {t("visit", { n: 1 })}
         </text>
       </g>
       <g className="opacity-0 motion-safe:animate-[blink-b_1.8s_steps(1)_infinite]">
         <circle cx="150" cy="72" r="4" fill={EMBER} />
         <text x="70" y="161" className="num fill-muted text-[7.5px] font-medium">
-          Visit 2
+          {t("visit", { n: 2 })}
         </text>
       </g>
       <text x="196" y="52" className="fill-accent text-[14.5px] font-semibold">
-        moved
+        {t("moved")}
       </text>
       <path d="M194 55c-10 4-20 9-30 14" stroke={EMBER} strokeWidth="0.8" pathLength={1} style={order(3)} />
     </Figure>
@@ -231,12 +236,13 @@ export function ChangeFigure() {
  */
 export function IrisPlate() {
   const id = useId().replace(/:/g, "");
+  const t = useT(FIGURES);
   return (
     <svg
       viewBox="0 0 240 240"
       className="block h-auto w-full"
       role="img"
-      aria-label="Illustration: the asteroid (7) Iris in two positions against fixed stars, 9 hours 42 minutes apart."
+      aria-label={t("iris")}
     >
       <defs>
         <radialGradient id={`${id}-well`} cx="0.5" cy="0.45" r="0.75">

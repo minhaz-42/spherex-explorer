@@ -1,6 +1,8 @@
 import { type PointerEvent, useId, useState } from "react";
 
+import { useLang, useT } from "../../lib/i18n";
 import { type Band, bandAt, BANDS, channelEdges, channelOf, FEATURES } from "./bands";
+import { bandWhat, featureLabel, SPECTRUM } from "./messages";
 
 const W = 1000;
 const X0 = 120;
@@ -20,6 +22,8 @@ export function SpectrumExplorer() {
   const id = useId().replace(/:/g, "");
   const [selected, setSelected] = useState<Band["n"]>(4);
   const [cursor, setCursor] = useState<number | null>(null);
+  const lang = useLang();
+  const t = useT(SPECTRUM);
 
   const band: Band = BANDS.find((b) => b.n === selected) ?? (BANDS[3] as Band);
   const hoverBand = cursor !== null ? bandAt(cursor) : undefined;
@@ -39,7 +43,7 @@ export function SpectrumExplorer() {
             viewBox={`0 0 ${W} 250`}
             className="block w-full min-w-[42rem] select-none"
             role="img"
-            aria-label="The six SPHEREx bands laid along the infrared spectrum from 0.75 to 5 micrometres, next to the visible light the eye can see."
+            aria-label={t("label")}
             onPointerMove={onMove}
             onPointerLeave={() => setCursor(null)}
             onClick={() => {
@@ -61,7 +65,7 @@ export function SpectrumExplorer() {
 
             {/* Visible light, squeezed into a stub on the left. */}
             <text x="14" y={BAR_TOP - 12} className="num fill-muted text-[12px] font-medium">
-              Visible
+              {t("visible")}
             </text>
             <rect x="14" y={BAR_TOP + 10} width="80" height={BAR_H - 20} rx="6" fill={`url(#${id}-visible)`} />
             <text x="14" y={BAR_TOP + BAR_H + 30} className="num fill-faint text-[12px]">
@@ -150,7 +154,7 @@ export function SpectrumExplorer() {
                   />
                   <circle cx={fx} cy={BAR_TOP - 4} r="2.2" fill="var(--text)" />
                   <text x={fx} y={top} textAnchor="middle" className="fill-text text-[17px] font-semibold">
-                    {f.label}
+                    {featureLabel(f.label, lang)}
                   </text>
                 </g>
               );
@@ -192,14 +196,16 @@ export function SpectrumExplorer() {
           </svg>
         </div>
         <p className="num mt-2 min-h-5 px-1 text-xs text-muted" aria-live="off">
-          {cursor !== null
-            ? `${cursor.toFixed(2)} µm${hoverBand ? ` · band ${hoverBand.n} · channel ${channelOf(hoverBand, cursor)} of 17` : " · between bands"}`
-            : "Hover the spectrum to read a wavelength · click a band to read about it"}
+          {cursor === null
+            ? t("hint")
+            : hoverBand
+              ? t("inBand", { wl: cursor.toFixed(2), n: hoverBand.n, c: channelOf(hoverBand, cursor) })
+              : t("between", { wl: cursor.toFixed(2) })}
         </p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] md:items-start">
-        <div role="group" aria-label="Choose a band" className="flex flex-wrap gap-2">
+        <div role="group" aria-label={t("choose")} className="flex flex-wrap gap-2">
           {BANDS.map((b) => (
             <button
               key={b.n}
@@ -209,7 +215,7 @@ export function SpectrumExplorer() {
               onClick={() => setSelected(b.n)}
             >
               <span aria-hidden="true" className="swatch" style={{ background: `var(--band-${b.n})` }} />
-              Band {b.n}
+              {t("band", { n: b.n })}
               <span className="num opacity-75">
                 {b.min.toFixed(2)}–{b.max.toFixed(2)} µm
               </span>
@@ -218,12 +224,12 @@ export function SpectrumExplorer() {
         </div>
         <div aria-live="polite" className="card px-6 py-5">
           <p className="flex flex-wrap items-baseline gap-x-3">
-            <span className="font-display text-3xl">Band {band.n}</span>
+            <span className="font-display text-3xl">{t("band", { n: band.n })}</span>
             <span className="num text-sm text-muted">
-              {band.min.toFixed(2)}–{band.max.toFixed(2)} µm · R ≈ {band.R} · 17 channels
+              {t("details", { min: band.min.toFixed(2), max: band.max.toFixed(2), R: band.R })}
             </span>
           </p>
-          <p className="mt-2 text-muted">{band.what}</p>
+          <p className="mt-2 text-muted">{bandWhat(band, lang)}</p>
         </div>
       </div>
     </div>

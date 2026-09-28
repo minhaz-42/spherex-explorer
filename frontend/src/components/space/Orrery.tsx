@@ -1,7 +1,9 @@
 import { Pause, Play, RotateCcw } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
+import { type Lang, translate, useLang, useT } from "../../lib/i18n";
 import { BODIES, BODY_ORDER, type SelectableId } from "./bodies";
+import { BODY_NAMES, bodyText, ORRERY } from "./messages";
 import { fitCanvas, observeSize, useInView, usePrefersReducedMotion } from "./motion";
 import { ELEMENTS, heliocentric, julianDate, type ViewId } from "./orbits";
 import { type Camera, createScene, drawScene, type Hit } from "./orreryScene";
@@ -9,18 +11,16 @@ import { PlanetPortrait } from "./PlanetPortrait";
 import { usePalette } from "./theme";
 
 const SPEEDS = [
-  { id: "day", label: "Day", days: 1 },
-  { id: "week", label: "Week", days: 7 },
-  { id: "month", label: "Month", days: 30.44 },
-  { id: "year", label: "Year", days: 365.25 },
+  { id: "day", days: 1 },
+  { id: "week", days: 7 },
+  { id: "month", days: 30.44 },
+  { id: "year", days: 365.25 },
 ] as const;
 
 type SpeedId = (typeof SPEEDS)[number]["id"];
 
-const VIEW_OPTIONS: Array<{ id: ViewId; label: string }> = [
-  { id: "inner", label: "Inner planets" },
-  { id: "whole", label: "Whole system" },
-];
+// Each view's label is the message of the same name.
+const VIEW_OPTIONS: ViewId[] = ["inner", "whole"];
 
 // The planetary elements are valid from 1800 to 2050; past that, time wraps back to today.
 const JD_MAX = julianDate(Date.UTC(2050, 0, 1));
@@ -36,10 +36,10 @@ function formatJd(jd: number): string {
   return dateFormat.format(new Date((jd - 2440587.5) * 86_400_000));
 }
 
-function distanceText(id: SelectableId, jd: number): string {
-  if (id === "sun") return "At the centre, holding everything else in orbit.";
+function distanceText(id: SelectableId, jd: number, lang: Lang = "en"): string {
+  if (id === "sun") return translate(ORRERY, lang, "sunCentre");
   const r = heliocentric(ELEMENTS[id], jd).r;
-  return `${r.toFixed(2)} au from the Sun on this date.`;
+  return translate(ORRERY, lang, "distance", { r: r.toFixed(2) });
 }
 
 export function Orrery() {
@@ -51,6 +51,8 @@ export function Orrery() {
   const tipRef = useRef<HTMLDivElement>(null);
   const inView = useInView(wrapRef);
   const pal = usePalette();
+  const lang = useLang();
+  const t = useT(ORRERY);
 
   const [playing, setPlaying] = useState(!reduced);
   const [speed, setSpeed] = useState<SpeedId>("month");
@@ -70,6 +72,7 @@ export function Orrery() {
     hovered,
     reduced,
     pal,
+    lang,
   });
 
   useEffect(() => {
@@ -81,7 +84,8 @@ export function Orrery() {
     s.hovered = hovered;
     s.reduced = reduced;
     s.pal = pal;
-  }, [playing, speed, view, selected, hovered, reduced, pal]);
+    s.lang = lang;
+  }, [playing, speed, view, selected, hovered, reduced, pal, lang]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -191,11 +195,12 @@ export function Orrery() {
         pal: s.pal,
         selected: s.selected,
         hovered: s.hovered,
+        names: BODY_NAMES[s.lang],
       });
 
       const date = formatJd(s.jd);
       if (dateRef.current && dateRef.current.textContent !== date) dateRef.current.textContent = date;
-      const dist = s.selected ? distanceText(s.selected, s.jd) : "";
+      const dist = s.selected ? distanceText(s.selected, s.jd, s.lang) : "";
       if (distRef.current && distRef.current.textContent !== dist) distRef.current.textContent = dist;
       const tip = tipRef.current;
       const h = s.hovered ? hits.find((x) => x.id === s.hovered) : undefined;
@@ -228,14 +233,15 @@ export function Orrery() {
       canvas.removeEventListener("pointercancel", onUp);
       canvas.removeEventListener("pointerleave", onLeave);
     };
-    // `pal` is read through the ref every frame; it is listed so an off-screen still frame redraws too.
-  }, [inView, pal]);
+    // `pal` and `lang` are read through the ref every frame; they are listed so an off-screen still
+    // frame redraws too.
+  }, [inView, pal, lang]);
 
   const resetToToday = () => {
     sim.current.jd = julianDate(Date.now());
   };
 
-  const info = BODIES[selected];
+  const info = bodyText(selected, lang);
 
   return (
     <div ref={wrapRef} className="flex flex-col gap-5">
@@ -243,24 +249,24 @@ export function Orrery() {
         <canvas
           ref={canvasRef}
           role="img"
-          aria-label="An animated view of the Sun, the eight planets, the asteroid belt and the asteroid (7) Iris on their orbits, at their approximate positions for the date shown. Drag to turn the view."
+          aria-label={t("canvas")}
           className="block h-[clamp(18rem,50vw,36rem)] w-full cursor-grab touch-pan-y select-none"
         />
         <div className="pointer-events-none absolute left-1 top-0 flex flex-col gap-1">
-          <span className="kicker">The solar system on</span>
+          <span className="kicker">{t("on")}</span>
           <span className="font-display text-[1.9rem] leading-none text-text" ref={dateRef} aria-live="off">
             {formatJd(startJd)}
           </span>
         </div>
         <p className="pointer-events-none absolute right-1 top-0 hidden max-w-[13rem] text-right text-xs text-faint sm:block">
-          Positions from JPL orbital elements. Distances compressed, sizes not to scale. Drag to turn.
+          {t("note")}
         </p>
         <div
           ref={tipRef}
           aria-hidden="true"
           className="glass pointer-events-none absolute left-0 top-0 rounded-full px-3 py-1 text-xs font-medium text-text opacity-0 transition-opacity"
         >
-          {hovered ? `${BODIES[hovered].name} · click for details` : ""}
+          {hovered ? t("tip", { name: bodyText(hovered, lang).name }) : ""}
         </div>
       </div>
 
@@ -269,35 +275,35 @@ export function Orrery() {
           type="button"
           className="btn btn-secondary btn-sm btn-icon"
           onClick={() => setPlaying((p) => !p)}
-          aria-label={playing ? "Pause the planets" : "Play the planets"}
+          aria-label={playing ? t("pause") : t("play")}
           aria-pressed={playing}
         >
           {playing ? <Pause size={15} aria-hidden /> : <Play size={15} aria-hidden />}
         </button>
         <div className="flex items-center gap-2">
-          <div className="segmented" role="group" aria-label="Time that passes each second">
+          <div className="segmented" role="group" aria-label={t("speeds")}>
             {SPEEDS.map((o) => (
               <button key={o.id} type="button" aria-pressed={speed === o.id} onClick={() => setSpeed(o.id)}>
-                {o.label}
+                {t(o.id)}
               </button>
             ))}
           </div>
-          <span className="text-xs text-faint">per second</span>
+          <span className="text-xs text-faint">{t("perSecond")}</span>
         </div>
         <button type="button" className="btn btn-ghost btn-sm" onClick={resetToToday}>
-          <RotateCcw size={14} aria-hidden /> Today
+          <RotateCcw size={14} aria-hidden /> {t("today")}
         </button>
-        <div className="segmented sm:ms-auto" role="group" aria-label="Zoom">
+        <div className="segmented sm:ms-auto" role="group" aria-label={t("zoom")}>
           {VIEW_OPTIONS.map((o) => (
-            <button key={o.id} type="button" aria-pressed={view === o.id} onClick={() => setView(o.id)}>
-              {o.label}
+            <button key={o} type="button" aria-pressed={view === o} onClick={() => setView(o)}>
+              {t(o)}
             </button>
           ))}
         </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,21rem)] md:items-start">
-        <div role="group" aria-label="Pick a body to read about" className="flex flex-wrap content-start gap-2">
+        <div role="group" aria-label={t("pick")} className="flex flex-wrap content-start gap-2">
           {(["sun", ...BODY_ORDER] as SelectableId[]).map((id) => (
             <button
               key={id}
@@ -307,7 +313,7 @@ export function Orrery() {
               onClick={() => setSelected(id)}
             >
               <span aria-hidden="true" className="swatch" style={{ background: BODIES[id].color }} />
-              {BODIES[id].name}
+              {bodyText(id, lang).name}
             </button>
           ))}
         </div>
@@ -317,7 +323,7 @@ export function Orrery() {
             <p className="font-display text-2xl leading-tight text-text">{info.name}</p>
             <p className="mt-1 text-sm text-muted">{info.fact}</p>
             <p className="mt-2 text-xs text-faint">
-              {info.year ? <>One orbit: {info.year}. </> : null}
+              {info.year ? t("oneOrbit", { year: info.year }) : null}
               <span ref={distRef} />
             </p>
           </div>

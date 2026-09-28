@@ -12,56 +12,51 @@ import { type Stat, StatRow } from "../components/space/Stats";
 import { BlinkPreview } from "../features/discover/BlinkPreview";
 import { AtlasTeaser } from "../features/objects/AtlasTeaser";
 import { getJson } from "../lib/api";
+import { type Lang, useLang, useT } from "../lib/i18n";
 import { caseLink, casesQuery } from "../lib/queries";
+import { LANDING } from "./landing.messages";
+
+type T = (key: keyof typeof LANDING.en) => string;
 
 const EXAMPLES = [
-  { label: "Andromeda Galaxy", to: "/explore?q=M31" },
-  { label: "North Ecliptic Pole", to: `/explore?q=${encodeURIComponent("270.0 66.56")}` },
-  { label: "Asteroid (7) Iris", to: "/discover" },
-];
+  { label: "exAndromeda", to: "/explore?q=M31" },
+  { label: "exPole", to: `/explore?q=${encodeURIComponent("270.0 66.56")}` },
+  { label: "exIris", to: "/discover" },
+] as const;
 
 const QUESTIONS = [
-  {
-    n: "01",
-    title: "Where?",
-    text: "Type a name like M31 or paste coordinates. The explorer turns it into a point on the sky and shows which constellation it sits in.",
-    Figure: WhereFigure,
-    wash: "wash-violet",
-  },
-  {
-    n: "02",
-    title: "When?",
-    text: "Every SPHEREx image that covers that point, on one timeline. They bunch into survey passes about six months apart.",
-    Figure: WhenFigure,
-    wash: "wash-gold",
-  },
-  {
-    n: "03",
-    title: "What changed?",
-    text: "Blink between visits, compare them side by side, or subtract one from another. Moving asteroids and brightness changes stand out.",
-    Figure: ChangeFigure,
-    wash: "wash-ember",
-  },
-];
+  { n: "01", title: "whereTitle", text: "whereText", Figure: WhereFigure, wash: "wash-violet" },
+  { n: "02", title: "whenTitle", text: "whenText", Figure: WhenFigure, wash: "wash-gold" },
+  { n: "03", title: "changeTitle", text: "changeText", Figure: ChangeFigure, wash: "wash-ember" },
+] as const;
 
-const STATS: Stat[] = [
-  { value: 102, label: "spectral channels", note: "17 on each of six detectors" },
-  { value: 4, label: "maps of the whole sky", note: "over the two-year survey" },
-  { value: 98, suffix: "min", label: "per orbit of Earth", note: "pole to pole, sun-synchronous" },
-  {
-    value: 1.45,
-    decimals: 2,
-    suffix: "million",
-    label: "images public so far",
-    note: "QR2 + QR3 at IRSA, September 2026",
-  },
-];
+const SURVEY_FACTS = [
+  ["factOrbit", "factOrbitLabel"],
+  ["factSweep", "factSweepLabel"],
+  ["factFields", "factFieldsLabel"],
+] as const;
+
+function stats(t: T, lang: Lang): Stat[] {
+  return [
+    { value: 102, label: t("statChannels"), note: t("statChannelsNote") },
+    { value: 4, label: t("statMaps"), note: t("statMapsNote") },
+    { value: 98, suffix: t("statMinutes"), label: t("statOrbit"), note: t("statOrbitNote") },
+    {
+      // Bangla counts large numbers in lakh: 1.45 million is 14.5 lakh.
+      ...(lang === "bn" ? { value: 14.5, decimals: 1 } : { value: 1.45, decimals: 2 }),
+      suffix: t("statMillion"),
+      label: t("statImages"),
+      note: t("statImagesNote"),
+    },
+  ];
+}
 
 const IRIS_CASE = "iris-2025-12";
 
 function SkySearch({ id }: { id: string }) {
   const navigate = useNavigate();
   const [q, setQ] = useState("");
+  const t = useT(LANDING);
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
@@ -76,19 +71,19 @@ function SkySearch({ id }: { id: string }) {
       className="glass flex flex-col gap-2 rounded-[28px] p-2 sm:flex-row sm:rounded-full"
     >
       <label htmlFor={id} className="visually-hidden">
-        Object name or coordinates
+        {t("searchLabel")}
       </label>
       <input
         id={id}
         className="field border-transparent bg-transparent shadow-none hover:border-transparent sm:flex-1"
-        placeholder="Try M31, Orion Nebula or 10.68 41.27"
+        placeholder={t("searchPlaceholder")}
         value={q}
         onChange={(e) => setQ(e.target.value)}
         autoComplete="off"
         spellCheck={false}
       />
       <button type="submit" className="btn btn-primary min-h-[2.75rem] px-6">
-        Explore <ArrowRight size={16} aria-hidden />
+        {t("searchButton")} <ArrowRight size={16} aria-hidden />
       </button>
     </form>
   );
@@ -157,6 +152,8 @@ function useIrisCase() {
 
 export function Landing() {
   const { iris, snapshot } = useIrisCase();
+  const t = useT(LANDING);
+  const lang = useLang();
   const rise = "motion-safe:animate-[rise_0.9s_cubic-bezier(0.16,1,0.3,1)_both]";
 
   return (
@@ -177,31 +174,33 @@ export function Landing() {
                 aria-hidden="true"
                 className="size-1.5 rounded-full bg-live shadow-[0_0_0_4px_rgb(22_115_71_/_0.15)]"
               />
-              Real infrared images · the public SPHEREx archive
+              {t("heroKicker")}
             </p>
             <h1 className={`display ${rise}`} style={enter(1)}>
-              Pick a point in the sky. <span className="shine">Watch it change.</span>
+              {t("heroBefore")}
+              <span className="shine">{t("heroShine")}</span>
             </h1>
             <p className={`prose-body text-lg ${rise}`} style={enter(2)}>
-              SPHEREx Explorer finds every public image NASA's SPHEREx telescope has taken of a place in the sky, lines
-              them up in time and lets you slide through <strong>102 colours of infrared light</strong>.
+              {t("heroLead")}
+              <strong>{t("heroLeadStrong")}</strong>
+              {t("heroLeadEnd")}
             </p>
             <div className={`flex flex-col gap-4 ${rise}`} style={enter(3)}>
               <SkySearch id="hero-search" />
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-sm text-faint">Try</span>
+                <span className="text-sm text-faint">{t("try")}</span>
                 {EXAMPLES.map((ex) => (
                   <Link key={ex.label} to={ex.to} className="chip">
-                    {ex.label}
+                    {t(ex.label)}
                   </Link>
                 ))}
               </div>
               <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
                 <Link to="/tour" className="link inline-flex items-center gap-1.5">
-                  <PlayCircle size={15} aria-hidden /> Take the 90-second tour
+                  <PlayCircle size={15} aria-hidden /> {t("tour")}
                 </Link>
                 <Link to="/play" className="link inline-flex items-center gap-1.5">
-                  <Crosshair size={15} aria-hidden /> Play Spot the mover
+                  <Crosshair size={15} aria-hidden /> {t("play")}
                 </Link>
               </div>
             </div>
@@ -216,14 +215,16 @@ export function Landing() {
       <section className="page py-20 sm:py-28">
         <SectionHead
           n="01"
-          kicker="How it works"
+          kicker={t("howKicker")}
           title={
             <>
-              Three questions, <span className="shine">in order</span>.
+              {t("howBefore")}
+              <span className="shine">{t("howShine")}</span>
+              {t("howAfter")}
             </>
           }
         >
-          Everything in the explorer hangs off the same three questions you would ask about any patch of sky.
+          {t("howText")}
         </SectionHead>
         <ol className="mt-14 grid gap-6 md:grid-cols-3">
           {QUESTIONS.map(({ n, title, text, Figure, wash }, i) => (
@@ -238,8 +239,8 @@ export function Landing() {
               </div>
               <div className="p-6">
                 <p className="num text-xs font-semibold text-accent">{n}</p>
-                <h3 className="mt-1 text-[2rem]">{title}</h3>
-                <p className="mt-2 text-muted">{text}</p>
+                <h3 className="mt-1 text-[2rem]">{t(title)}</h3>
+                <p className="mt-2 text-muted">{t(text)}</p>
               </div>
             </Reveal>
           ))}
@@ -261,33 +262,28 @@ export function Landing() {
           <div className="flex flex-col gap-10">
             <SectionHead
               n="02"
-              kicker="The survey"
+              kicker={t("surveyKicker")}
               title={
                 <>
-                  A fresh map of the whole sky, <span className="shine">twice a year</span>.
+                  {t("surveyBefore")}
+                  <span className="shine">{t("surveyShine")}</span>
+                  {t("surveyAfter")}
                 </>
               }
             >
-              <p>
-                SPHEREx circles Earth pole to pole every 98 minutes. Each pointing lies on a great circle through the
-                ecliptic poles, and as Earth travels around the Sun that circle turns about a degree a day. Six months
-                later it has swept the whole sky.
-              </p>
+              <p>{t("surveyP1")}</p>
               <p className="mt-3">
-                Over the two-year survey it maps the sky four times. The poles, where every circle crosses, are visited
-                again and again: that is where SPHEREx keeps its two <strong>deep fields</strong>.
+                {t("surveyP2")}
+                <strong>{t("surveyP2Strong")}</strong>
+                {t("surveyP2End")}
               </p>
             </SectionHead>
             <Reveal delay={1}>
               <dl className="grid grid-cols-3 gap-6 border-t border-rule pt-6">
-                {[
-                  ["98 min", "one orbit of Earth"],
-                  ["6 months", "to sweep the whole sky"],
-                  ["2", "deep fields, at the poles"],
-                ].map(([v, l]) => (
+                {SURVEY_FACTS.map(([v, l]) => (
                   <div key={l}>
-                    <dt className="font-display text-3xl text-text">{v}</dt>
-                    <dd className="mt-1 text-sm text-faint">{l}</dd>
+                    <dt className="font-display text-3xl text-text">{t(v)}</dt>
+                    <dd className="mt-1 text-sm text-faint">{t(l)}</dd>
                   </div>
                 ))}
               </dl>
@@ -300,15 +296,16 @@ export function Landing() {
       <section className="page py-20 sm:py-28">
         <SectionHead
           n="03"
-          kicker="The colours"
+          kicker={t("coloursKicker")}
           title={
             <>
-              Six detectors. <span className="shine">102 colours</span> of infrared.
+              {t("coloursBefore")}
+              <span className="shine">{t("coloursShine")}</span>
+              {t("coloursAfter")}
             </>
           }
         >
-          Your eyes stop at red. SPHEREx starts just past it, at 0.75 µm, and splits the light out to 5 µm into 102
-          narrow channels. Each band shows something different.
+          {t("coloursText")}
         </SectionHead>
         <Reveal className="mt-12">
           <SpectrumExplorer />
@@ -319,8 +316,8 @@ export function Landing() {
       <section className="relative isolate overflow-hidden py-20">
         <div aria-hidden="true" className="wash-band absolute inset-0 -z-10" />
         <div className="page">
-          <p className="kicker mb-12">By the numbers</p>
-          <StatRow stats={STATS} />
+          <p className="kicker mb-12">{t("numbersKicker")}</p>
+          <StatRow stats={stats(t, lang)} />
         </div>
       </section>
 
@@ -329,19 +326,20 @@ export function Landing() {
         <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
           <SectionHead
             n="04"
-            kicker="The atlas"
+            kicker={t("atlasKicker")}
             title={
               <>
-                Galaxies, nebulae and clusters, <span className="shine">ready to explore</span>.
+                {t("atlasBefore")}
+                <span className="shine">{t("atlasShine")}</span>
+                {t("atlasAfter")}
               </>
             }
           >
-            Each one opens with what the catalogues know about it, the same patch in other light, and every SPHEREx
-            image of it.
+            {t("atlasText")}
           </SectionHead>
           <Reveal delay={1}>
             <Link to="/explore" className="btn btn-secondary">
-              See the whole atlas <ArrowRight size={16} aria-hidden />
+              {t("atlasButton")} <ArrowRight size={16} aria-hidden />
             </Link>
           </Reveal>
         </div>
@@ -371,35 +369,34 @@ export function Landing() {
               )}
             </div>
             <figcaption className="text-xs text-faint">
-              {iris
-                ? "Two real SPHEREx frames, flipped with one shared brightness scale."
-                : "Illustration of the two visits. The real frames are on the Discover page."}
+              {iris ? t("irisFrames") : t("irisIllustration")}
             </figcaption>
           </figure>
           <div className="flex flex-col gap-6">
-            <SectionHead n="05" kicker="Discover" title="An asteroid, caught in the act.">
+            <SectionHead n="05" kicker={t("caseKicker")} title={t("caseTitle")}>
               <p>
-                On 2 December 2025 SPHEREx looked twice at the same patch of sky near the star 36 Sextantis, 9 hours and
-                42 minutes apart. In between, the asteroid <strong>(7) Iris</strong> moved against the background stars.
+                {t("caseP1")}
+                <strong>{t("caseP1Strong")}</strong>
+                {t("caseP1End")}
               </p>
-              <p className="mt-3">Blink the two frames and compare its position with the one JPL's orbit predicts.</p>
+              <p className="mt-3">{t("caseP2")}</p>
             </SectionHead>
             <div className="flex flex-wrap gap-3">
               <Link to="/discover" className="btn btn-primary">
-                Open the case <ArrowRight size={16} aria-hidden />
+                {t("openCase")} <ArrowRight size={16} aria-hidden />
               </Link>
               {iris ? (
                 <Link to={caseLink(iris, snapshot ? "snapshot" : undefined)} className="btn btn-secondary">
-                  See every frame
+                  {t("everyFrame")}
                 </Link>
               ) : null}
             </div>
             <p className="text-sm text-faint">
-              Heard about a hidden “Planet X”?{" "}
+              {t("planetX")}{" "}
               <Link to="/discover#planet-x" className="link">
-                Here is what SPHEREx can and cannot tell us
+                {t("planetXLink")}
               </Link>
-              .
+              {t("planetXEnd")}
             </p>
           </div>
         </Reveal>
@@ -415,7 +412,8 @@ export function Landing() {
         />
         <Reveal className="page flex flex-col items-center gap-8 text-center">
           <h2 className="display text-[clamp(2.6rem,1.8rem+3.4vw,4.8rem)]">
-            Where will you <span className="shine">look first?</span>
+            {t("lookBefore")}
+            <span className="shine">{t("lookShine")}</span>
           </h2>
           <div className="w-full max-w-xl text-left">
             <SkySearch id="footer-search" />

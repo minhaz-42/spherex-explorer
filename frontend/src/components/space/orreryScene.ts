@@ -144,6 +144,8 @@ export interface DrawOptions {
   pal: CanvasPalette;
   selected: SelectableId | null;
   hovered: SelectableId | null;
+  /** Label text for each body, in the page's language; the English names when left out. */
+  names?: Record<SelectableId, string>;
 }
 
 function sprite(scene: Scene, key: string): SphereSprite {
@@ -257,7 +259,10 @@ export function drawScene(
   for (const item of [...items].sort((a, b) => rank(a.id) - rank(b.id))) {
     const isSel = opt.selected === item.id;
     if (!shouldLabel(item.id, cam.mix, isSel, opt.hovered === item.id)) continue;
-    drawLabel(ctx, item, f.unit, isSel, width, height, placed, rank(item.id) < 2);
+    // Sentence case keeps "SPHEREx" spelled as the mission spells it.
+    const name = opt.names?.[item.id] ?? BODIES[item.id].name;
+    const text = item.id === "earth" ? `${name} · SPHEREx` : name;
+    drawLabel(ctx, item, text, f.unit, isSel, width, height, placed, rank(item.id) < 2);
   }
 
   return items.filter((i) => i.fade > 0.3).map(({ id, x, y, r }) => ({ id, x, y, r }));
@@ -310,6 +315,7 @@ const overlaps = (a: Box, b: Box) => a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 &
 function drawLabel(
   ctx: CanvasRenderingContext2D,
   item: { id: SelectableId; x: number; y: number; r: number; fade: number },
+  name: string,
   unit: number,
   selected: boolean,
   width: number,
@@ -317,10 +323,9 @@ function drawLabel(
   placed: Box[],
   force: boolean,
 ): void {
-  // Sentence case keeps "SPHEREx" spelled as the mission spells it.
-  const name = item.id === "earth" ? "Earth · SPHEREx" : BODIES[item.id].name;
   ctx.save();
-  ctx.font = `600 ${Math.round(11 * unit + 0.5)}px "Plus Jakarta Sans Variable", system-ui, sans-serif`;
+  // Bangla names fall through to the page's Bengali face.
+  ctx.font = `600 ${Math.round(11 * unit + 0.5)}px "Plus Jakarta Sans Variable", "Noto Sans Bengali Variable", system-ui, sans-serif`;
   const w = ctx.measureText(name).width;
   const h = 13 * unit;
   const { x, y, r } = item;

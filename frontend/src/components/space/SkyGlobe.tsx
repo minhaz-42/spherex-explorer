@@ -1,6 +1,8 @@
 import { Pause, Play } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
+import { translate, useLang, useT, type Vars } from "../../lib/i18n";
+import { GLOBE } from "./messages";
 import { fitCanvas, observeSize, useInView, usePrefersReducedMotion } from "./motion";
 import { PALETTES, useTheme } from "./theme";
 
@@ -64,6 +66,8 @@ export function SkyGlobe() {
   const mapRef = useRef<HTMLSpanElement>(null);
   const barRef = useRef<HTMLSpanElement>(null);
   const inView = useInView(wrapRef);
+  const lang = useLang();
+  const t = useT(GLOBE);
   const [playing, setPlaying] = useState(!reduced);
   const state = useRef<GlobeState>({ progress: reduced ? 1.6 : 0.05, lon0: 0.6, tilt: 0.42, playing });
 
@@ -82,6 +86,8 @@ export function SkyGlobe() {
     const ramp = BANDS[theme];
     const ink = (a: number) => `rgba(${pal.ink}, ${Math.min(1, a * pal.lineBoost)})`;
     const ember = (a: number) => `rgba(${pal.ember}, ${a})`;
+    // Canvas labels and live readouts, in the page's language.
+    const say = (key: keyof typeof GLOBE.en, vars?: Vars) => translate(GLOBE, lang, key, vars);
     const s = state.current;
     let size = fitCanvas(canvas);
     // The sphere is painted pixel by pixel into a buffer about 70% of its size on screen.
@@ -227,10 +233,11 @@ export function SkyGlobe() {
       // The deep fields at the ecliptic poles, brighter with every visit.
       const visits = Math.min(MAPS, s.progress);
       const pulse = reduced ? 0.5 : 0.5 + 0.5 * Math.sin(now / 500);
-      ctx.font = '600 11px "Plus Jakarta Sans Variable", system-ui, sans-serif';
+      // Bangla labels fall through to the page's Bengali face.
+      ctx.font = '600 11px "Plus Jakarta Sans Variable", "Noto Sans Bengali Variable", system-ui, sans-serif';
       for (const [lat, label] of [
-        [89.9, "North deep field"],
-        [-82, "South deep field"],
+        [89.9, say("north")],
+        [-82, say("south")],
       ] as const) {
         const p = toScreen(-1.4, lat * DEG, R, cx, cy);
         if (p.depth <= 0.05) continue;
@@ -271,10 +278,12 @@ export function SkyGlobe() {
 
       // The readouts sit outside React state so the numbers can change every frame.
       const mapNo = Math.min(MAPS, Math.floor(s.progress) + 1);
-      if (mapRef.current) mapRef.current.textContent = s.progress >= MAPS ? "All four maps" : `Map ${mapNo} of ${MAPS}`;
+      if (mapRef.current) {
+        mapRef.current.textContent = s.progress >= MAPS ? say("allMaps") : say("map", { n: mapNo, total: MAPS });
+      }
       if (barRef.current) barRef.current.style.width = `${Math.min(100, (s.progress / MAPS) * 100)}%`;
       if (readoutRef.current) {
-        let text = "Hover the globe to read coordinates";
+        let text = say("hover");
         if (hover) {
           const X = (hover.x - cx) / R;
           const Y = (cy - hover.y) / R;
@@ -286,7 +295,12 @@ export function SkyGlobe() {
             const lon = ((((Math.atan2(X, x1) + s.lon0) / DEG) % 360) + 360) % 360;
             const swept = lon % 180;
             const n = Math.min(MAPS, Math.floor(s.progress) + (swept < (s.progress % 1) * 180 ? 1 : 0));
-            text = `Ecliptic ${lon.toFixed(0)}°, ${lat >= 0 ? "+" : "−"}${Math.abs(lat).toFixed(0)}° · scanned ${n} of ${MAPS} times`;
+            text = say("readout", {
+              lon: lon.toFixed(0),
+              lat: `${lat >= 0 ? "+" : "−"}${Math.abs(lat).toFixed(0)}`,
+              n,
+              total: MAPS,
+            });
           }
         }
         if (readoutRef.current.textContent !== text) readoutRef.current.textContent = text;
@@ -352,14 +366,14 @@ export function SkyGlobe() {
       canvas.removeEventListener("pointercancel", onUp);
       canvas.removeEventListener("pointerleave", onLeave);
     };
-  }, [inView, reduced, theme]);
+  }, [inView, reduced, theme, lang]);
 
   return (
     <div ref={wrapRef} className="flex flex-col gap-4">
       <canvas
         ref={canvasRef}
         role="img"
-        aria-label="A globe of the sky filling in stripe by stripe as a scan circle sweeps around it, building up four complete maps. The two poles, marked, are the deep fields."
+        aria-label={t("canvas")}
         className="mx-auto block aspect-square w-full max-w-[30rem] cursor-grab touch-pan-y select-none active:cursor-grabbing"
       />
       <div className="flex flex-wrap items-center gap-3">
@@ -367,13 +381,13 @@ export function SkyGlobe() {
           type="button"
           className="btn btn-secondary btn-sm btn-icon"
           onClick={() => setPlaying((p) => !p)}
-          aria-label={playing ? "Pause the survey" : "Play the survey"}
+          aria-label={playing ? t("pause") : t("play")}
           aria-pressed={playing}
         >
           {playing ? <Pause size={15} aria-hidden /> : <Play size={15} aria-hidden />}
         </button>
         <span ref={mapRef} className="font-display text-2xl text-text">
-          Map 1 of 4
+          {t("map", { n: 1, total: MAPS })}
         </span>
         <span aria-hidden="true" className="relative h-1 min-w-24 flex-1 overflow-hidden rounded-full bg-sunk">
           <span
@@ -384,7 +398,7 @@ export function SkyGlobe() {
         </span>
       </div>
       <p ref={readoutRef} className="num text-xs text-faint" aria-live="off">
-        Hover the globe to read coordinates
+        {t("hover")}
       </p>
     </div>
   );
