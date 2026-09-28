@@ -173,8 +173,8 @@ frontend/                  Web app (Vite, React, TypeScript, Tailwind CSS)
   src/pages/               Landing, Explore, Discover, About
   src/features/            search, viewer, timeline, wavelength, known objects, discover
   src/lib/                 API client and helpers
-  src/components/space/    pencil-drawn solar system, sky globe, spectrum and sketches (landing page)
-  src/styles/index.css     design tokens (pencil-on-paper light theme) and base styles
+  src/components/space/    lit solar system, sky globe, spectrum and figures (landing page)
+  src/styles/index.css     design tokens (observatory-atlas light theme) and base styles
   tests/, e2e/             Vitest and Playwright tests
 data/cases.json            curated Discover cases (built by backend/scripts/build_cases.py)
 data/snapshot/             demo snapshot: recorded API answers for those cases

@@ -2,14 +2,13 @@ import { Pause, Play } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { fitCanvas, observeSize, useInView, usePrefersReducedMotion } from "./motion";
-import { graphite, seeded, sketchCircle, sketchPath } from "./sketch";
 
 /*
  * An illustration of how the SPHEREx all-sky survey fills in. Each pointing lies on a great circle
  * through the ecliptic poles; as Earth moves around the Sun the circle turns about a degree a day,
  * so the whole sky is covered about every six months and four times over the mission. The poles,
- * crossed by every circle, collect the most visits — that is where the two deep fields are.
- * Stripe shades stand for the six detector bands; the real pattern is finer than this.
+ * crossed by every circle, collect the most visits: that is where the two deep fields are. Stripe
+ * shades stand for the six detector bands; the real pattern is finer than this.
  */
 
 const BANDS: Array<[number, number, number]> = [
@@ -23,7 +22,6 @@ const BANDS: Array<[number, number, number]> = [
 
 const MAPS = 4;
 const SECONDS_PER_MAP = 11;
-const BUFFER = 150;
 const DEG = Math.PI / 180;
 
 interface GlobeState {
@@ -35,7 +33,7 @@ interface GlobeState {
   playing: boolean;
 }
 
-/** Sky point (ecliptic lon/lat, radians) to screen offsets in the unit disc, plus depth. */
+/** Sky point (ecliptic lon/lat, radians) to offsets in the unit disc (y up) plus depth. */
 function toView(lon: number, lat: number, s: GlobeState) {
   const x1 = Math.cos(lat) * Math.cos(lon - s.lon0);
   const y1 = Math.cos(lat) * Math.sin(lon - s.lon0);
@@ -69,6 +67,8 @@ export function SkyGlobe() {
     const animate = inView;
     const s = state.current;
     let size = fitCanvas(canvas);
+    // The sphere is painted pixel by pixel into a buffer about 70% of its size on screen.
+    const BUFFER = Math.round(Math.min(340, Math.max(180, Math.min(size.width, size.height) * 0.8 * size.dpr * 0.7)));
     const buffer = document.createElement("canvas");
     buffer.width = BUFFER;
     buffer.height = BUFFER;
@@ -86,7 +86,7 @@ export function SkyGlobe() {
     });
 
     const geometry = () => {
-      const R = Math.min(size.width, size.height) * 0.42;
+      const R = Math.min(size.width, size.height) * 0.4;
       return { R, cx: size.width / 2, cy: size.height / 2 };
     };
 
@@ -96,11 +96,12 @@ export function SkyGlobe() {
       const st = Math.sin(s.tilt);
       const full = Math.floor(s.progress);
       const partial = (s.progress - full) * 180;
+      const half = BUFFER / 2;
       for (let py = 0; py < BUFFER; py++) {
         for (let px = 0; px < BUFFER; px++) {
           const i = (py * BUFFER + px) * 4;
-          const X = (px + 0.5) / (BUFFER / 2) - 1;
-          const Y = 1 - (py + 0.5) / (BUFFER / 2);
+          const X = (px + 0.5) / half - 1;
+          const Y = 1 - (py + 0.5) / half;
           const rr = X * X + Y * Y;
           if (rr > 1) {
             data[i + 3] = 0;
@@ -113,106 +114,145 @@ export function SkyGlobe() {
           const lon = Math.atan2(X, x1) + s.lon0;
           const lonDeg = (((lon / DEG) % 360) + 360) % 360;
           const swept = lonDeg % 180;
-          const visits = full + (swept < partial ? 1 : 0);
-          const light = 0.72 + 0.28 * (Z * 0.7 + Y * 0.3);
-          // Coloured-pencil strokes: a diagonal texture in the buffer's pixel grid.
-          const stroke = (px + py) % 3 === 0 ? 1 : 0.55;
+          // Fractional coverage at the scan front keeps its edge smooth.
+          const visits = full + Math.min(1, Math.max(0, (partial - swept) / 1.5));
+          // Soft light from the upper left; the far side sinks to lavender, never grey.
+          const shade = Math.min(1, Math.max(0, 0.55 + 0.5 * (Z * 0.5 + Y * 0.35 - X * 0.3)));
+          const edge = Math.min(1, (1 - Math.sqrt(rr)) * half + 0.5);
+          let r = 222 + 31 * shade;
+          let g = 225 + 29 * shade;
+          let b = 246 + 9 * shade;
           if (visits > 0) {
-            const band = BANDS[Math.floor(swept / 5) % 6] ?? [53, 122, 214];
-            const a = Math.min(0.92, 0.3 + visits * 0.16) * stroke;
-            data[i] = band[0] * light;
-            data[i + 1] = band[1] * light;
-            data[i + 2] = band[2] * light;
-            data[i + 3] = a * 255;
-          } else {
-            // Unvisited sky: paper with graphite shading on the far side.
-            const shade = Math.max(0, 1 - light) * 1.8;
-            data[i] = 42;
-            data[i + 1] = 41;
-            data[i + 2] = 49;
-            data[i + 3] = shade * 110 * stroke;
+            // Blend into the next stripe over its last few tenths so boundaries don't stair-step.
+            const f = swept / 5;
+            const idx = Math.floor(f);
+            const w = Math.min(1, Math.max(0, (f - idx - 0.82) / 0.18));
+            const b0 = BANDS[idx % 6] ?? [53, 122, 214];
+            const b1 = BANDS[(idx + 1) % 6] ?? b0;
+            const cover = Math.min(1, visits);
+            const k = Math.min(0.95, 0.45 + visits * 0.14) * cover;
+            const lit = 0.84 + 0.16 * shade;
+            r = r * (1 - k) + (b0[0] * (1 - w) + b1[0] * w) * k * lit;
+            g = g * (1 - k) + (b0[1] * (1 - w) + b1[1] * w) * k * lit;
+            b = b * (1 - k) + (b0[2] * (1 - w) + b1[2] * w) * k * lit;
           }
+          data[i] = r;
+          data[i + 1] = g;
+          data[i + 2] = b;
+          data[i + 3] = 255 * edge;
         }
       }
       bctx.putImageData(image, 0, 0);
     };
 
+    const toScreen = (lon: number, lat: number, R: number, cx: number, cy: number) => {
+      const v = toView(lon, lat, s);
+      return { x: cx + v.x * R, y: cy - v.y * R, depth: v.depth };
+    };
+
+    /** Strokes the visible (front) part of a sampled curve. */
+    const front = (pts: Array<{ x: number; y: number; depth: number }>) => {
+      ctx.beginPath();
+      let pen = false;
+      for (const p of pts) {
+        if (p.depth > 0) {
+          if (pen) ctx.lineTo(p.x, p.y);
+          else ctx.moveTo(p.x, p.y);
+          pen = true;
+        } else pen = false;
+      }
+      ctx.stroke();
+    };
+
     const draw = (now: number) => {
       const { R, cx, cy } = geometry();
-      const boil = reduced ? 0 : Math.floor(now / 200);
       ctx.setTransform(size.dpr, 0, 0, size.dpr, 0, 0);
       ctx.clearRect(0, 0, size.width, size.height);
+
+      // A violet glow around the sphere.
+      // The glow ends inside the canvas (half-width 1.25 R) so its edge never shows as a square.
+      const glow = ctx.createRadialGradient(cx, cy, R * 0.95, cx, cy, R * 1.22);
+      glow.addColorStop(0, "rgba(91, 63, 208, 0.18)");
+      glow.addColorStop(1, "rgba(91, 63, 208, 0)");
+      ctx.fillStyle = glow;
+      ctx.fillRect(0, 0, size.width, size.height);
+
       paint();
       ctx.imageSmoothingEnabled = true;
       ctx.drawImage(buffer, cx - R, cy - R, R * 2, R * 2);
 
-      const rand = seeded(boil);
-      const toScreen = (lon: number, lat: number) => {
-        const v = toView(lon, lat, s);
-        return { x: cx + v.x * R, y: cy - v.y * R, depth: v.depth };
-      };
-      const arc = (pts: Array<{ x: number; y: number; depth: number }>, color: string, width: number) => {
-        let run: Array<{ x: number; y: number }> = [];
-        for (const p of pts) {
-          if (p.depth > 0) run.push(p);
-          else if (run.length) {
-            sketchPath(ctx, run, rand, { amount: 0.4, color, width });
-            run = [];
-          }
-        }
-        if (run.length) sketchPath(ctx, run, rand, { amount: 0.4, color, width });
-      };
-
       // Graticule of ecliptic latitude and longitude.
+      ctx.lineWidth = 0.8;
       for (let lat = -60; lat <= 60; lat += 30) {
-        arc(
-          Array.from({ length: 73 }, (_, k) => toScreen(k * 5 * DEG, lat * DEG)),
-          graphite(lat === 0 ? 0.45 : 0.2),
-          lat === 0 ? 1.1 : 0.8,
-        );
+        ctx.strokeStyle = lat === 0 ? "rgba(11, 20, 55, 0.4)" : "rgba(11, 20, 55, 0.14)";
+        front(Array.from({ length: 97 }, (_, k) => toScreen(k * 3.75 * DEG, lat * DEG, R, cx, cy)));
       }
+      ctx.strokeStyle = "rgba(11, 20, 55, 0.12)";
       for (let lon = 0; lon < 360; lon += 30) {
-        arc(
-          Array.from({ length: 37 }, (_, k) => toScreen(lon * DEG, (-90 + k * 5) * DEG)),
-          graphite(0.18),
-          0.8,
-        );
+        front(Array.from({ length: 49 }, (_, k) => toScreen(lon * DEG, (-90 + k * 3.75) * DEG, R, cx, cy)));
       }
 
-      // Today's scan circle, drawn in vermilion.
+      // Today's scan circle, glowing ember.
       const scanLon = (s.progress % 1) * 180 * DEG;
-      for (const off of [0, Math.PI]) {
-        arc(
-          Array.from({ length: 49 }, (_, k) => toScreen(scanLon + off, (-90 + k * 3.75) * DEG)),
-          "rgba(185, 61, 18, 0.9)",
-          1.8,
-        );
-      }
-
-      // The deep fields at the ecliptic poles: circled, with a note.
-      const visits = Math.min(MAPS, s.progress);
-      for (const [lat, label] of [
-        [89.9, "north deep field"],
-        [-82, "south deep field"],
+      for (const [width, alpha] of [
+        [6, 0.14],
+        [1.6, 0.95],
       ] as const) {
-        const p = toScreen(-1.4, lat * DEG);
-        if (p.depth <= 0.05) continue;
-        const r = 5 + visits * 1.6;
-        ctx.fillStyle = `rgba(185, 61, 18, ${0.25 + visits * 0.12})`;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, r * 0.55, 0, Math.PI * 2);
-        ctx.fill();
-        sketchCircle(ctx, p.x, p.y, r, rand, { color: "rgba(185, 61, 18, 0.9)", width: 1.3 });
-        ctx.font = '600 17px "Caveat Variable", Caveat, cursive';
-        ctx.fillStyle = graphite(0.9);
-        ctx.fillText(label, p.x + r + 6, p.y + (lat > 0 ? -2 : 12));
+        ctx.lineWidth = width;
+        ctx.strokeStyle = `rgba(181, 56, 27, ${alpha})`;
+        for (const off of [0, Math.PI]) {
+          front(Array.from({ length: 61 }, (_, k) => toScreen(scanLon + off, (-90 + k * 3) * DEG, R, cx, cy)));
+        }
       }
 
-      sketchCircle(ctx, cx, cy, R, rand, { color: graphite(0.85), width: 1.5, wobble: 0.02 });
+      // The deep fields at the ecliptic poles, brighter with every visit.
+      const visits = Math.min(MAPS, s.progress);
+      const pulse = reduced ? 0.5 : 0.5 + 0.5 * Math.sin(now / 500);
+      ctx.font = '500 10px "IBM Plex Mono", ui-monospace, monospace';
+      for (const [lat, label] of [
+        [89.9, "NORTH DEEP FIELD"],
+        [-82, "SOUTH DEEP FIELD"],
+      ] as const) {
+        const p = toScreen(-1.4, lat * DEG, R, cx, cy);
+        if (p.depth <= 0.05) continue;
+        const r = 3 + visits * 0.8;
+        const halo = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r * 4);
+        halo.addColorStop(0, `rgba(255, 140, 90, ${0.55 + visits * 0.08})`);
+        halo.addColorStop(1, "rgba(255, 140, 90, 0)");
+        ctx.fillStyle = halo;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, r * 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "rgb(181, 56, 27)";
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, r * 0.7, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = `rgba(181, 56, 27, ${0.35 + 0.4 * pulse})`;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, r * (1.8 + pulse), 0, Math.PI * 2);
+        ctx.stroke();
+        // A pale halo keeps the label legible over the stripes.
+        const lx = p.x + r * 2.6 + 6;
+        const ly = p.y + (lat > 0 ? -4 : 12);
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.85)";
+        ctx.lineWidth = 3;
+        ctx.lineJoin = "round";
+        ctx.strokeText(label, lx, ly);
+        ctx.fillStyle = "rgba(11, 20, 55, 0.8)";
+        ctx.fillText(label, lx, ly);
+      }
+
+      // Crisp limb.
+      ctx.strokeStyle = "rgba(11, 20, 55, 0.45)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(cx, cy, R, 0, Math.PI * 2);
+      ctx.stroke();
 
       // The readouts sit outside React state so the numbers can change every frame.
       const mapNo = Math.min(MAPS, Math.floor(s.progress) + 1);
-      if (mapRef.current) mapRef.current.textContent = s.progress >= MAPS ? "4 maps done" : `Map ${mapNo} of ${MAPS}`;
+      if (mapRef.current) mapRef.current.textContent = s.progress >= MAPS ? "All four maps" : `Map ${mapNo} of ${MAPS}`;
       if (barRef.current) barRef.current.style.width = `${Math.min(100, (s.progress / MAPS) * 100)}%`;
       if (readoutRef.current) {
         let text = "Hover the globe to read coordinates";
@@ -266,14 +306,14 @@ export function SkyGlobe() {
         s.tilt = Math.max(-1.2, Math.min(1.2, s.tilt + (p.y - drag.y) * 0.01));
         drag = p;
       }
-      if (reduced) draw(performance.now());
+      if (!animate || reduced) draw(performance.now());
     };
     const onUp = () => {
       drag = null;
     };
     const onLeave = () => {
       hover = null;
-      if (reduced) draw(performance.now());
+      if (!animate || reduced) draw(performance.now());
     };
     canvas.addEventListener("pointerdown", onDown);
     canvas.addEventListener("pointermove", onMove);
@@ -296,11 +336,11 @@ export function SkyGlobe() {
   }, [inView, reduced]);
 
   return (
-    <div ref={wrapRef} className="flex flex-col gap-3">
+    <div ref={wrapRef} className="flex flex-col gap-4">
       <canvas
         ref={canvasRef}
         role="img"
-        aria-label="A pencil globe of the sky, coloured in stripe by stripe as a scan line sweeps around it, building up four complete maps. The two poles, circled, are the deep fields."
+        aria-label="A globe of the sky filling in stripe by stripe as a scan circle sweeps around it, building up four complete maps. The two poles, marked, are the deep fields."
         className="mx-auto block aspect-square w-full max-w-[30rem] cursor-grab touch-pan-y select-none active:cursor-grabbing"
       />
       <div className="flex flex-wrap items-center gap-3">
@@ -311,16 +351,17 @@ export function SkyGlobe() {
           aria-label={playing ? "Pause the survey" : "Play the survey"}
           aria-pressed={playing}
         >
-          {playing ? <Pause size={16} aria-hidden /> : <Play size={16} aria-hidden />}
+          {playing ? <Pause size={15} aria-hidden /> : <Play size={15} aria-hidden />}
         </button>
-        <span ref={mapRef} className="hand text-2xl text-text">
+        <span ref={mapRef} className="font-display text-2xl text-text">
           Map 1 of 4
         </span>
-        <span
-          aria-hidden="true"
-          className="relative h-2 min-w-24 flex-1 overflow-hidden rounded-full border border-text/70"
-        >
-          <span ref={barRef} className="absolute inset-y-0 left-0 bg-accent/70" style={{ width: "0%" }} />
+        <span aria-hidden="true" className="relative h-1 min-w-24 flex-1 overflow-hidden rounded-full bg-sunk">
+          <span
+            ref={barRef}
+            className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-gold to-accent"
+            style={{ width: "0%" }}
+          />
         </span>
       </div>
       <p ref={readoutRef} className="num text-xs text-faint" aria-live="off">
