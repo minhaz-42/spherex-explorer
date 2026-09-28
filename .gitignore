@@ -36,3 +36,6 @@ frontend/playwright-report/
 Thumbs.db
 .idea/
 .vscode/
+
+# Small real-data test fixtures are the exception
+!backend/tests/fixtures/*.fits
