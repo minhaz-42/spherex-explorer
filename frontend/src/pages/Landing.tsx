@@ -25,21 +25,21 @@ const QUESTIONS = [
     title: "Where?",
     text: "Type a name like M31 or paste coordinates. The explorer turns it into a point on the sky and shows which constellation it sits in.",
     Figure: WhereFigure,
-    wash: "radial-gradient(120% 90% at 35% 25%, #eef0ff 0%, #f6f6fd 55%, #ffffff 100%)",
+    wash: "wash-violet",
   },
   {
     n: "02",
     title: "When?",
     text: "Every SPHEREx image that covers that point, on one timeline. They bunch into survey passes about six months apart.",
     Figure: WhenFigure,
-    wash: "radial-gradient(120% 90% at 50% 20%, #fff4de 0%, #fbf8f1 55%, #ffffff 100%)",
+    wash: "wash-gold",
   },
   {
     n: "03",
     title: "What changed?",
     text: "Blink between visits, compare them side by side, or subtract one from another. Moving asteroids and brightness changes stand out.",
     Figure: ChangeFigure,
-    wash: "radial-gradient(120% 90% at 65% 25%, #ffece6 0%, #fbf5f4 55%, #ffffff 100%)",
+    wash: "wash-ember",
   },
 ];
 
@@ -224,7 +224,7 @@ export function Landing() {
               delay={i}
               className="card group overflow-hidden transition-[translate,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-[var(--shadow-lg)]"
             >
-              <div className="border-b border-rule px-6 pb-2 pt-5" style={{ background: wash }}>
+              <div className={`border-b border-rule px-6 pb-2 pt-5 ${wash}`}>
                 <Figure />
               </div>
               <div className="p-6">
@@ -308,11 +308,7 @@ export function Landing() {
 
       {/* By the numbers. */}
       <section className="relative isolate overflow-hidden py-20">
-        <div
-          aria-hidden="true"
-          className="absolute inset-0 -z-10"
-          style={{ background: "linear-gradient(115deg, #ffffff 0%, #f3f0ff 45%, #fff4ea 100%)" }}
-        />
+        <div aria-hidden="true" className="wash-band absolute inset-0 -z-10" />
         <div className="page">
           <p className="kicker mb-12">By the numbers</p>
           <StatRow stats={STATS} />

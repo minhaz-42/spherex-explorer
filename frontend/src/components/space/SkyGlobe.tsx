@@ -2,6 +2,7 @@ import { Pause, Play } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { fitCanvas, observeSize, useInView, usePrefersReducedMotion } from "./motion";
+import { PALETTES, useTheme } from "./theme";
 
 /*
  * An illustration of how the SPHEREx all-sky survey fills in. Each pointing lies on a great circle
@@ -11,14 +12,25 @@ import { fitCanvas, observeSize, useInView, usePrefersReducedMotion } from "./mo
  * shades stand for the six detector bands; the real pattern is finer than this.
  */
 
-const BANDS: Array<[number, number, number]> = [
-  [111, 163, 234],
-  [79, 142, 226],
-  [53, 122, 214],
-  [36, 99, 187],
-  [26, 79, 152],
-  [17, 62, 122],
-];
+// The band ramps of both themes (see --band-1…6 in index.css), as RGB.
+const BANDS: Record<"light" | "dark", Array<[number, number, number]>> = {
+  light: [
+    [111, 163, 234],
+    [79, 142, 226],
+    [53, 122, 214],
+    [36, 99, 187],
+    [26, 79, 152],
+    [17, 62, 122],
+  ],
+  dark: [
+    [207, 226, 252],
+    [165, 199, 246],
+    [126, 173, 238],
+    [94, 147, 228],
+    [69, 124, 216],
+    [51, 103, 198],
+  ],
+};
 
 const MAPS = 4;
 const SECONDS_PER_MAP = 11;
@@ -45,6 +57,7 @@ function toView(lon: number, lat: number, s: GlobeState) {
 
 export function SkyGlobe() {
   const reduced = usePrefersReducedMotion();
+  const theme = useTheme();
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const readoutRef = useRef<HTMLParagraphElement>(null);
@@ -65,6 +78,10 @@ export function SkyGlobe() {
 
     // Off screen we draw one still frame; the survey only runs while the globe is visible.
     const animate = inView;
+    const pal = PALETTES[theme];
+    const ramp = BANDS[theme];
+    const ink = (a: number) => `rgba(${pal.ink}, ${Math.min(1, a * pal.lineBoost)})`;
+    const ember = (a: number) => `rgba(${pal.ember}, ${a})`;
     const s = state.current;
     let size = fitCanvas(canvas);
     // The sphere is painted pixel by pixel into a buffer about 70% of its size on screen.
@@ -119,16 +136,18 @@ export function SkyGlobe() {
           // Soft light from the upper left; the far side sinks to lavender, never grey.
           const shade = Math.min(1, Math.max(0, 0.55 + 0.5 * (Z * 0.5 + Y * 0.35 - X * 0.3)));
           const edge = Math.min(1, (1 - Math.sqrt(rr)) * half + 0.5);
-          let r = 222 + 31 * shade;
-          let g = 225 + 29 * shade;
-          let b = 246 + 9 * shade;
+          const [sr, sg, sb] = pal.globeShade;
+          const [lr, lg, lb] = pal.globeLit;
+          let r = sr + (lr - sr) * shade;
+          let g = sg + (lg - sg) * shade;
+          let b = sb + (lb - sb) * shade;
           if (visits > 0) {
             // Blend into the next stripe over its last few tenths so boundaries don't stair-step.
             const f = swept / 5;
             const idx = Math.floor(f);
             const w = Math.min(1, Math.max(0, (f - idx - 0.82) / 0.18));
-            const b0 = BANDS[idx % 6] ?? [53, 122, 214];
-            const b1 = BANDS[(idx + 1) % 6] ?? b0;
+            const b0 = ramp[idx % 6] ?? [53, 122, 214];
+            const b1 = ramp[(idx + 1) % 6] ?? b0;
             const cover = Math.min(1, visits);
             const k = Math.min(0.95, 0.45 + visits * 0.14) * cover;
             const lit = 0.84 + 0.16 * shade;
@@ -172,8 +191,8 @@ export function SkyGlobe() {
       // A violet glow around the sphere.
       // The glow ends inside the canvas (half-width 1.25 R) so its edge never shows as a square.
       const glow = ctx.createRadialGradient(cx, cy, R * 0.95, cx, cy, R * 1.22);
-      glow.addColorStop(0, "rgba(91, 63, 208, 0.18)");
-      glow.addColorStop(1, "rgba(91, 63, 208, 0)");
+      glow.addColorStop(0, `rgba(${pal.violet}, 0.2)`);
+      glow.addColorStop(1, `rgba(${pal.violet}, 0)`);
       ctx.fillStyle = glow;
       ctx.fillRect(0, 0, size.width, size.height);
 
@@ -184,10 +203,10 @@ export function SkyGlobe() {
       // Graticule of ecliptic latitude and longitude.
       ctx.lineWidth = 0.8;
       for (let lat = -60; lat <= 60; lat += 30) {
-        ctx.strokeStyle = lat === 0 ? "rgba(11, 20, 55, 0.4)" : "rgba(11, 20, 55, 0.14)";
+        ctx.strokeStyle = lat === 0 ? ink(0.4) : ink(0.14);
         front(Array.from({ length: 97 }, (_, k) => toScreen(k * 3.75 * DEG, lat * DEG, R, cx, cy)));
       }
-      ctx.strokeStyle = "rgba(11, 20, 55, 0.12)";
+      ctx.strokeStyle = ink(0.12);
       for (let lon = 0; lon < 360; lon += 30) {
         front(Array.from({ length: 49 }, (_, k) => toScreen(lon * DEG, (-90 + k * 3.75) * DEG, R, cx, cy)));
       }
@@ -199,7 +218,7 @@ export function SkyGlobe() {
         [1.6, 0.95],
       ] as const) {
         ctx.lineWidth = width;
-        ctx.strokeStyle = `rgba(181, 56, 27, ${alpha})`;
+        ctx.strokeStyle = ember(alpha);
         for (const off of [0, Math.PI]) {
           front(Array.from({ length: 61 }, (_, k) => toScreen(scanLon + off, (-90 + k * 3) * DEG, R, cx, cy)));
         }
@@ -223,11 +242,11 @@ export function SkyGlobe() {
         ctx.beginPath();
         ctx.arc(p.x, p.y, r * 4, 0, Math.PI * 2);
         ctx.fill();
-        ctx.fillStyle = "rgb(181, 56, 27)";
+        ctx.fillStyle = ember(1);
         ctx.beginPath();
         ctx.arc(p.x, p.y, r * 0.7, 0, Math.PI * 2);
         ctx.fill();
-        ctx.strokeStyle = `rgba(181, 56, 27, ${0.35 + 0.4 * pulse})`;
+        ctx.strokeStyle = ember(0.35 + 0.4 * pulse);
         ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.arc(p.x, p.y, r * (1.8 + pulse), 0, Math.PI * 2);
@@ -235,16 +254,16 @@ export function SkyGlobe() {
         // A pale halo keeps the label legible over the stripes.
         const lx = p.x + r * 2.6 + 6;
         const ly = p.y + (lat > 0 ? -4 : 12);
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.85)";
+        ctx.strokeStyle = `rgba(${pal.halo}, 0.85)`;
         ctx.lineWidth = 3;
         ctx.lineJoin = "round";
         ctx.strokeText(label, lx, ly);
-        ctx.fillStyle = "rgba(11, 20, 55, 0.8)";
+        ctx.fillStyle = ink(0.8);
         ctx.fillText(label, lx, ly);
       }
 
       // Crisp limb.
-      ctx.strokeStyle = "rgba(11, 20, 55, 0.45)";
+      ctx.strokeStyle = ink(0.45);
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.arc(cx, cy, R, 0, Math.PI * 2);
@@ -333,7 +352,7 @@ export function SkyGlobe() {
       canvas.removeEventListener("pointercancel", onUp);
       canvas.removeEventListener("pointerleave", onLeave);
     };
-  }, [inView, reduced]);
+  }, [inView, reduced, theme]);
 
   return (
     <div ref={wrapRef} className="flex flex-col gap-4">

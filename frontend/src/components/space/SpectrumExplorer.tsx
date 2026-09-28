@@ -108,7 +108,8 @@ export function SpectrumExplorer() {
                     x={bx + bw / 2}
                     y={BAR_TOP + BAR_H / 2 + 8}
                     textAnchor="middle"
-                    className={`font-display text-[24px] ${b.n <= 2 ? "fill-text" : "fill-white"}`}
+                    fill={`var(--band-ink-${b.n})`}
+                    className="font-display text-[24px]"
                   >
                     {b.n}
                   </text>

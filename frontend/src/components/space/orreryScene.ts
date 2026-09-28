@@ -8,6 +8,7 @@ import { BODIES, BODY_ORDER, irisOutline, type SelectableId } from "./bodies";
 import { clamp, seeded } from "./noise";
 import { displayRadius, ELEMENTS, heliocentric, type HelioPosition, orbitPath, periodDays, VIEWS } from "./orbits";
 import { cross, eclipticFromEquatorial, normalize, primeMeridian, SphereSprite, type Vec3 } from "./sphere";
+import { type CanvasPalette, PALETTES } from "./theme";
 import { texture } from "./textures";
 
 export interface Camera {
@@ -45,11 +46,12 @@ export interface Scene {
 
 const DEG = Math.PI / 180;
 const EARTH_RATE = 0.98560028; // degrees per day
-const INK = "11, 20, 55";
-const EMBER = "181, 56, 27";
+// The palette of the frame being drawn; set at the start of drawScene. Drawing is synchronous,
+// so a module-level slot is safe and keeps the helpers below free of an extra argument.
+let pal: CanvasPalette = PALETTES.light;
 
-const ink = (a: number) => `rgba(${INK}, ${a})`;
-const ember = (a: number) => `rgba(${EMBER}, ${a})`;
+const ink = (a: number) => `rgba(${pal.ink}, ${Math.min(1, a * pal.lineBoost)})`;
+const ember = (a: number) => `rgba(${pal.ember}, ${a})`;
 
 export function createScene(jd: number, beltCount = 460): Scene {
   const rand = seeded(7);
@@ -138,6 +140,8 @@ export interface DrawOptions {
   /** Seconds since the animation started: spin, corona and satellite motion. */
   t: number;
   dpr: number;
+  /** Colours for the current theme. */
+  pal: CanvasPalette;
   selected: SelectableId | null;
   hovered: SelectableId | null;
 }
@@ -159,6 +163,7 @@ export function drawScene(
   cam: Camera,
   opt: DrawOptions,
 ): Hit[] {
+  pal = opt.pal;
   const se = Math.max(Math.sin(cam.el), 0.2);
   const edge = Math.max(40, Math.min(width / 2 - 16, (height / 2 - 30) / se));
   const f: Frame = {
@@ -208,7 +213,7 @@ export function drawScene(
     const lon = (rock.lon0 + rock.rate * days) * DEG;
     const p = project(f, { x: rock.a * Math.cos(lon), y: rock.a * Math.sin(lon), z: rock.z, r: rock.a });
     if (p.fade <= 0) continue;
-    ctx.fillStyle = rock.warm ? `rgba(176, 120, 60, ${rock.alpha * p.fade})` : ink(rock.alpha * p.fade);
+    ctx.fillStyle = rock.warm ? `rgba(${pal.dust}, ${rock.alpha * p.fade})` : ink(rock.alpha * p.fade);
     const s = rock.size * f.unit;
     ctx.beginPath();
     ctx.arc(p.x, p.y, s / 2, 0, Math.PI * 2);
@@ -363,7 +368,7 @@ function drawLabel(
   const tx = choice.x1 + choice.sx * 2;
   const ty = choice.sy < 0 ? choice.y1 - 4 : choice.y1 + h - 1;
   // A pale halo so labels stay legible where they cross orbits and trails.
-  ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
+  ctx.strokeStyle = `rgba(${pal.halo}, 0.8)`;
   ctx.lineWidth = 3;
   ctx.lineJoin = "round";
   ctx.strokeText(name, tx, ty);
@@ -461,7 +466,7 @@ function drawPlanet(
     pole,
     prime,
     light,
-    ambient: 0.3,
+    ambient: pal.ambient,
     atmosphere: style.atmosphere,
     glint: style.glint,
     lumpy: id === "iris" ? irisOutline : undefined,
@@ -486,7 +491,7 @@ function drawPlanet(
       pole: toCamera(scene.poles.earth, f.b),
       prime: toCamera([1, 0, 0], f.b),
       light: litFrom(moonCam),
-      ambient: 0.3,
+      ambient: pal.ambient,
     };
     if (ms.render(texture("moon"), 2 * mr * f.dpr, moonLook)) {
       const size = ms.size / f.dpr;
@@ -568,7 +573,7 @@ function drawSatellite(
   const s = 2.2 * unit;
   ctx.fillStyle = ink(0.9);
   ctx.fillRect(-s / 2, -s / 2, s, s);
-  ctx.strokeStyle = "rgba(58, 86, 212, 0.95)";
+  ctx.strokeStyle = `rgba(${pal.blue}, 0.95)`;
   ctx.lineWidth = 1.2;
   ctx.beginPath();
   ctx.moveTo(0, -s * 2.1);
@@ -578,12 +583,12 @@ function drawSatellite(
 }
 
 /**
- * Light on a body at camera position `p`: from the Sun, plus a little from the viewer's side so a
- * disc reads as a lit sphere on a light page. The terminator still faces the Sun.
+ * Light on a body at camera position `p`: from the Sun, plus some from the viewer's side so a disc
+ * reads as a lit sphere on a light page (less on the dark theme). The terminator still faces the Sun.
  */
 function litFrom(p: Vec3): Vec3 {
   const s = normalize([-p[0], -p[1], -p[2]]);
-  return normalize([s[0], s[1], s[2] + 0.75]);
+  return normalize([s[0], s[1], s[2] + pal.fill]);
 }
 
 function rgb(hex: string): [number, number, number] {

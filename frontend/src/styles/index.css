@@ -95,11 +95,118 @@
   /* Headlines that catch the light: ember through magenta to violet (every stop above 4.5:1). */
   --gradient-text: linear-gradient(100deg, #b5381b 0%, #a3317a 48%, #5b3fd0 100%);
 
+  /* Surfaces that let the sky show through. */
+  --glass-bg: rgb(255 255 255 / 0.66);
+  --glass-border: rgb(255 255 255 / 0.85);
+  --panel-bg: rgb(255 255 255 / 0.72);
+  --panel-border: rgb(255 255 255 / 0.9);
+  --selection: rgb(181 56 27 / 0.16);
+  --glow-opacity: 0.55;
+
+  /* Washes behind figures and bands of the landing page. */
+  --wash-violet: radial-gradient(120% 90% at 35% 25%, #eef0ff 0%, #f6f6fd 55%, #ffffff 100%);
+  --wash-gold: radial-gradient(120% 90% at 50% 20%, #fff4de 0%, #fbf8f1 55%, #ffffff 100%);
+  --wash-ember: radial-gradient(120% 90% at 65% 25%, #ffece6 0%, #fbf5f4 55%, #ffffff 100%);
+  --wash-band: linear-gradient(115deg, #ffffff 0%, #f3f0ff 45%, #fff4ea 100%);
+
+  /* Figure paint: the sky sphere and the photographic plates. */
+  --fig-sphere-hi: #ffffff;
+  --fig-sphere-mid: #e3e7fb;
+  --fig-sphere-lo: #bfc8f0;
+  --fig-plate-a: #ffffff;
+  --fig-plate-b: #f1f2f8;
+
+  /* Text drawn on each band's colour. */
+  --band-ink-1: #0b1437;
+  --band-ink-2: #0b1437;
+  --band-ink-3: #ffffff;
+  --band-ink-4: #ffffff;
+  --band-ink-5: #ffffff;
+  --band-ink-6: #ffffff;
+
   --motion-fast: 140ms;
   --motion: 240ms;
   --motion-slow: 700ms;
   --ease: cubic-bezier(0.2, 0, 0, 1);
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/*
+ * Dark theme, chosen with <html data-theme="dark">: a deep navy night sky, never black. Text on
+ * --bg: --text 15.3:1, --text-muted 9.1:1, --text-faint 6.5:1, all above 5.2:1 on every surface;
+ * --accent 7.9:1 with dark ink on it (8.5:1); --rule-control 4.4:1. The band ramp is its own
+ * ordinal set validated on --bg and --bg-raised (darkest step above 3:1). The image well and the
+ * *-on-image colours are shared by both themes.
+ */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg: #111733;
+  --bg-raised: #171e3f;
+  --bg-sunk: #0c1128;
+  --bg-hover: #1f2750;
+  --rule: #252d55;
+  --rule-strong: #353f6e;
+  --rule-control: #737da6;
+
+  --text: #eceff9;
+  --text-muted: #b3bad6;
+  --text-faint: #949cbd;
+
+  --accent: #ff8f66;
+  --accent-strong: #ffa585;
+  --accent-ink: #1c0c06;
+  --accent-wash: rgb(255 143 102 / 0.12);
+
+  --gold: #f0c46e;
+  --gold-deep: #f0c46e;
+  --violet: #aa9bff;
+  --highlight: rgb(240 196 110 / 0.25);
+
+  --focus: #8ea2ff;
+  --live: #5bd39b;
+  --snapshot: #8ea2ff;
+  --warn: #f0c46e;
+  --danger: #ff8f84;
+  --danger-wash: rgb(255 143 132 / 0.1);
+  --warn-wash: rgb(240 196 110 / 0.14);
+
+  --band-1: #cfe2fc;
+  --band-2: #a5c7f6;
+  --band-3: #7eadee;
+  --band-4: #5e93e4;
+  --band-5: #457cd8;
+  --band-6: #3367c6;
+  --band-ink-1: #0b1437;
+  --band-ink-2: #0b1437;
+  --band-ink-3: #0b1437;
+  --band-ink-4: #0b1437;
+  --band-ink-5: #ffffff;
+  --band-ink-6: #ffffff;
+
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.35);
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 12px 32px -14px rgb(0 0 0 / 0.6);
+  --shadow-lg: 0 2px 6px rgb(0 0 0 / 0.3), 0 32px 80px -30px rgb(0 0 0 / 0.75);
+
+  --gradient-text: linear-gradient(100deg, #ff9a6e 0%, #f07ab8 48%, #b3a4ff 100%);
+
+  --glass-bg: rgb(23 30 63 / 0.62);
+  --glass-border: rgb(255 255 255 / 0.08);
+  --panel-bg: rgb(23 30 63 / 0.6);
+  --panel-border: rgb(255 255 255 / 0.08);
+  --selection: rgb(255 143 102 / 0.25);
+  --glow-opacity: 0.32;
+
+  --wash-violet: radial-gradient(120% 90% at 35% 25%, #2a2f6a 0%, #1b2149 55%, #171e3f 100%);
+  --wash-gold: radial-gradient(120% 90% at 50% 20%, #3a3030 0%, #1f2145 55%, #171e3f 100%);
+  --wash-ember: radial-gradient(120% 90% at 65% 25%, #3d2438 0%, #1f2045 55%, #171e3f 100%);
+  --wash-band: linear-gradient(115deg, #121837 0%, #1d1a4a 45%, #2a1e33 100%);
+
+  --fig-sphere-hi: #46528f;
+  --fig-sphere-mid: #283369;
+  --fig-sphere-lo: #161d44;
+  --fig-plate-a: #1f2750;
+  --fig-plate-b: #171e3f;
 }
 
 @theme inline {
@@ -162,7 +269,7 @@
   }
 
   ::selection {
-    background: rgb(181 56 27 / 0.16);
+    background: var(--selection);
     color: var(--text);
   }
 
@@ -279,8 +386,8 @@
   }
 
   .glass {
-    background: rgb(255 255 255 / 0.66);
-    border: 1px solid rgb(255 255 255 / 0.85);
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
     box-shadow:
       var(--shadow-sm),
       inset 0 0 0 1px rgb(11 20 55 / 0.04);
@@ -289,8 +396,8 @@
   }
 
   .panel {
-    background: rgb(255 255 255 / 0.72);
-    border: 1px solid rgb(255 255 255 / 0.9);
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
     border-radius: 28px;
     box-shadow: var(--shadow-lg);
     backdrop-filter: blur(22px) saturate(1.4);
@@ -310,8 +417,24 @@
     position: absolute;
     border-radius: 999px;
     filter: blur(60px);
-    opacity: 0.55;
+    opacity: var(--glow-opacity);
     animation: drift 26s ease-in-out infinite alternate;
+  }
+
+  .wash-violet {
+    background: var(--wash-violet);
+  }
+
+  .wash-gold {
+    background: var(--wash-gold);
+  }
+
+  .wash-ember {
+    background: var(--wash-ember);
+  }
+
+  .wash-band {
+    background: var(--wash-band);
   }
 
   .swatch {
@@ -444,7 +567,7 @@
   .chip[aria-pressed="true"] {
     border-color: var(--text);
     background: var(--text);
-    color: #ffffff;
+    color: var(--bg-raised);
   }
 
   @media (pointer: coarse) {

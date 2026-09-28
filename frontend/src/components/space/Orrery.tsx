@@ -6,6 +6,7 @@ import { fitCanvas, observeSize, useInView, usePrefersReducedMotion } from "./mo
 import { ELEMENTS, heliocentric, julianDate, type ViewId } from "./orbits";
 import { type Camera, createScene, drawScene, type Hit } from "./orreryScene";
 import { PlanetPortrait } from "./PlanetPortrait";
+import { usePalette } from "./theme";
 
 const SPEEDS = [
   { id: "day", label: "Day", days: 1 },
@@ -49,6 +50,7 @@ export function Orrery() {
   const distRef = useRef<HTMLSpanElement>(null);
   const tipRef = useRef<HTMLDivElement>(null);
   const inView = useInView(wrapRef);
+  const pal = usePalette();
 
   const [playing, setPlaying] = useState(!reduced);
   const [speed, setSpeed] = useState<SpeedId>("month");
@@ -67,6 +69,7 @@ export function Orrery() {
     selected: selected as SelectableId | null,
     hovered,
     reduced,
+    pal,
   });
 
   useEffect(() => {
@@ -77,7 +80,8 @@ export function Orrery() {
     s.selected = selected;
     s.hovered = hovered;
     s.reduced = reduced;
-  }, [playing, speed, view, selected, hovered, reduced]);
+    s.pal = pal;
+  }, [playing, speed, view, selected, hovered, reduced, pal]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -184,6 +188,7 @@ export function Orrery() {
         jd: s.jd,
         t: s.reduced ? 4 : t,
         dpr: size.dpr,
+        pal: s.pal,
         selected: s.selected,
         hovered: s.hovered,
       });
@@ -223,7 +228,8 @@ export function Orrery() {
       canvas.removeEventListener("pointercancel", onUp);
       canvas.removeEventListener("pointerleave", onLeave);
     };
-  }, [inView]);
+    // `pal` is read through the ref every frame; it is listed so an off-screen still frame redraws too.
+  }, [inView, pal]);
 
   const resetToToday = () => {
     sim.current.jd = julianDate(Date.now());

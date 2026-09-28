@@ -69,9 +69,9 @@ export function WhereFigure() {
     <Figure>
       <defs>
         <radialGradient id={`${id}-sphere`} cx="0.36" cy="0.3" r="0.85">
-          <stop offset="0" stopColor="#ffffff" />
-          <stop offset="0.55" stopColor="#e3e7fb" />
-          <stop offset="1" stopColor="#bfc8f0" />
+          <stop offset="0" stopColor="var(--fig-sphere-hi)" />
+          <stop offset="0.55" stopColor="var(--fig-sphere-mid)" />
+          <stop offset="1" stopColor="var(--fig-sphere-lo)" />
         </radialGradient>
         <radialGradient id={`${id}-target`}>
           <stop offset="0" stopColor="#ff9a6b" stopOpacity="0.9" />
@@ -175,12 +175,21 @@ export function ChangeFigure() {
     <Figure>
       <defs>
         <linearGradient id={`${id}-plate`} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#ffffff" />
-          <stop offset="1" stopColor="#f1f2f8" />
+          <stop offset="0" stopColor="var(--fig-plate-a)" />
+          <stop offset="1" stopColor="var(--fig-plate-b)" />
         </linearGradient>
       </defs>
       <g transform="rotate(-5 120 88)">
-        <rect x="58" y="26" width="124" height="118" rx="6" fill="#ffffff" stroke={INK} strokeOpacity="0.14" />
+        <rect
+          x="58"
+          y="26"
+          width="124"
+          height="118"
+          rx="6"
+          fill="var(--fig-plate-a)"
+          stroke={INK}
+          strokeOpacity="0.14"
+        />
       </g>
       <rect
         x="62"

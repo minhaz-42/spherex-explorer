@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 
 import { fitCanvas, observeSize, usePrefersReducedMotion } from "./motion";
 import { type Rand, seeded } from "./noise";
+import { type CanvasPalette, usePalette } from "./theme";
 
 export type SkyMood = "lively" | "calm";
 
@@ -25,10 +26,9 @@ interface Meteor {
   born: number;
 }
 
-// Mostly midnight ink, like a printed star atlas, with a few warm and cool stars.
-const TINTS = ["11, 20, 55", "11, 20, 55", "11, 20, 55", "11, 20, 55", "58, 86, 212", "181, 56, 27", "127, 85, 0"];
-
-function makeStars(width: number, height: number, mood: SkyMood, rand: Rand): Star[] {
+// Star colours come from the theme: midnight ink on the light page, like a printed star atlas, and
+// pale, faintly coloured stars on the dark one.
+function makeStars(width: number, height: number, mood: SkyMood, rand: Rand, tints: string[]): Star[] {
   const density = mood === "lively" ? 1 / 4200 : 1 / 9000;
   const count = Math.round(Math.min(320, width * height * density));
   return Array.from({ length: count }, () => {
@@ -39,7 +39,7 @@ function makeStars(width: number, height: number, mood: SkyMood, rand: Rand): St
       y: rand() * height,
       depth: 0.2 + rand() * 0.8,
       r: 0.35 + mag * 1.5,
-      color: TINTS[Math.floor(rand() * TINTS.length)] ?? TINTS[0]!,
+      color: tints[Math.floor(rand() * tints.length)] ?? tints[0] ?? "11, 20, 55",
       phase: rand() * Math.PI * 2,
       speed: 0.5 + rand() * 1.4,
       spikes: mag > 0.55,
@@ -54,6 +54,7 @@ function makeStars(width: number, height: number, mood: SkyMood, rand: Rand): St
 export function AtlasSky({ mood }: { mood: SkyMood }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const reduced = usePrefersReducedMotion();
+  const pal: CanvasPalette = usePalette();
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -62,7 +63,7 @@ export function AtlasSky({ mood }: { mood: SkyMood }) {
 
     const rand = seeded(42);
     let size = fitCanvas(canvas);
-    let stars = makeStars(size.width, size.height, mood, seeded(42));
+    let stars = makeStars(size.width, size.height, mood, seeded(42), pal.stars);
     let pointer = { x: 0, y: 0 };
     let raf = 0;
     let lastDraw = 0;
@@ -81,7 +82,7 @@ export function AtlasSky({ mood }: { mood: SkyMood }) {
         const x = s.x + (lively ? pointer.x * s.depth * 12 : 0);
         const y = (((s.y - drift + (lively ? pointer.y * s.depth * 12 : 0)) % size.height) + size.height) % size.height;
         const twinkle = reduced ? 1 : 0.6 + 0.4 * Math.sin(t * s.speed + s.phase);
-        const a = (0.18 + s.r * 0.22) * twinkle * (0.55 + s.depth * 0.45);
+        const a = Math.min(1, (0.18 + s.r * 0.22) * twinkle * (0.55 + s.depth * 0.45) * pal.starAlpha);
         ctx.fillStyle = `rgba(${s.color}, ${a})`;
         ctx.beginPath();
         ctx.arc(x, y, s.r, 0, Math.PI * 2);
@@ -129,8 +130,8 @@ export function AtlasSky({ mood }: { mood: SkyMood }) {
           const tx = hx - (m.dx / norm) * 120;
           const ty = hy - (m.dy / norm) * 120;
           const tail = ctx.createLinearGradient(tx, ty, hx, hy);
-          tail.addColorStop(0, "rgba(181, 56, 27, 0)");
-          tail.addColorStop(1, `rgba(181, 56, 27, ${0.55 * fade})`);
+          tail.addColorStop(0, `rgba(${pal.ember}, 0)`);
+          tail.addColorStop(1, `rgba(${pal.ember}, ${0.6 * fade})`);
           ctx.strokeStyle = tail;
           ctx.lineWidth = 1.1;
           ctx.lineCap = "round";
@@ -138,7 +139,7 @@ export function AtlasSky({ mood }: { mood: SkyMood }) {
           ctx.moveTo(tx, ty);
           ctx.lineTo(hx, hy);
           ctx.stroke();
-          ctx.fillStyle = `rgba(232, 168, 56, ${0.9 * fade})`;
+          ctx.fillStyle = `rgba(${pal.gold}, ${0.9 * fade})`;
           ctx.beginPath();
           ctx.arc(hx, hy, 1.6, 0, Math.PI * 2);
           ctx.fill();
@@ -156,7 +157,7 @@ export function AtlasSky({ mood }: { mood: SkyMood }) {
 
     const stopSize = observeSize(canvas, () => {
       size = fitCanvas(canvas);
-      stars = makeStars(size.width, size.height, mood, seeded(42));
+      stars = makeStars(size.width, size.height, mood, seeded(42), pal.stars);
       if (reduced) draw(performance.now());
     });
 
@@ -183,7 +184,7 @@ export function AtlasSky({ mood }: { mood: SkyMood }) {
       window.removeEventListener("pointermove", onPointer);
       document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [mood, reduced]);
+  }, [mood, reduced, pal]);
 
   return (
     <canvas ref={canvasRef} aria-hidden="true" className="pointer-events-none fixed inset-0 -z-10 h-full w-full" />
