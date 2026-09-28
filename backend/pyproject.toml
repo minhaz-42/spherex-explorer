@@ -14,6 +14,7 @@ dependencies = [
     # Rice decoding of QR3 flags uses astropy.io.fits.hdu.compressed._codecs, so the
     # upper bound is deliberate: check that module before raising it.
     "astropy>=7.0,<9",
+    "defusedxml>=0.7.1",
 ]
 
 [dependency-groups]
@@ -24,6 +25,7 @@ dev = [
     "ruff>=0.7",
     "mypy>=1.13",
     "asgi-lifespan>=2.1.0",
+    "types-defusedxml>=0.7.0.20260504",
 ]
 
 [project.scripts]

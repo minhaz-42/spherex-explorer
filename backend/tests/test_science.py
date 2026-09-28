@@ -145,14 +145,21 @@ def test_default_mask_and_flag_names() -> None:
 
 
 def test_frame_key_validation() -> None:
-    key = "qr2/level2/2025W49_1A/l2b-v20-2025-339/2/level2_2025W49_1A_0332_1D2_spx_l2b-v20-2025-339.fits"
+    key = (
+        "qr2/level2/2025W49_1A/l2b-v20-2025-339/2/"
+        "level2_2025W49_1A_0332_1D2_spx_l2b-v20-2025-339.fits"
+    )
     fk = FrameKey.parse(key)
     assert (fk.release, fk.obs_id, fk.detector) == ("qr2", "2025W49_1A_0332_1", 2)
-    retry = "qr3/level2/2026W31_2A/l2b_retry-v27-2026-242/5/level2_2026W31_2A_0101_3D5_spx_l2b_retry-v27-2026-242.fits"
+    retry = (
+        "qr3/level2/2026W31_2A/l2b_retry-v27-2026-242/5/"
+        "level2_2026W31_2A_0101_3D5_spx_l2b_retry-v27-2026-242.fits"
+    )
     assert FrameKey.parse(retry).detector == 5
     for bad in [
         "../etc/passwd",
-        "qr2/level2/2025W49_1A/l2b-v20-2025-339/2/level2_2025W49_1A_0332_1D3_spx_l2b-v20-2025-339.fits",
+        # detector in the path and in the file name disagree
+        key.replace("level2_2025W49_1A_0332_1D2", "level2_2025W49_1A_0332_1D3"),
         "https://evil.example/qr2/level2/x.fits",
         key + "?x=1",
         "qr2/abs_gain_matrix/cal-agm-v7-2025-218/1/abs_gain_matrix_D1_spx_cal-agm-v7-2025-218.fits",
@@ -210,7 +217,9 @@ def test_payload_has_units_methods_and_decodable_arrays() -> None:
     assert p["image"]["unit"].startswith("MJy/sr")
     assert p["target"]["inFrame"] is True
     assert p["photometry"]["reliable"] is True
-    assert p["photometry"]["fluxMicroJy"] == pytest.approx(3.0 * 37.86 * ARCSEC2_TO_SR * 1e12, rel=0.05)
+    assert p["photometry"]["fluxMicroJy"] == pytest.approx(
+        3.0 * 37.86 * ARCSEC2_TO_SR * 1e12, rel=0.05
+    )
     # Wavelength at the centre of the synthetic filter: 1.10 + 0.5 × (y / 63) + a little along x.
     assert 1.3 < p["wavelength"]["atTargetUm"] < 1.4
     assert p["time"]["isoMid"].startswith("2025-12-02")
