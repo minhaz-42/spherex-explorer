@@ -724,17 +724,22 @@ def main():
     ir = make_ir(3.4)
     wet = np.stack([fftconvolve((mus_send.x + fx_send.x)[:, c], ir[:, c])[:N] for c in range(2)], axis=1) * 0.22
     music = mus.x + wet
-    # Hard silences: the cuts to black and the freeze leave nothing ringing.
-    gate = np.ones(N)
-    for a, b in ((10.72, 10.76), (59.3, 60.0), (116.55, 116.62), (221.4, 221.62)):
-        ia, ib = at(a), at(b)
-        gate[ia:ib] = 0
-        r = int(0.02 * SR)
-        gate[max(ia - r, 0) : ia] = np.linspace(1, 0, ia - max(ia - r, 0))
+    # Hard silences: the cuts to black and the freeze leave no music ringing. The effects stop at
+    # the freeze and the dot too, but not at a cut to black: that is where the boom lands.
+    def gate(spans):
+        g = np.ones(N)
+        for a, b in spans:
+            ia, ib = at(a), at(b)
+            g[ia:ib] = 0
+            r = int(0.02 * SR)
+            g[max(ia - r, 0) : ia] = np.linspace(1, 0, ia - max(ia - r, 0))
+        return g
+
+    freeze = ((10.72, 10.76), (116.55, 116.62))
     # After the freeze in the opening, only the held tone (which starts after the gate).
-    music *= gate[:, None]
+    music *= gate((*freeze, (59.3, 60.0), (221.4, 221.62)))[:, None]
     music *= (1 - 0.78 * duck)[:, None]
-    fxx = fx.x * gate[:, None] * (1 - 0.55 * duck)[:, None]
+    fxx = fx.x * gate(freeze)[:, None] * (1 - 0.55 * duck)[:, None]
     sf.write(OUT / "music.wav", music.astype(np.float32), SR)
     sf.write(OUT / "fx.wav", fxx.astype(np.float32), SR)
     sf.write(OUT / "vo.wav", vo.x.astype(np.float32), SR)
