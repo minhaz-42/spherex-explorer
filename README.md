@@ -205,6 +205,13 @@ It needs outbound HTTPS to irsa.ipac.caltech.edu, nasa-irsa-spherex.s3.us-east-1
 ssd-api.jpl.nasa.gov, ssd.jpl.nasa.gov and cds.unistra.fr. A server in a US region reads frames many
 times faster than a distant one.
 
+## The pitch film
+
+`film/` builds a 3 minute 58 second film for the Space Apps judging, with captioned and voice-free
+versions. The videos (200–300 MB each) are not in git: `make -C film deliver release` rebuilds them
+into `film/release/`, next to the captions and poster that are tracked. See
+[film/README.md](film/README.md).
+
 ## Project structure
 
 ```text
@@ -235,6 +242,8 @@ frontend/                  Web app (Vite, React, TypeScript, Tailwind CSS)
 data/cases.json            curated Discover cases (built by backend/scripts/build_cases.py)
 data/snapshot/             demo snapshot: recorded API answers for those cases
 docs/                      research, architecture, requirements, methods, limitations, demo guide
+film/                      the four-minute pitch film: built from code, real data and app recordings
+  release/                 captions and poster (the MP4s are built here, not committed)
 Makefile                   setup, dev, check, build, serve
 ```
 
@@ -273,6 +282,8 @@ Makefile                   setup, dev, check, build, serve
 | [docs/limitations.md](docs/limitations.md) | What the app cannot do or conclude |
 | [docs/demo-guide.md](docs/demo-guide.md) | A three-minute demo, with a fallback |
 | [docs/development-log.md](docs/development-log.md) | What was built, when, and what was verified |
+| [film/README.md](film/README.md) | The pitch film: what is in it, what is real, how to change and rebuild it |
+| [film/SCRIPT.md](film/SCRIPT.md) | The film's narration with timecodes, for recording or speaking live |
 
 ## References
 
