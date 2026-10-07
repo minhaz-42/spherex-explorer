@@ -1,14 +1,14 @@
 # The pitch film
 
-A 3 minute 58 second film for the NASA Space Apps judging ("240 seconds of glory"), built entirely
+A 3 minute 59 second film for the NASA Space Apps judging ("240 seconds of glory"), built entirely
 from code, public data and recordings of the real app. It follows the four-part model:
 
 | Part | Time | Title | What happens |
 |---|---|---|---|
-| Who / attention | 0:00–1:00 | The Dot | Real SPHEREx stars of the field around asteroid (7) Iris appear one by one; one point moves; freeze. The view pulls back through the SPHEREx maps to the whole sky in six bands. Code, commits and the app at work; the name. |
-| Why | 1:00–2:00 | The Blink | 1930: Tombaugh's blink comparator and Pluto (a labelled reconstruction). Barnard's Star across 75 years of real surveys to SPHEREx. Three real SPHEREx frames of Iris. "The method is simple. The scale isn't." Searching by hand. |
-| What | 2:00–3:00 | The demo | Real footage of SPHEREx Explorer on live data: search, blink, our own moving-source search, JPL's check, the honest difference view, the decades blink, the game, Bangla, the assistant. |
-| Impact | 3:00–3:58 | The Invitation | Stay on the discovery; pull back to Iris's orbit and to Earth; every generation's way of seeing; more data, more people; "A student. A citizen scientist. An astronomer."; the first shot's dot, caught; the name. |
+| Who / attention | 0:00–1:05 | The Dot | The Space Apps logo and "Team Oblivion presents"; the logo moves to the corner and stays. Real SPHEREx stars of the field around asteroid (7) Iris appear one by one; one point moves; freeze. The view pulls back through the SPHEREx maps to the whole sky in six bands. Code and the app at work; Team Oblivion, each of the five in turn, by name and by what they did; the name. |
+| Why | 1:05–2:05 | The Blink | 1930: Tombaugh's blink comparator and Pluto (a labelled reconstruction). Barnard's Star across 75 years of real surveys to SPHEREx. Three real SPHEREx frames of Iris. "The method is simple. The scale isn't." Searching by hand. |
+| What | 2:05–3:03 | The demo | Real footage of SPHEREx Explorer on live data: search, blink, our own moving-source search, JPL's check, the honest difference view, the decades blink, the game, Bangla, the assistant. |
+| Impact | 3:03–3:59 | The Invitation | Stay on the discovery; pull back to Iris's orbit and to Earth; every generation's way of seeing; more data, more people; "A student. A citizen scientist. An astronomer."; the first shot's dot, caught; the name. |
 
 The narration, with timecodes, is in [SCRIPT.md](SCRIPT.md).
 
@@ -25,6 +25,9 @@ another way (a drive link, or a GitHub release):
 - `SPHEREx-Explorer-film-no-voice.mp4`: music and effects only, for narrating live over the film.
 - `SPHEREx-Explorer-film.en.srt`: captions as a separate file.
 - `poster.jpg`: a still for thumbnails.
+- `v2/`: the same three videos with the team cards unspoken: the narrator says "We're Team Oblivion,
+  from Bangladesh" and the music carries the five cards. Built by leaving lines `q1m1`–`q1m5` out of
+  `script.json`; the cards then space themselves evenly.
 
 Sound is mastered to −14 LUFS with peaks at −1 dBTP.
 
@@ -42,23 +45,35 @@ Sound is mastered to −14 LUFS with peaks at −1 dBTP.
 - **Adjusted for display:** the QR2 colour map has unfinished tiles at the Galactic centre; they are
   smoothed over, and the end card says so. The opening field is the median of the 19 frames, with
   each frame's own pixels around the asteroid, so the moving point is the real one.
+- **The team and the logo:** the team photo is a real photo of the team with its background removed
+  (`brand/team.png`); the logos are the NASA Space Apps Challenge's own (`brand/space-apps-logo.png`
+  for the opening, `brand/space-apps-logo-long.png` in the corner).
 - **Generated:** the narration is a synthetic voice (Kokoro); the music and effects are synthesised
   by `audio/score.py`. No samples or third-party music.
 
 ## Changing it
 
-The picture's timing is fixed; words, voice, end card and team footage can change without
+The picture's timing is fixed; words, voice, names, logos and team footage can change without
 touching the code.
 
 | To change | Edit | Then |
 |---|---|---|
 | A narration line | `text` and `say` in `script.json` | `make voice audio deliver` |
 | The voice: your own | Record each line as `voice/<id>.wav` (ids in `script.json`); any sample rate | `make voice audio deliver` |
-| The end card's team line or tagline | `config.json` | `make render deliver` |
-| Footage of the team at work | `footage/team.mp4`, about 5 s, landscape | `make team render deliver` |
+| "Team Oblivion presents", the end card's team line or tagline | `config.json` | `make render deliver` |
+| A name, role or "what they did" on a team card | `members` in `config.json` (right to left, as in the photo) | `make render deliver` |
+| What the narrator says about each of them | lines `q1m1`–`q1m5` in `script.json`; each card is timed by its line | `make voice audio render deliver` |
+| The team photo | `brand/team.png`, background removed; then each face's `x` and head's `top` in `config.json` | `make render deliver` |
+| The corner logo | put it in `brand/` and name it in `cornerLogo` in `config.json` | `make render deliver` |
 
-`audio/voice.py` warns when a line runs into the next one. "We're a team from Bangladesh" is a
-placeholder for the team's name: change it in `script.json` (line `q1e`) and in `config.json`.
+`audio/voice.py` warns when a line runs into the next one.
+
+`edit.json` is the cut. The scenes and the score are written on a 238-second source timeline; the
+film is assembled from stretches of it plus two new scenes, the opening and the team
+(`render/scenes/intro.js`). The trims are still holds, cuts the picture already had, and two beats
+of a blink, so nothing visibly jumps.
+`script.json`'s times are on the finished film's clock. Changing the cut means changing those
+times too, and keeping the total under 240 seconds: `deliver.py` checks.
 
 A recorded human voice will sound better than the synthetic one, and judges score authenticity: if
 you can, record the script in a quiet room, one file per line, and rebuild.
@@ -85,9 +100,10 @@ time, so any frame can be rendered alone.
 - `assets/fetch.py`, `assets/prep.py`: download and prepare the imagery.
 - `capture/`: Playwright scripts that drive the app and record Chrome's screencast at 2× density,
   with a log of the pointer and of where key elements were.
-- `render/`: the film as an HTML canvas page. `film.js` holds the timeline; `scenes/q1.js`–`q4.js`
-  draw each part; `render.mjs` steps it frame by frame in headless Chromium, in parallel, into
-  H.264. The scenes also export the sound cues (`render.mjs cues`).
-- `audio/`: narration (`voice.py`), score and mix (`score.py`), loudness (`master.py`), captions
-  (`captions.py`).
+- `render/`: the film as an HTML canvas page. `film.js` plays the cut (`edit.json`);
+  `scenes/q1.js`–`q4.js` draw each part on the source timeline and `scenes/intro.js` the opening,
+  the team and the corner logo; `render.mjs` steps it frame by frame in headless Chromium, in
+  parallel, into H.264. The scenes also export the sound cues (`render.mjs cues`).
+- `audio/`: narration (`voice.py`), score, the cut and the mix (`score.py`), loudness
+  (`master.py`), captions (`captions.py`).
 - `deliver.py`: the final files, and a check that each is under four minutes.

@@ -1,6 +1,16 @@
 {
-  "_about": "Words on the film's end card. Change them and re-render (make -C film render).",
-  "team": "A team from Bangladesh",
+  "_about": "Words and pictures for the opening, the team and the end card. Change them and re-render (make -C film render deliver).",
+  "presents": ["Team Oblivion", "presents"],
+  "team": "Team Oblivion · Bangladesh",
   "event": "NASA Space Apps Challenge 2026",
-  "tagline": "Look closer. Discover what changed."
+  "tagline": "Look closer. Discover what changed.",
+  "cornerLogo": "brand/space-apps-logo-long.png",
+  "_members": "Introduced right to left, as they stand in brand/team.png. `did` is the line on screen; `line` is the narration line (script.json) that says it, and times the card. `x` is the centre of each face and `top` the top of each head in that photo, in pixels.",
+  "members": [
+    { "name": "Tanvir Ahmed", "role": "Lead Developer", "did": "Built the app: the archive search, the blink and the moving-object finder.", "line": "q1m1", "x": 1423, "top": 273 },
+    { "name": "Fahim Foysal Souwmik", "role": "Team Lead", "did": "Led the team, shaped the idea and kept us on course.", "line": "q1m2", "x": 1115, "top": 286 },
+    { "name": "Shefa Tabassum", "role": "Data Analyst", "did": "Analysed the SPHEREx data and checked the measurements.", "line": "q1m3", "x": 877, "top": 377 },
+    { "name": "Sadman Sakib", "role": "Film & Storytelling", "did": "Told our story: the pitch, the script and this film.", "line": "q1m4", "x": 603, "top": 352 },
+    { "name": "Atahar Hossain Piash", "role": "Science & Research", "did": "Researched SPHEREx and the science behind every method.", "line": "q1m5", "x": 280, "top": 287 }
+  ]
 }

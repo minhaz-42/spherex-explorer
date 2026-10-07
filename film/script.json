@@ -1,203 +1,239 @@
 {
-  "_about": "Narration for the 240-second pitch film. `text` is what appears in subtitles and the script; `say` is the spelling the synthetic voice needs (SPHEREx as 'Sphere X', Tombaugh as 'Tombaw'). `at` is the start time in seconds on the film's timeline. Edit a line, then run `make -C film voice mix render`.",
+  "_about": "Narration for the 240-second pitch film. `text` is what appears in subtitles and the script; `say` is the spelling the synthetic voice needs (SPHEREx as 'Sphere X', Tombaugh as 'Tombaw'). `at` is the start time in seconds on the finished film's clock (after edit.json). Edit a line, then run `make -C film voice audio deliver`.",
   "voice": "af_heart",
   "speed": 0.94,
   "lines": [
     {
       "id": "q1a",
-      "at": 17.0,
+      "at": 19.2,
       "text": "In 2025, NASA launched SPHEREx.",
       "say": "In twenty twenty-five, NASA launched Sphere X."
     },
     {
       "id": "q1b",
-      "at": 20.6,
+      "at": 22.8,
       "text": "Every six months, it maps the entire sky in 102 colours of infrared light.",
       "say": "Every six months, it maps the entire sky, in a hundred and two colours of infrared light."
     },
     {
       "id": "q1c",
-      "at": 27.0,
+      "at": 29.2,
       "text": "Again. And again.",
       "say": "Again. And again."
     },
     {
       "id": "q1d",
-      "at": 35.6,
+      "at": 32.65,
       "text": "And we couldn't stop asking: what if something important is hiding in there?",
       "say": "And we couldn't stop asking... what if something important is hiding in there?"
     },
     {
       "id": "q1e",
-      "at": 45.4,
-      "text": "We're a team from Bangladesh. And we built SPHEREx Explorer because we believe discovery shouldn't belong only to the people who have the tools to look for it.",
-      "say": "We're a team from Bangladesh. And we built Sphere X Explorer because we believe discovery shouldn't belong only to the people who have the tools to look for it."
+      "at": 37.46,
+      "text": "We're Team Oblivion, from Bangladesh.",
+      "say": "We're Team Oblivion, from Bangladesh."
+    },
+    {
+      "id": "q1m1",
+      "at": 40.01,
+      "text": "Tanvir Ahmed built the app.",
+      "say": "Tanvir Ahmed built the app."
+    },
+    {
+      "id": "q1m2",
+      "at": 42.01,
+      "text": "Fahim Foysal Souwmik led the team.",
+      "say": "Fahim Foysal Souwmik led the team."
+    },
+    {
+      "id": "q1m3",
+      "at": 44.47,
+      "text": "Shefa Tabassum analysed the data.",
+      "say": "Shefa Tabassum analysed the data."
+    },
+    {
+      "id": "q1m4",
+      "at": 46.98,
+      "text": "Sadman Sakib told our story.",
+      "say": "Sadman Sakib told our story."
+    },
+    {
+      "id": "q1m5",
+      "at": 49.18,
+      "text": "And Atahar Hossain Piash researched the science.",
+      "say": "And Atahar Hossain Piash researched the science."
+    },
+    {
+      "id": "q1f",
+      "at": 55.36,
+      "text": "And we built SPHEREx Explorer because we believe discovery shouldn't belong only to the people who have the tools to look for it.",
+      "say": "And we built Sphere X Explorer because we believe discovery shouldn't belong only to the people who have the tools to look for it."
     },
     {
       "id": "q2a",
-      "at": 61.2,
+      "at": 66.21,
       "text": "Arizona, 1930. Clyde Tombaugh blinks between two photographs of the same patch of sky…",
       "say": "Arizona, nineteen thirty. Clyde Tombaw blinks between two photographs of the same patch of sky..."
     },
     {
       "id": "q2b",
-      "at": 67.75,
+      "at": 72.76,
       "text": "…until one tiny point moves.",
       "say": "until one tiny point moves."
     },
     {
       "id": "q2c",
-      "at": 73.4,
+      "at": 78.41,
       "text": "Almost a century later, the method hasn't changed.",
       "say": "Almost a century later, the method hasn't changed."
     },
     {
       "id": "q2d",
-      "at": 79.0,
+      "at": 84.01,
       "text": "Photograph the sky. Compare. Look for what moved.",
       "say": "Photograph the sky. Compare. Look for what moved."
     },
     {
       "id": "q2e",
-      "at": 91.0,
+      "at": 96.01,
       "text": "The method is simple.",
       "say": "The method is simple."
     },
     {
       "id": "q2f",
-      "at": 94.4,
+      "at": 99.41,
       "text": "The scale isn't.",
       "say": "The scale isn't."
     },
     {
       "id": "q2g",
-      "at": 105.6,
+      "at": 110.61,
       "text": "Somewhere inside all of this, something could be moving.",
       "say": "Somewhere inside all of this, something could be moving."
     },
     {
       "id": "q2h",
-      "at": 111.6,
+      "at": 116.61,
       "text": "The question is: will anyone notice?",
       "say": "The question is... will anyone notice?"
     },
     {
       "id": "q3a",
-      "at": 120.8,
+      "at": 125.81,
       "text": "So we built a new way to look.",
       "say": "So we built a new way to look."
     },
     {
       "id": "q3b",
-      "at": 124.4,
+      "at": 129.41,
       "text": "Name any place in the sky. SPHEREx Explorer finds every image SPHEREx has taken of it, live from the public archive.",
       "say": "Name any place in the sky. Sphere X Explorer finds every image Sphere X has taken of it, live from the public archive."
     },
     {
       "id": "q3c",
-      "at": 133.6,
+      "at": 138.61,
       "text": "Then it does what Tombaugh did. It blinks the frames.",
       "say": "Then it does what Tombaw did. It blinks the frames."
     },
     {
       "id": "q3d",
-      "at": 138.4,
+      "at": 143.41,
       "text": "And something moves.",
       "say": "And something moves."
     },
     {
       "id": "q3e",
-      "at": 142.0,
+      "at": 147.01,
       "text": "Its own search finds the moving point, knowing nothing about asteroids. Then it checks with NASA's JPL.",
       "say": "Its own search finds the moving point, knowing nothing about asteroids. Then it checks with NASA's J.P.L."
     },
     {
       "id": "q3f",
-      "at": 149.6,
+      "at": 154.61,
       "text": "It's the asteroid Iris, caught by SPHEREx in December 2025.",
       "say": "It's the asteroid Iris, caught by Sphere X in December twenty twenty-five."
     },
     {
       "id": "q3g",
-      "at": 155.6,
+      "at": 160.61,
       "text": "And it's honest. Each frame sees a different colour, so it never mistakes colour for change.",
       "say": "And it's honest. Each frame sees a different colour, so it never mistakes colour for change."
     },
     {
       "id": "q3h",
-      "at": 163.0,
+      "at": 168.01,
       "text": "Seventy-five years of sky surveys, side by side. A game that trains your eye. In English, and in Bangla.",
       "say": "Seventy-five years of sky surveys, side by side. A game that trains your eye. In English, and in Bangla."
     },
     {
       "id": "q3i",
-      "at": 172.4,
+      "at": 177.41,
       "text": "Ask it anything. Every answer shows its sources.",
       "say": "Ask it anything. Every answer shows its sources."
     },
     {
       "id": "q4a",
-      "at": 188.6,
+      "at": 190.37,
       "text": "For most of human history, the universe was something we could only look at.",
       "say": "For most of human history, the universe was something we could only look at."
     },
     {
       "id": "q4b",
-      "at": 199.0,
+      "at": 200.77,
       "text": "Every generation built a better way to see.",
       "say": "Every generation built a better way to see."
     },
     {
       "id": "q4c",
-      "at": 202.6,
+      "at": 204.37,
       "text": "Our generation has something different.",
       "say": "Our generation has something different."
     },
     {
       "id": "q4d",
-      "at": 206.0,
+      "at": 207.77,
       "text": "We have more data than ever before.",
       "say": "We have more data than ever before."
     },
     {
       "id": "q4e",
-      "at": 209.4,
+      "at": 211.17,
       "text": "Now we need more people looking at it.",
       "say": "Now we need more people looking at it."
     },
     {
       "id": "q4f",
-      "at": 213.6,
+      "at": 215.37,
       "text": "A student.",
       "say": "A student."
     },
     {
       "id": "q4g",
-      "at": 215.4,
+      "at": 217.17,
       "text": "A citizen scientist.",
       "say": "A citizen scientist."
     },
     {
       "id": "q4h",
-      "at": 217.4,
+      "at": 219.17,
       "text": "An astronomer.",
       "say": "An astronomer."
     },
     {
       "id": "q4i",
-      "at": 219.2,
+      "at": 220.97,
       "text": "Anyone curious enough to look.",
       "say": "Anyone curious enough to look."
     },
     {
       "id": "q4j",
-      "at": 224.6,
+      "at": 226.37,
       "text": "Because the next discovery may not be hiding from humanity.",
       "say": "Because the next discovery may not be hiding from humanity."
     },
     {
       "id": "q4k",
-      "at": 229.0,
+      "at": 230.77,
       "text": "It may simply be waiting for someone to notice.",
       "say": "It may simply be waiting for someone to notice."
     }

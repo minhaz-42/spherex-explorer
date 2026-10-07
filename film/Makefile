@@ -11,7 +11,7 @@ help:
 	@echo "make setup      Python env (TTS, ffmpeg, astropy), voice model"
 	@echo "make assets     fetch real data (IRSA, CDS, STScI, JPL) and prepare images"
 	@echo "make capture    record the app (needs 'make serve' at the repo root and Ollama running)"
-	@echo "make team       use footage/team.mp4 (you, at work) for two shots at 0:32 and 0:37"
+	@echo "make team       use footage/team.mp4 (you, at work) in the montage (the current cut leaves it out)"
 	@echo "make voice      synthesise narration from script.json (voice/<id>.wav overrides a line)"
 	@echo "make audio      score, effects, mix, -14 LUFS masters, captions"
 	@echo "make render     render the picture (about 15–25 minutes)"
@@ -64,7 +64,7 @@ release:
 	   build/delivery/poster.jpg release/
 
 preview:
-	$(NODE) render/render.mjs sheet 0 236 4
+	$(NODE) render/render.mjs sheet 0 238 4
 
 clean:
 	rm -rf build/video build/stills build/delivery

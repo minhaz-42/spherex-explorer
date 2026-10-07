@@ -1,0 +1,67 @@
+{
+  "_about": "The cut. Scenes q1–q4 and the score are written on the source timeline (0–238 s); the finished film is assembled from these pieces in order. `src` plays a stretch of the source; `scene` is new material drawn on the film's own clock (render/scenes/intro.js). `join` is how a stretch meets the one before it: `hold` across a still moment, `cut` at a cut in the picture, `step` on a beat of the Iris blink. Nothing visibly jumps. render/film.js, audio/score.py and deliver.py all read this file; script.json's times are on the finished film's clock.",
+  "pieces": [
+    {
+      "scene": "opening",
+      "dur": 3.0
+    },
+    {
+      "src": [
+        0,
+        12.75
+      ]
+    },
+    {
+      "src": [
+        13.55,
+        32.3
+      ],
+      "join": "hold"
+    },
+    {
+      "src": [
+        34.4875,
+        37.2
+      ],
+      "join": "cut"
+    },
+    {
+      "scene": "team",
+      "dur": 15.6
+    },
+    {
+      "src": [
+        44.8,
+        55.45
+      ]
+    },
+    {
+      "src": [
+        58.45,
+        178.0
+      ],
+      "join": "hold"
+    },
+    {
+      "src": [
+        180.0,
+        181.24
+      ],
+      "join": "cut"
+    },
+    {
+      "src": [
+        182.48,
+        235.5
+      ],
+      "join": "step"
+    },
+    {
+      "src": [
+        236.0,
+        238.0
+      ],
+      "join": "hold"
+    }
+  ]
+}

@@ -458,7 +458,7 @@ function drawPeople(ctx, t, D, frame) {
 }
 
 // The dark field from 42.4 s, carried on under the name so the cut never shows.
-function darkFieldCam(t) {
+export function darkFieldCam(t) {
   const k = E.sine(inv(42.4, 45.0, t));
   const back = E.inOut(inv(45.0, 52.0, t));
   return { u: lerp(760 + 40 * k, 830, back), v: lerp(980 - 30 * k, 920, back), mpx: loglerp(loglerp(1500, 820, k), 1350, back) };

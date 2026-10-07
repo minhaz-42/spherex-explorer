@@ -546,7 +546,9 @@ function drawEnd(ctx, t, D) {
   wordmark(ctx, wm, H / 2 - 70, 132);
   ctx.restore();
   text(ctx, cfg.tagline || "Look closer. Discover what changed.", W / 2, H / 2 + 40, { size: 36, weight: 300, family: F.display, color: C.ink, alpha: E.out(inv(233.6, 234.4, t)) * fade });
-  text(ctx, `${cfg.team || "A team from Bangladesh"}  ·  ${cfg.event || "NASA Space Apps Challenge 2026"}`, W / 2, H / 2 + 112, { size: 22, weight: 500, family: F.sans, color: C.dim, alpha: E.out(inv(234.2, 235.0, t)) * fade });
+  // Who made it, then where it was made for.
+  text(ctx, cfg.team || "Team Oblivion · Bangladesh", W / 2, H / 2 + 112, { size: 24, weight: 600, family: F.sans, color: C.ink, track: 0.5, alpha: 0.88 * E.out(inv(234.2, 235.0, t)) * fade });
+  text(ctx, cfg.event || "NASA Space Apps Challenge 2026", W / 2, H / 2 + 150, { size: 19, weight: 500, family: F.sans, color: C.dim, alpha: E.out(inv(234.45, 235.25, t)) * fade });
   const cr = E.out(inv(234.6, 235.4, t)) * fade;
   text(ctx, "SPHEREx data NASA/JPL-Caltech/IPAC via IRSA · SPHEREx QR2 maps via CDS hips2fits · DSS (STScI/AURA, Palomar) · 2MASS · AllWISE · JPL Horizons & SBIdent", W / 2, H - 92, { size: 14, weight: 500, family: F.sans, color: C.faint, alpha: cr });
   text(ctx, "Narration: synthetic voice · Music: original · The QR2 map's unfinished Galactic-centre tiles are smoothed for display · Not affiliated with or endorsed by NASA, JPL, Caltech or IPAC", W / 2, H - 66, { size: 14, weight: 500, family: F.sans, color: C.faint, alpha: cr });

@@ -218,8 +218,8 @@ gives built-in answers, since there is no local model; `SPHEREX_*` project varia
 
 ## The pitch film
 
-`film/` builds a 3 minute 58 second film for the Space Apps judging, with captioned and voice-free
-versions. The videos (200–300 MB each) are not in git: `make -C film deliver release` rebuilds them
+`film/` builds a 3 minute 59 second film for the Space Apps judging, with captioned and voice-free
+versions. It opens on the Space Apps logo and introduces each member of Team Oblivion from 0:37. The videos (200–300 MB each) are not in git: `make -C film deliver release` rebuilds them
 into `film/release/`, next to the captions and poster that are tracked. See
 [film/README.md](film/README.md).
 

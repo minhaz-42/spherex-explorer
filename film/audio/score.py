@@ -2,6 +2,11 @@
 (build/cues.json, exported by render.mjs), and the narration (build/vo). Writes stems and the
 mix to build/audio/.
 
+The score and the cues are written on the source timeline, like the scenes. They are cut to the
+finished film as edit.json says, with a crossfade at every join, and the new pieces (the opening
+and the team) get music of their own on the film's clock. The narration is placed on the film's
+clock directly.
+
 Everything is generated from code: no samples, no third-party music.
 """
 
@@ -16,7 +21,7 @@ from scipy.signal import butter, fftconvolve, lfilter, sosfilt
 FILM = Path(__file__).resolve().parents[1]
 OUT = FILM / "build" / "audio"
 SR = 48000
-DUR = 238.0
+DUR = 238.0  # the source timeline
 N = int(SR * DUR)
 rng = np.random.default_rng(1930)
 
@@ -37,18 +42,19 @@ def note(name):
 
 
 class Bus:
-    def __init__(self, stereo=True):
-        self.x = np.zeros((N, 2) if stereo else N, np.float64)
+    def __init__(self, stereo=True, n=N):
+        self.n = n
+        self.x = np.zeros((n, 2) if stereo else n, np.float64)
 
     def add(self, t, sig, gain=1.0, pan=0.0):
         """Add a mono or stereo signal starting at time t (s); pan -1..1 for mono."""
         i = at(t)
-        if i >= N or len(sig) == 0:
+        if i >= self.n or len(sig) == 0:
             return
         if i < 0:
             sig = sig[-i:]
             i = 0
-        n = min(len(sig), N - i)
+        n = min(len(sig), self.n - i)
         if sig.ndim == 1:
             l = np.cos((pan + 1) * np.pi / 4)
             r = np.sin((pan + 1) * np.pi / 4)
@@ -682,12 +688,137 @@ def effects(cues):
     return fx, send
 
 
+# ---- The cut, and music for the new pieces ------------------------------------------------------------
+
+
+def the_cut():
+    """edit.json's pieces with their place on the film's clock, and the film's length."""
+    plan, t = [], 0.0
+    for p in json.loads((FILM / "edit.json").read_text())["pieces"]:
+        d = p.get("dur") or p["src"][1] - p["src"][0]
+        plan.append({**p, "at": t, "dur": d})
+        t += d
+    return plan, t
+
+
+def to_film(plan, t):
+    """Where source time t lands in the film (None if it was cut)."""
+    for p in plan:
+        if "src" in p and p["src"][0] <= t < p["src"][1]:
+            return p["at"] + t - p["src"][0]
+    return None
+
+
+# Crossfade at each join, in seconds: across a still hold, short at a cut or on a beat of the blink,
+# a little longer where a new scene begins or ends.
+JOIN = {"hold": 0.3, "cut": 0.12, "step": 0.12, None: 0.3}
+SCENE_IN, SCENE_OUT = 0.6, 0.3
+
+
+def assemble(x, plan, n):
+    """Lay the kept stretches of a source-timeline stem end to end on the film's clock."""
+    y = np.zeros((n, x.shape[1]))
+    for k, p in enumerate(plan):
+        if "src" not in p:
+            continue
+        a, b = p["src"]
+        prev = plan[k - 1] if k else None
+        nxt = plan[k + 1] if k + 1 < len(plan) else None
+        fin = 0.0 if prev is None else JOIN[p.get("join")] if "src" in prev else SCENE_IN
+        fout = 0.0 if nxt is None else JOIN[nxt.get("join")] if "src" in nxt else SCENE_OUT
+        s0, s1 = max(a - fin / 2, 0.0), min(b + fout / 2, DUR)
+        seg = x[at(s0) : at(s1)].copy()
+        # Equal gain across a hold (both sides are the same sound), equal power elsewhere.
+        for f, side in ((a - s0, "in"), (s1 - b, "out")):
+            m = at(2 * f)
+            if m <= 0:
+                continue
+            k_ = np.linspace(0, 1, m)
+            joined = (p if side == "in" else nxt).get("join")
+            ramp = np.sin(k_ * np.pi / 2) ** 2 if joined == "hold" else np.sin(k_ * np.pi / 2)
+            if side == "in":
+                seg[:m] *= ramp[:, None]
+            else:
+                seg[-m:] *= ramp[::-1][:, None]
+        i = at(p["at"] - (a - s0))
+        m = min(len(seg), n - i)
+        y[i : i + m] += seg[:m]
+    return y
+
+
+def compose_new(plan, n, lines):
+    """Music and effects for the new pieces, on the film's clock. The key is the score's D minor."""
+    mus, send, fx = Bus(n=n), Bus(n=n), Bus(n=n)
+    opening = next(p for p in plan if p.get("scene") == "opening")
+    team = next(p for p in plan if p.get("scene") == "team")
+
+    # The opening: air and a low fifth; the logo arrives on a soft bell chord; who presents on a high
+    # bell; the logo glides into the corner on a breath.
+    t0 = opening["at"]
+    fx.add(t0, reverse_swell(1.0, 0.3))
+    low = pad(F([note("D2"), note("A2"), note("D3")]), 4.6, cutoff=650, attack=0.9, release=1.8)
+    mus.add(t0 + 0.1, low, gain=0.55)
+    send.add(t0 + 0.1, low, gain=0.3)
+    s = boom(2.6, 0.32)
+    fx.add(t0 + 0.95, s)
+    send.add(t0 + 0.95, s, gain=0.5)
+    for j, m in enumerate(("D5", "A5", "D6", "F6")):
+        b = bell(midi(note(m)), 3.2, 0.2 if j < 3 else 0.1)
+        mus.add(t0 + 0.95 + j * 0.07, b, pan=-0.3 + j * 0.2)
+        send.add(t0 + 0.95 + j * 0.07, b, gain=1.5)
+    b = bell(midi(note("A6")), 2.2, 0.1)
+    mus.add(t0 + 1.7, b, pan=0.2)
+    send.add(t0 + 1.7, b, gain=1.4)
+    fx.add(t0 + 3.25, whoosh(1.2, up=False, vel=0.28), pan=0.5)
+
+    # The team: a warm bed under the voice, the chord moving as the camera moves from one person to
+    # the next, a rising bell as each name is said (right to left, like the light), and a breath
+    # in as they all stand in the light together.
+    t0, dur = team["at"], team["dur"]
+    members = json.loads((FILM / "config.json").read_text()).get("members", [])
+    by_id = {ln["id"]: ln for ln in lines}
+    starts = [by_id[m["line"]]["at"] for m in members if m.get("line") in by_id]
+    if len(starts) < len(members):
+        # No narration for the cards: the scene spaces them evenly (render/scenes/intro.js).
+        starts = [t0 + 2.8 + i * (dur - 1.3 - 2.8) / len(members) for i in range(len(members))]
+    exit_ = t0 + dur - 1.3
+    s = impact(0.42)
+    fx.add(t0, s)
+    send.add(t0, s, gain=0.6)
+    edges = [t0] + [a - 0.45 for a in starts] + [t0 + dur + 0.4]
+    chords = [DM, F_, C_, DM, BB, C_, C_]
+    for j, (a, b) in enumerate(zip(edges, edges[1:])):
+        ch = chords[min(j, len(chords) - 1)]
+        st = strings(F([m + 12 for m in ch[1:]]), b - a + 1.3, attack=0.9 if j == 0 else 0.45, release=1.2)
+        pd = pad(F(ch), b - a + 1.3, cutoff=1900, attack=0.7 if j == 0 else 0.35, release=1.0)
+        mus.add(a, st, gain=0.4)
+        mus.add(a, pd, gain=0.28)
+        send.add(a, st, gain=0.45)
+    for j, a in enumerate(starts):
+        b = bell(midi(note(("D5", "F5", "A5", "C6", "D6")[j % 5])), 2.6, 0.26)
+        mus.add(a - 0.05, b, pan=0.6 - j * 0.3)
+        send.add(a - 0.05, b, gain=1.4)
+    beat = 60 / 96
+    if starts:
+        roots = [note("D3"), note("F3"), note("C3"), note("D3"), note("Bb2"), note("C3")]
+        for i, tb in enumerate(np.arange(starts[0] - 0.45, exit_, beat / 2)):
+            j = sum(tb >= e for e in edges[1:])
+            mus.add(tb, pluck(midi(roots[min(j, len(roots) - 1)] + [0, 12, 7, 12][i % 4]), 0.5, 0.15), pan=(-0.35 if i % 2 else 0.35))
+    # All of them in the light together: a breath in, and a soft chord as it lands.
+    fx.add(exit_ - 0.4, reverse_swell(0.9, 0.4))
+    for j, m in enumerate(("D4", "A4", "D5", "F5")):
+        b = bell(midi(note(m)), 3.0, 0.16)
+        mus.add(exit_ + 0.5 + j * 0.03, b, pan=-0.3 + j * 0.2)
+        send.add(exit_ + 0.5 + j * 0.03, b, gain=1.5)
+    return mus, send, fx
+
+
 # ---- Narration and the mix ------------------------------------------------------------------------------
 
 
-def narration(lines):
-    vo = Bus()
-    mask = np.zeros(N)
+def narration(lines, n):
+    vo = Bus(n=n)
+    mask = np.zeros(n)
     for ln in lines:
         x, sr = sf.read(FILM / "build" / "vo" / f"{ln['id']}.wav")
         assert sr == SR
@@ -698,7 +829,7 @@ def narration(lines):
         x = highpass(x, 80, 2)
         vo.add(ln["at"], x, gain=1.0)
         a, b = at(ln["at"] - 0.12), at(ln["end"] + 0.25)
-        mask[max(a, 0) : min(b, N)] = 1
+        mask[max(a, 0) : min(b, n)] = 1
     # Smooth the ducking: quick to dip, slow to recover.
     win = np.hanning(int(0.35 * SR))
     win /= win.sum()
@@ -714,12 +845,16 @@ def main():
     OUT.mkdir(parents=True, exist_ok=True)
     cues = json.loads((FILM / "build" / "cues.json").read_text())
     lines = json.loads((FILM / "build" / "vo" / "lines.json").read_text())
+    plan, film_dur = the_cut()
+    nf = int(SR * film_dur)
     print("· score")
     mus, mus_send = compose(cues, lines)
     print("· effects")
     fx, fx_send = effects(cues)
+    print("· the new pieces")
+    new_mus, new_send, new_fx = compose_new(plan, nf, lines)
     print("· narration")
-    vo, duck = narration(lines)
+    vo, duck = narration(lines, nf)
     print("· reverb")
     ir = make_ir(3.4)
     wet = np.stack([fftconvolve((mus_send.x + fx_send.x)[:, c], ir[:, c])[:N] for c in range(2)], axis=1) * 0.22
@@ -738,8 +873,13 @@ def main():
     freeze = ((10.72, 10.76), (116.55, 116.62))
     # After the freeze in the opening, only the held tone (which starts after the gate).
     music *= gate((*freeze, (59.3, 60.0), (221.4, 221.62)))[:, None]
+    fxx = fx.x * gate(freeze)[:, None]
+    print("· the cut")
+    new_wet = np.stack([fftconvolve(new_send.x[:, c], ir[:, c])[:nf] for c in range(2)], axis=1) * 0.22
+    music = assemble(music, plan, nf) + new_mus.x + new_wet
+    fxx = assemble(fxx, plan, nf) + new_fx.x
     music *= (1 - 0.78 * duck)[:, None]
-    fxx = fx.x * gate(freeze)[:, None] * (1 - 0.55 * duck)[:, None]
+    fxx *= (1 - 0.55 * duck)[:, None]
     sf.write(OUT / "music.wav", music.astype(np.float32), SR)
     sf.write(OUT / "fx.wav", fxx.astype(np.float32), SR)
     sf.write(OUT / "vo.wav", vo.x.astype(np.float32), SR)
@@ -747,8 +887,8 @@ def main():
     # Gentle bus compression and a soft limiter.
     peak = np.abs(mix).max()
     mix = np.tanh(mix / max(peak, 1e-9) * 1.4) / np.tanh(1.4) * 0.95
-    fade = np.ones(N)
-    fade[at(237.2) :] = np.linspace(1, 0, N - at(237.2)) ** 2
+    fade = np.ones(nf)
+    fade[at(film_dur - 0.8) :] = np.linspace(1, 0, nf - at(film_dur - 0.8)) ** 2
     mix *= fade[:, None]
     sf.write(OUT / "mix_pre.wav", mix.astype(np.float32), SR)
     # The same film without the voice, for a team that narrates live or records its own take.
@@ -756,9 +896,10 @@ def main():
     bed = np.tanh(bed / max(np.abs(bed).max(), 1e-9) * 1.4) / np.tanh(1.4) * 0.95
     bed *= fade[:, None]
     sf.write(OUT / "bed_pre.wav", bed.astype(np.float32), SR)
-    for name, a, b in (("Q1", 0, 60), ("Q2", 60, 120), ("Q3", 120, 180), ("Q4", 180, 238)):
+    q = [0.0, to_film(plan, 60.0), to_film(plan, 120.0), to_film(plan, 180.0), film_dur]
+    for name, a, b in zip(("Q1", "Q2", "Q3", "Q4"), q, q[1:]):
         print(f"  {name}: music {loudness_rms(music[at(a):at(b)]):6.1f} dB  fx {loudness_rms(fxx[at(a):at(b)]):6.1f} dB  vo {loudness_rms(vo.x[at(a):at(b)]):6.1f} dB  mix {loudness_rms(mix[at(a):at(b)]):6.1f} dB")
-    print("✓", OUT / "mix_pre.wav")
+    print(f"✓ {OUT / 'mix_pre.wav'}  ({film_dur:.2f} s)")
 
 
 if __name__ == "__main__":

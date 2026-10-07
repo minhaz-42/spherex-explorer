@@ -53,7 +53,14 @@ def main():
          "-crf", "16", "-pix_fmt", "yuv420p", "-tune", "film", "-c:a", "aac", "-b:a", "320k", "-shortest", "-movflags", "+faststart",
          *META, str(dst)])
     print("✓", dst.name)
-    run(["-ss", "51.9", "-i", str(pic), "-frames:v", "1", "-q:v", "2", str(OUT / "poster.jpg")])
+    # The poster: the name, crisp, under the dark field (51.9 s on the source timeline).
+    t, at = None, 0.0
+    for p in json.loads((FILM / "edit.json").read_text())["pieces"]:
+        d = p.get("dur") or p["src"][1] - p["src"][0]
+        if "src" in p and p["src"][0] <= 51.9 < p["src"][1]:
+            t = at + 51.9 - p["src"][0]
+        at += d
+    run(["-ss", f"{t:.2f}", "-i", str(pic), "-frames:v", "1", "-q:v", "2", str(OUT / "poster.jpg")])
     print("✓ poster.jpg")
     ok = True
     for f in sorted(OUT.glob("*.mp4")):
