@@ -40,3 +40,4 @@ Thumbs.db
 # Small real-data test fixtures are the exception
 !backend/tests/fixtures/*.fits
 /backend/.cache-e2e/
+.vercel

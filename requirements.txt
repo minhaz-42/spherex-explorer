@@ -1,0 +1,11 @@
+# Runtime dependencies for the Vercel function (api/index.py), pinned to backend/uv.lock.
+# uvicorn without [standard]: the function only needs its proxy-headers middleware.
+fastapi==0.141.1
+uvicorn==0.54.0
+httpx==0.28.1
+pydantic==2.13.5
+pydantic-settings==2.15.0
+numpy==2.5.3
+scipy==1.18.1
+astropy==8.0.1
+defusedxml==0.7.1

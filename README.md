@@ -205,6 +205,17 @@ It needs outbound HTTPS to irsa.ipac.caltech.edu, nasa-irsa-spherex.s3.us-east-1
 ssd-api.jpl.nasa.gov, ssd.jpl.nasa.gov and cds.unistra.fr. A server in a US region reads frames many
 times faster than a distant one.
 
+#### Vercel
+
+The public instance runs on Vercel at <https://spherex-explorer.vercel.app>. Deploy with
+`npx vercel deploy --prod` from the repository root. `vercel.json` builds the web app and serves
+`frontend/dist` from Vercel's CDN with the same security headers as the FastAPI server, and
+rewrites `/api/*` to one Python function, `api/index.py`, which wraps the same app. Its
+dependencies are pinned in `requirements.txt` to match `backend/uv.lock`: change both together.
+On Vercel the cache lives in `/tmp` and lasts only as long as a function instance, and the assistant
+gives built-in answers, since there is no local model; `SPHEREX_*` project variables override both.
+`.vercelignore` uploads only what the build needs.
+
 ## The pitch film
 
 `film/` builds a 3 minute 58 second film for the Space Apps judging, with captioned and voice-free
@@ -215,6 +226,7 @@ into `film/release/`, next to the captions and poster that are tracked. See
 ## Project structure
 
 ```text
+api/index.py               Vercel entry point: wraps the FastAPI app as one function
 backend/                   Python data service (FastAPI)
   src/spherex_explorer/
     main.py                app factory: /api routes, security headers, serves frontend/dist
@@ -245,6 +257,7 @@ docs/                      research, architecture, requirements, methods, limita
 film/                      the four-minute pitch film: built from code, real data and app recordings
   release/                 captions and poster (the MP4s are built here, not committed)
 Makefile                   setup, dev, check, build, serve
+vercel.json, requirements.txt, .vercelignore   Vercel build, routing, headers, function deps
 ```
 
 ## Working on the project

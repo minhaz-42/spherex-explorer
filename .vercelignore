@@ -1,0 +1,18 @@
+# Upload only what the deployment builds from; film/ alone is several gigabytes.
+/*
+!/api
+!/backend
+!/data
+!/frontend
+!/requirements.txt
+!/vercel.json
+/backend/.cache
+/backend/.cache-e2e
+/backend/.venv
+/backend/tests
+/frontend/node_modules
+/frontend/dist
+/frontend/test-results
+/frontend/playwright-report
+**/__pycache__
+**/.DS_Store
