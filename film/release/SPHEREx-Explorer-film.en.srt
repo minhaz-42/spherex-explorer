@@ -1,0 +1,179 @@
+1
+00:00:16,950 --> 00:00:20,119
+In 2025, NASA launched SPHEREx.
+
+2
+00:00:20,550 --> 00:00:21,941
+Every six months,
+
+3
+00:00:21,941 --> 00:00:26,525
+it maps the entire sky in 102 colours of infrared light.
+
+4
+00:00:26,950 --> 00:00:28,570
+Again. And again.
+
+5
+00:00:35,550 --> 00:00:37,251
+And we couldn't stop asking:
+
+6
+00:00:37,251 --> 00:00:40,105
+what if something important is hiding in there?
+
+7
+00:00:45,350 --> 00:00:48,959
+We're a team from Bangladesh. And we built SPHEREx Explorer
+
+8
+00:00:48,959 --> 00:00:52,050
+because we believe discovery shouldn't belong only
+
+9
+00:00:52,050 --> 00:00:55,016
+to the people who have the tools to look for it.
+
+10
+00:01:01,150 --> 00:01:03,928
+Arizona, 1930. Clyde Tombaugh blinks
+
+11
+00:01:03,928 --> 00:01:07,632
+between two photographs of the same patch of sky
+
+12
+00:01:07,700 --> 00:01:09,888
+until one tiny point moves.
+
+13
+00:01:13,350 --> 00:01:16,668
+Almost a century later, the method hasn't changed.
+
+14
+00:01:18,950 --> 00:01:22,463
+Photograph the sky. Compare. Look for what moved.
+
+15
+00:01:30,950 --> 00:01:32,587
+The method is simple.
+
+16
+00:01:34,350 --> 00:01:35,729
+The scale isn't.
+
+17
+00:01:45,550 --> 00:01:48,837
+Somewhere inside all of this, something could be moving.
+
+18
+00:01:51,550 --> 00:01:54,126
+The question is: will anyone notice?
+
+19
+00:02:00,750 --> 00:02:02,720
+So we built a new way to look.
+
+20
+00:02:04,350 --> 00:02:06,290
+Name any place in the sky.
+
+21
+00:02:06,290 --> 00:02:10,692
+SPHEREx Explorer finds every image SPHEREx has taken of it,
+
+22
+00:02:10,692 --> 00:02:12,830
+live from the public archive.
+
+23
+00:02:13,550 --> 00:02:16,846
+Then it does what Tombaugh did. It blinks the frames.
+
+24
+00:02:18,350 --> 00:02:19,868
+And something moves.
+
+25
+00:02:21,950 --> 00:02:24,666
+Its own search finds the moving point,
+
+26
+00:02:24,666 --> 00:02:26,989
+knowing nothing about asteroids.
+
+27
+00:02:26,989 --> 00:02:29,239
+Then it checks with NASA's JPL.
+
+28
+00:02:29,550 --> 00:02:34,382
+It's the asteroid Iris, caught by SPHEREx in December 2025.
+
+29
+00:02:35,550 --> 00:02:38,827
+And it's honest. Each frame sees a different colour,
+
+30
+00:02:38,827 --> 00:02:41,285
+so it never mistakes colour for change.
+
+31
+00:02:42,950 --> 00:02:46,370
+Seventy-five years of sky surveys, side by side.
+
+32
+00:02:46,370 --> 00:02:50,288
+A game that trains your eye. In English, and in Bangla.
+
+33
+00:02:52,350 --> 00:02:55,722
+Ask it anything. Every answer shows its sources.
+
+34
+00:03:08,550 --> 00:03:10,092
+For most of human history,
+
+35
+00:03:10,092 --> 00:03:12,999
+the universe was something we could only look at.
+
+36
+00:03:18,950 --> 00:03:21,927
+Every generation built a better way to see.
+
+37
+00:03:22,550 --> 00:03:24,973
+Our generation has something different.
+
+38
+00:03:25,950 --> 00:03:28,488
+We have more data than ever before.
+
+39
+00:03:29,350 --> 00:03:31,927
+Now we need more people looking at it.
+
+40
+00:03:33,550 --> 00:03:34,723
+A student.
+
+41
+00:03:35,350 --> 00:03:37,174
+A citizen scientist.
+
+42
+00:03:37,350 --> 00:03:38,661
+An astronomer.
+
+43
+00:03:39,150 --> 00:03:41,213
+Anyone curious enough to look.
+
+44
+00:03:44,550 --> 00:03:48,184
+Because the next discovery may not be hiding from humanity.
+
+45
+00:03:48,950 --> 00:03:51,754
+It may simply be waiting for someone to notice.
