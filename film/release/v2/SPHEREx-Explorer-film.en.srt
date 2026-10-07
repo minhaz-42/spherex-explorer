@@ -11,7 +11,7 @@ Every six months,
 it maps the entire sky in 102 colours of infrared light.
 
 4
-00:00:29,150 --> 00:00:30,769
+00:00:29,150 --> 00:00:30,770
 Again. And again.
 
 5
@@ -27,177 +27,157 @@ what if something important is hiding in there?
 We're Team Oblivion, from Bangladesh.
 
 8
-00:00:39,960 --> 00:00:41,964
-Tanvir Ahmed built the app.
-
-9
-00:00:41,960 --> 00:00:44,418
-Fahim Foysal Souwmik led the team.
-
-10
-00:00:44,420 --> 00:00:46,925
-Shefa Tabassum analysed the data.
-
-11
-00:00:46,930 --> 00:00:49,128
-Sadman Sakib told our story.
-
-12
-00:00:49,130 --> 00:00:52,059
-And Atahar Hossain Piash researched the science.
-
-13
 00:00:55,310 --> 00:00:57,059
 And we built SPHEREx Explorer
 
-14
+9
 00:00:57,059 --> 00:01:00,074
 because we believe discovery shouldn't belong only
 
-15
+10
 00:01:00,074 --> 00:01:02,932
 to the people who have the tools to look for it.
 
-16
+11
 00:01:06,160 --> 00:01:08,938
 Arizona, 1930. Clyde Tombaugh blinks
 
-17
+12
 00:01:08,938 --> 00:01:12,642
 between two photographs of the same patch of sky
 
-18
+13
 00:01:12,710 --> 00:01:14,898
 until one tiny point moves.
 
-19
+14
 00:01:18,360 --> 00:01:21,678
 Almost a century later, the method hasn't changed.
 
-20
+15
 00:01:23,960 --> 00:01:27,473
 Photograph the sky. Compare. Look for what moved.
 
-21
+16
 00:01:35,960 --> 00:01:37,598
 The method is simple.
 
-22
+17
 00:01:39,360 --> 00:01:40,739
 The scale isn't.
 
-23
+18
 00:01:50,560 --> 00:01:53,847
 Somewhere inside all of this, something could be moving.
 
-24
+19
 00:01:56,560 --> 00:01:59,136
 The question is: will anyone notice?
 
-25
+20
 00:02:05,760 --> 00:02:07,730
 So we built a new way to look.
 
-26
+21
 00:02:09,360 --> 00:02:11,300
 Name any place in the sky.
 
-27
+22
 00:02:11,300 --> 00:02:15,702
 SPHEREx Explorer finds every image SPHEREx has taken of it,
 
-28
+23
 00:02:15,702 --> 00:02:17,840
 live from the public archive.
 
-29
+24
 00:02:18,560 --> 00:02:21,856
 Then it does what Tombaugh did. It blinks the frames.
 
-30
+25
 00:02:23,360 --> 00:02:24,878
 And something moves.
 
-31
+26
 00:02:26,960 --> 00:02:29,676
 Its own search finds the moving point,
 
-32
+27
 00:02:29,676 --> 00:02:31,999
 knowing nothing about asteroids.
 
-33
+28
 00:02:31,999 --> 00:02:34,249
 Then it checks with NASA's JPL.
 
-34
+29
 00:02:34,560 --> 00:02:39,392
 It's the asteroid Iris, caught by SPHEREx in December 2025.
 
-35
+30
 00:02:40,560 --> 00:02:43,837
 And it's honest. Each frame sees a different colour,
 
-36
+31
 00:02:43,837 --> 00:02:46,295
 so it never mistakes colour for change.
 
-37
+32
 00:02:47,960 --> 00:02:51,380
 Seventy-five years of sky surveys, side by side.
 
-38
+33
 00:02:51,380 --> 00:02:55,298
 A game that trains your eye. In English, and in Bangla.
 
-39
+34
 00:02:57,360 --> 00:03:00,732
 Ask it anything. Every answer shows its sources.
 
-40
+35
 00:03:10,320 --> 00:03:11,862
 For most of human history,
 
-41
+36
 00:03:11,862 --> 00:03:14,769
 the universe was something we could only look at.
 
-42
+37
 00:03:20,720 --> 00:03:23,697
 Every generation built a better way to see.
 
-43
+38
 00:03:24,320 --> 00:03:26,743
 Our generation has something different.
 
-44
+39
 00:03:27,720 --> 00:03:30,258
 We have more data than ever before.
 
-45
+40
 00:03:31,120 --> 00:03:33,697
 Now we need more people looking at it.
 
-46
+41
 00:03:35,320 --> 00:03:36,493
 A student.
 
-47
+42
 00:03:37,120 --> 00:03:38,944
 A citizen scientist.
 
-48
+43
 00:03:39,120 --> 00:03:40,431
 An astronomer.
 
-49
+44
 00:03:40,920 --> 00:03:42,983
 Anyone curious enough to look.
 
-50
+45
 00:03:46,320 --> 00:03:49,954
 Because the next discovery may not be hiding from humanity.
 
-51
+46
 00:03:50,720 --> 00:03:53,524
 It may simply be waiting for someone to notice.

@@ -1,0 +1,182 @@
+SPHEREx EXPLORER · PITCH FILM SCRIPT (v3)
+Team Oblivion · Bangladesh · NASA Space Apps Challenge 2026
+Length: 3:59  (under 4:00)
+
+The long NASA Space Apps logo stays in the top-right corner from 0:04 to the end.
+Times are minutes:seconds in the finished video.
+
+========================================================================
+0 · OPENING   0:00 - 0:04
+========================================================================
+
+0.1  The title   [0:00 - 0:04]
+On screen: The NASA International Space Apps Challenge logo. "TEAM
+  OBLIVION PRESENTS". The logo moves to the top-right corner and stays
+  there for the whole film.
+(No narration)
+
+========================================================================
+1 · THE DOT  (Who / attention)   0:00 - 1:05
+========================================================================
+
+1.1  The hook   [0:03 - 0:17]
+On screen: Real SPHEREx stars appear one by one. One point moves
+  (asteroid 7 Iris). Freeze. "Did you see it move?"
+(No narration)
+
+1.2  SPHEREx   [0:17 - 0:32]
+On screen: The stars become data, the view pulls back to the whole sky.
+  "SPHEREx". The six detector bands: "102 colours of infrared light".
+  "Every six months".
+0:19  NARRATOR: In 2025, NASA launched SPHEREx.
+0:22  NARRATOR: Every six months, it maps the entire sky in 102 colours
+              of infrared light.
+0:29  NARRATOR: Again. And again.
+
+1.3  Our work   [0:32 - 0:37]
+On screen: Our code, then the app blinking the Iris frames.
+0:32  NARRATOR: And we couldn't stop asking: what if something important
+              is hiding in there?
+
+1.4  Team Oblivion   [0:37 - 0:52]
+On screen: The team rises out of the stars. "TEAM OBLIVION ·
+  BANGLADESH". Close on each person, right to left, with a card: name,
+  role, what they did. Then all five together.
+Cards (right to left):
+  - Tanvir Ahmed · Lead Developer: Built the app: the archive search, the blink and the moving-object finder.
+  - Fahim Foysal Souwmik · Team Lead: Led the team, shaped the idea and kept us on course.
+  - Shefa Tabassum · Data Analyst: Analysed the SPHEREx data and checked the measurements.
+  - Sadman Sakib · Film & Storytelling: Told our story: the pitch, the script and this film.
+  - Atahar Hossain Piash · Science & Research: Researched SPHEREx and the science behind every method.
+0:37  NARRATOR: We're Team Oblivion, from Bangladesh.
+0:40  NARRATOR: Tanvir Ahmed built the app.
+0:42  NARRATOR: Fahim Foysal Souwmik led the team.
+0:44  NARRATOR: Shefa Tabassum analysed the data.
+0:46  NARRATOR: Sadman Sakib told our story.
+0:49  NARRATOR: And Atahar Hossain Piash researched the science.
+
+1.5  The name   [0:52 - 1:05]
+On screen: The app rises out of the dark. Stars gather into "SPHEREx
+  Explorer". "Discovery shouldn't belong only to the people who have the
+  tools to look for it." Cut to black.
+0:55  NARRATOR: And we built SPHEREx Explorer because we believe
+              discovery shouldn't belong only to the people who have the
+              tools to look for it.
+
+========================================================================
+2 · THE BLINK  (Why)   1:05 - 2:05
+========================================================================
+
+2.1  Arizona, 1930   [1:05 - 1:18]
+On screen: Lowell Observatory, February 1930. The blink comparator; two
+  plates flip. "PLUTO". (A labelled reconstruction.)
+1:06  NARRATOR: Arizona, 1930. Clyde Tombaugh blinks between two
+              photographs of the same patch of sky…
+1:12  NARRATOR: …until one tiny point moves.
+
+2.2  Barnard's Star   [1:18 - 1:24]
+On screen: The same patch of sky in five surveys, 1950s to SPHEREx 2026.
+  The star moves.
+1:18  NARRATOR: Almost a century later, the method hasn't changed.
+
+2.3  Photograph. Compare. Look for what moved.   [1:24 - 1:36]
+On screen: Three real SPHEREx frames of Iris; they blink. One frame in a
+  wall of images.
+1:24  NARRATOR: Photograph the sky. Compare. Look for what moved.
+
+2.4  The scale   [1:36 - 1:50]
+On screen: "102 colours x the whole sky x every six months". "450
+  million galaxies". "100 million stars in the Milky Way".
+1:36  NARRATOR: The method is simple.
+1:39  NARRATOR: The scale isn't.
+
+2.5  By hand   [1:50 - 2:05]
+On screen: Someone scrolling an endless archive, comparing by eye. One
+  dot remains.
+1:50  NARRATOR: Somewhere inside all of this, something could be moving.
+1:56  NARRATOR: The question is: will anyone notice?
+
+========================================================================
+3 · THE DEMO  (What)   2:05 - 3:03
+========================================================================
+
+3.1  A new way to look   [2:05 - 2:08]
+On screen: The dot opens into the app.
+2:05  NARRATOR: So we built a new way to look.
+
+3.2  01 Search any place in the sky   [2:08 - 2:18]
+On screen: "Andromeda Galaxy" typed; every SPHEREx frame of it found;
+  the timeline plays.
+2:09  NARRATOR: Name any place in the sky. SPHEREx Explorer finds every
+              image SPHEREx has taken of it, live from the public
+              archive.
+
+3.3  02 Blink the frames   [2:18 - 2:26]
+On screen: The Iris case blinking. "9.7 hours later, it had moved".
+2:18  NARRATOR: Then it does what Tombaugh did. It blinks the frames.
+2:23  NARRATOR: And something moves.
+
+3.4  03 Find what moved / 04 Check it with NASA JPL   [2:26 - 2:40]
+On screen: Our search finds candidate C1; JPL's predicted track matches:
+  7 Iris, 0.8" away.
+2:27  NARRATOR: Its own search finds the moving point, knowing nothing
+              about asteroids. Then it checks with NASA's JPL.
+2:34  NARRATOR: It's the asteroid Iris, caught by SPHEREx in December
+              2025.
+
+3.5  05 Honest about wavelength   [2:40 - 2:47]
+On screen: "A difference image would be misleading here."
+2:40  NARRATOR: And it's honest. Each frame sees a different colour, so
+              it never mistakes colour for change.
+
+3.6  06 Surveys, a game, Bangla   [2:47 - 2:57]
+On screen: 75 years of surveys side by side; Spot the mover (a game);
+  English / Bangla.
+2:48  NARRATOR: Seventy-five years of sky surveys, side by side. A game
+              that trains your eye. In English, and in Bangla.
+
+3.7  07 Ask, and see the sources   [2:57 - 3:03]
+On screen: The assistant answers, with numbered sources.
+2:57  NARRATOR: Ask it anything. Every answer shows its sources.
+
+========================================================================
+4 · THE INVITATION  (Impact)   3:03 - 3:59
+========================================================================
+
+4.1  Stay on the discovery   [3:03 - 3:13]
+On screen: Iris on its track. Pull back to its orbit, then to Earth.
+3:10  NARRATOR: For most of human history, the universe was something we
+              could only look at.
+
+4.2  Every way of seeing   [3:13 - 3:26]
+On screen: The naked eye, the telescope, photographic plates, the great
+  observatories, SPHEREx.
+3:20  NARRATOR: Every generation built a better way to see.
+3:24  NARRATOR: Our generation has something different.
+
+4.3  The data, and the people   [3:26 - 3:33]
+On screen: The whole sky unfolds; hundreds of small rings light up
+  across it.
+3:27  NARRATOR: We have more data than ever before.
+3:31  NARRATOR: Now we need more people looking at it.
+
+4.4  Who it is for   [3:33 - 3:43]
+On screen: The game, Discover, JPL's match, fast cuts through the app.
+  Cut to black.
+3:35  NARRATOR: A student.
+3:37  NARRATOR: A citizen scientist.
+3:39  NARRATOR: An astronomer.
+3:40  NARRATOR: Anyone curious enough to look.
+
+4.5  Caught   [3:43 - 3:54]
+On screen: The first shot's dot, caught: "Moving · 53" an hour",
+  "Matches JPL: 7 Iris". Pull back to the whole sky.
+3:46  NARRATOR: Because the next discovery may not be hiding from
+              humanity.
+3:50  NARRATOR: It may simply be waiting for someone to notice.
+
+4.6  End card   [3:54 - 3:59]
+On screen: "SPHEREx Explorer" · "Look closer. Discover what changed." ·
+  "Team Oblivion · Bangladesh" · "NASA Space Apps Challenge 2026".
+  Credits. Fade out.
+(No narration)

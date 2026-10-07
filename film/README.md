@@ -25,6 +25,8 @@ another way (a drive link, or a GitHub release):
 - `SPHEREx-Explorer-film-no-voice.mp4`: music and effects only, for narrating live over the film.
 - `SPHEREx-Explorer-film.en.srt`: captions as a separate file.
 - `poster.jpg`: a still for thumbnails.
+- `SPHEREx-Explorer-film-script.pdf` and `.txt`: the full script, part by part and shot by shot,
+  with timecodes, narration, what is on screen and the sound (the PDF has a still from each shot).
 - `v2/`: the same three videos with the team cards unspoken: the narrator says "We're Team Oblivion,
   from Bangladesh" and the music carries the five cards. Built by leaving lines `q1m1`–`q1m5` out of
   `script.json`; the cards then space themselves evenly.

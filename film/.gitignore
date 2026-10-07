@@ -2,3 +2,4 @@ models/
 scratch/
 # The finished videos are 200–300 MB each: shared outside git (see README.md).
 release/*.mp4
+release/v2/*.mp4
