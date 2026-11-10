@@ -75,14 +75,50 @@ def parse_tap(status: int, text: str) -> list[dict[str, Any]]:
         ) from exc
 
 
+# CDS's official SIMBAD mirrors, tried in turn when the configured service is unreachable or
+# missing (as during CDS's November 2026 incident, when Strasbourg's TAP answered 404). They run
+# the same database and ADQL; the CfA copy may lag Strasbourg by a few weeks.
+MIRRORS = (
+    "https://simbad.cfa.harvard.edu/simbad/sim-tap/sync",
+    "https://simbad.idia.ac.za/simbad/sim-tap/sync",
+)
+# A dead host should cost seconds, not the whole timeout, before the next mirror is tried.
+_TIMEOUT = httpx.Timeout(TIMEOUT_S, connect=8.0)
+# The last service that answered, tried first next time (per process).
+_working: str | None = None
+
+
 async def run_query(client: httpx.AsyncClient, url: str, adql: str) -> list[dict[str, Any]]:
-    async with upstream(SERVICE):
-        response = await client.post(
-            url,
-            data={"request": "doQuery", "lang": "adql", "format": "json", "query": adql},
-            timeout=TIMEOUT_S,
-        )
-    return parse_tap(response.status_code, response.text)
+    """Run ADQL on the configured SIMBAD TAP service, falling back to its mirrors.
+
+    A query SIMBAD rejects is not retried elsewhere: the mirrors would reject it too.
+    """
+    global _working
+    order = [u for u in (_working, url, *MIRRORS) if u]
+    failure: UpstreamError | None = None
+    for candidate in dict.fromkeys(order):
+        try:
+            async with upstream(SERVICE):
+                response = await client.post(
+                    candidate,
+                    data={"request": "doQuery", "lang": "adql", "format": "json", "query": adql},
+                    timeout=_TIMEOUT,
+                )
+        except UpstreamError as exc:
+            failure = exc
+            continue
+        if response.status_code == 404 or response.status_code >= 500:
+            failure = UpstreamError(
+                SERVICE,
+                f"{SERVICE} answered with HTTP {response.status_code}.",
+                detail=response.text[:300],
+            )
+            continue
+        rows = parse_tap(response.status_code, response.text)
+        _working = candidate
+        return rows
+    assert failure is not None
+    raise failure
 
 
 # --- ADQL ------------------------------------------------------------------------------------

@@ -72,8 +72,9 @@ Context around the target comes from other public services, also without keys:
 
 | What | Where | Used for |
 |---|---|---|
-| SIMBAD TAP (CDS) | `https://simbad.cds.unistra.fr/simbad/sim-tap/sync` | Object facts and the catalogued objects in a field |
-| hips2fits (CDS) | `https://alasky.cds.unistra.fr/hips-image-services/hips2fits` | DSS2, 2MASS and AllWISE colour images of the same field |
+| SIMBAD TAP (CDS) | `https://simbad.cds.unistra.fr/simbad/sim-tap/sync`, falling back to its mirrors at CfA Harvard and IDIA | Object facts and the catalogued objects in a field |
+| SkyView (NASA HEASARC, Goddard) | `https://skyview.gsfc.nasa.gov/current/cgi/runquery.pl` | DSS2, 2MASS and AllWISE bands, made into colour images of the same field |
+| hips2fits (CDS) | `https://alasky.cds.unistra.fr/hips-image-services/hips2fits` | The same colour images, when SkyView fails |
 | Digitized Sky Survey (STScI) | `https://archive.stsci.edu/cgi-bin/dss_search` | Palomar plates from the 1950s (POSS-I) and about 1990 (POSS-II) |
 | Natural Earth | bundled as `frontend/public/data/land-110m.json` | Coastlines on the "Where was SPHEREx?" globe (public domain) |
 

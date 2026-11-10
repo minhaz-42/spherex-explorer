@@ -10,16 +10,19 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import logging
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Query, Request, Response
 
-from ..objects import images, plates, simbad
+from ..errors import UpstreamError
+from ..objects import images, plates, simbad, skyview
 from . import compute
 from .cachekeys import field_objects_key, object_image_key, plate_key
 from .routes import DAY, DEC, RA, Source, services
 
 router = APIRouter()
+log = logging.getLogger("spherex_explorer")
 
 IMAGE_CACHE_CONTROL = "public, max-age=604800"
 # A plate is a large, slow download for STScI, so it costs more of a visitor's allowance.
@@ -87,34 +90,53 @@ async def object_image(
     size: Annotated[int, Query(ge=64, le=512, description="Width and height, pixels")] = 256,
     source: Source = "live",
 ) -> Response:
-    """A colour survey image of the field from CDS hips2fits (DSS2, 2MASS or AllWISE)."""
+    """A colour survey image of the field (DSS2, 2MASS or AllWISE).
+
+    From NASA SkyView, built here from its single-band images; if SkyView fails, the ready-made
+    colour JPEG from CDS hips2fits. The ``X-Image-Credit`` header says which.
+    """
     svc = services(request)
     wanted = images.quantise(ra, dec, fov, survey, size)
 
     async def compute() -> dict[str, Any]:
         svc.limiter.check(_client(request))
-        jpeg = await images.fetch_jpeg(svc.client, svc.settings.hips2fits_url, wanted)
-        return {
+        facts = {
             "survey": wanted.survey,
-            "hips": images.SURVEYS[wanted.survey].hips,
             "ra": wanted.ra,
             "dec": wanted.dec,
             "fov": wanted.fov,
             "size": wanted.size,
             "projection": wanted.projection,
+        }
+        try:
+            png = await skyview.fetch_png(svc.client, svc.settings.skyview_url, wanted)
+            return {
+                **facts,
+                "png": base64.b64encode(png).decode("ascii"),
+                "credit": skyview.CREDITS[wanted.survey],
+            }
+        except UpstreamError as exc:
+            log.warning("NASA SkyView failed (%s); trying CDS hips2fits", exc.message)
+        jpeg = await images.fetch_jpeg(svc.client, svc.settings.hips2fits_url, wanted)
+        return {
+            **facts,
+            "hips": images.SURVEYS[wanted.survey].hips,
             "jpeg": base64.b64encode(jpeg).decode("ascii"),
+            "credit": images.SURVEYS[wanted.survey].credit,
         }
 
     key = object_image_key(ra, dec, fov, survey, size)
     stored = await svc.store.get_or_compute(
         "object-image", key, compute, ttl_s=30 * DAY, source=source
     )
+    # Answers cached before SkyView was added hold a hips2fits JPEG and no credit.
+    png = "png" in stored
     return Response(
-        content=base64.b64decode(stored["jpeg"]),
-        media_type="image/jpeg",
+        content=base64.b64decode(stored["png"] if png else stored["jpeg"]),
+        media_type="image/png" if png else "image/jpeg",
         headers={
             "Cache-Control": IMAGE_CACHE_CONTROL,
-            "X-Image-Credit": images.SURVEYS[wanted.survey].credit,
+            "X-Image-Credit": stored.get("credit", images.SURVEYS[wanted.survey].credit),
         },
     )
 

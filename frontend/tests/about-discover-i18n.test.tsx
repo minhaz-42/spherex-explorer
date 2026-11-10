@@ -145,7 +145,7 @@ describe("About in Bangla", () => {
   it("keeps the credits in English, word for word, and marks them as English", () => {
     renderPage(<About />);
     const english = creditTexts();
-    expect(english).toHaveLength(8);
+    expect(english).toHaveLength(9);
 
     bangla();
     expect(screen.getByRole("heading", { level: 2, name: "ডেটা ও কৃতজ্ঞতা" })).toBeInTheDocument();
@@ -159,6 +159,7 @@ describe("About in Bangla", () => {
     expect(screen.getByText(/^This research has made use of the NASA\/IPAC Infrared Science Archive/)).toHaveAttribute("lang", "en");
     expect(screen.getByRole("link", { name: "doi:10.26131/IRSA652" })).toHaveAttribute("href", "https://doi.org/10.26131/IRSA652");
     expect(screen.getByRole("link", { name: "SIMBAD database" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "SkyView" })).toHaveAttribute("href", "https://skyview.gsfc.nasa.gov/");
   });
 
   it("is English by default, unchanged, and switches both ways while open", () => {

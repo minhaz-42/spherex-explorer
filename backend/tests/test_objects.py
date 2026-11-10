@@ -42,7 +42,7 @@ FITS_HEADERS = {"content-type": "image/x-fits"}
 
 
 def decode_png(data: bytes) -> NDArray[np.uint8]:
-    """Pixels of an 8-bit greyscale PNG, checking its chunk CRCs and per-row filter bytes."""
+    """Pixels of an 8-bit greyscale or RGB PNG, checking its chunk CRCs and per-row filter bytes."""
     assert data[:8] == b"\x89PNG\r\n\x1a\n"
     pos, idat, kinds = 8, b"", []
     while pos < len(data):
@@ -57,10 +57,14 @@ def decode_png(data: bytes) -> NDArray[np.uint8]:
         kinds.append(kind)
         pos += 12 + length
     assert kinds[0] == b"IHDR" and kinds[-1] == b"IEND"
-    assert (depth, colour) == (8, 0)
-    rows = np.frombuffer(zlib.decompress(idat), dtype=np.uint8).reshape(height, width + 1)
+    assert depth == 8 and colour in (0, 2)
+    channels = 3 if colour == 2 else 1
+    rows = np.frombuffer(zlib.decompress(idat), dtype=np.uint8).reshape(
+        height, width * channels + 1
+    )
     assert not rows[:, 0].any()  # filter type 0 on every row
-    return rows[:, 1:]
+    pixels = rows[:, 1:]
+    return pixels.reshape(height, width, 3) if colour == 2 else pixels
 
 
 def png_of(plate: dict[str, Any]) -> NDArray[np.uint8]:
@@ -404,10 +408,28 @@ async def test_simbad_failures_are_upstream_errors(
         "service": "CDS SIMBAD database",
     }
     with respx.mock:
-        respx.post(settings.simbad_tap_url).mock(side_effect=httpx.ReadTimeout("slow"))
+        for url in (settings.simbad_tap_url, *simbad.MIRRORS):
+            respx.post(url).mock(side_effect=httpx.ReadTimeout("slow"))
         slow = await api.get("/api/object", params=M31)
     assert slow.status_code == 504
     assert slow.json()["error"]["code"] == "upstream_timeout"
+
+
+async def test_simbad_falls_back_to_a_mirror_and_remembers_it(
+    api: httpx.AsyncClient, settings: Settings, fixtures: Path
+) -> None:
+    gone = httpx.Response(404, text="<h1>Not Found</h1>")
+    answer = httpx.Response(200, text=(fixtures / "simbad_field_iris.json").read_text())
+    with respx.mock:
+        primary = respx.post(settings.simbad_tap_url).mock(return_value=gone)
+        mirror = respx.post(simbad.MIRRORS[0]).mock(return_value=answer)
+        first = await api.get("/api/field-objects", params=IRIS_FIELD)
+        again = await api.get("/api/field-objects", params={**IRIS_FIELD, "limit": 5})
+    assert first.status_code == 200 and again.status_code == 200
+    assert first.json()["objects"]
+    # The dead service was asked once; after that the mirror that answered goes first.
+    assert primary.call_count == 1
+    assert mirror.call_count == 2
 
 
 # --- /api/object-image -----------------------------------------------------------------------
@@ -439,11 +461,79 @@ def test_image_requests_are_quantised_before_caching() -> None:
     assert field_objects_key(1.0, 2.0, 0.15, 25) != field_objects_key(1.0, 2.0, 0.15, 26)
 
 
-async def test_image_route_serves_the_jpeg(
+def band_fits(size: int, bright: tuple[int, int] | None = None, level: float = 100.0) -> bytes:
+    """A SkyView-like single-band FITS image: flat sky, optionally one bright pixel (row, col)."""
+    data = np.full((size, size), level, dtype=np.float32)
+    data += np.random.default_rng(1).normal(0, 1, data.shape).astype(np.float32)
+    if bright is not None:
+        data[bright] = level * 50
+    buffer = io.BytesIO()
+    fits.PrimaryHDU(data).writeto(buffer)
+    return buffer.getvalue()
+
+
+SKYVIEW_DOWN = httpx.Response(503, text="Service Unavailable")
+
+
+async def test_image_route_builds_a_colour_png_from_nasa_skyview(
+    api: httpx.AsyncClient, settings: Settings
+) -> None:
+    # A star only in the red plate, in the southernmost row (FITS row 0), column 10.
+    answers = {"DSS2 Red": band_fits(64, bright=(0, 10)), "DSS2 Blue": band_fits(64)}
+
+    def by_band(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200, content=answers[request.url.params["survey"]], headers=FITS_HEADERS
+        )
+
+    with respx.mock:
+        route = respx.get(url__startswith=settings.skyview_url).mock(side_effect=by_band)
+        response = await api.get(
+            "/api/object-image", params={**M31, "fov": 0.5, "survey": "dss", "size": 64}
+        )
+    assert response.status_code == 200, response.text
+    assert response.headers["content-type"] == "image/png"
+    assert response.headers["x-image-credit"] == "DSS2 (STScI/AURA) via NASA SkyView"
+    assert sorted(c.request.url.params["survey"] for c in route.calls) == ["DSS2 Blue", "DSS2 Red"]
+    sent = route.calls[0].request.url.params
+    assert (sent["position"], sent["size"], sent["pixels"], sent["Return"], sent["projection"]) == (
+        "10.6847,41.2687",
+        "0.5",
+        "64",
+        "FITS",
+        "Tan",
+    )
+    rgb = decode_png(response.content)
+    assert rgb.shape == (64, 64, 3)
+    # North up: the southern row is the image's bottom row. Red only in red; green the mean.
+    r, g, b = (int(v) for v in rgb[63, 10])
+    assert r == 255 and b < 40 and 100 < g < 160
+    assert rgb[:, :, 0].mean() < 60  # the sky stays dark
+
+
+async def test_an_empty_skyview_answer_falls_back_to_hips2fits(
     api: httpx.AsyncClient, settings: Settings, fixtures: Path
 ) -> None:
     jpeg = (fixtures / "hips2fits_dss_m31_64.jpg").read_bytes()
     with respx.mock:
+        respx.get(url__startswith=settings.skyview_url).mock(
+            return_value=httpx.Response(200, content=band_fits(1), headers=FITS_HEADERS)
+        )
+        respx.get(url__startswith=settings.hips2fits_url).mock(
+            return_value=httpx.Response(200, content=jpeg, headers=JPEG_HEADERS)
+        )
+        response = await api.get("/api/object-image", params={**M31, "fov": 0.5, "survey": "wise"})
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "image/jpeg"
+    assert response.headers["x-image-credit"] == "AllWISE (NASA/JPL-Caltech/UCLA) via CDS hips2fits"
+
+
+async def test_image_route_falls_back_to_the_hips2fits_jpeg(
+    api: httpx.AsyncClient, settings: Settings, fixtures: Path
+) -> None:
+    jpeg = (fixtures / "hips2fits_dss_m31_64.jpg").read_bytes()
+    with respx.mock:
+        respx.get(url__startswith=settings.skyview_url).mock(return_value=SKYVIEW_DOWN)
         route = respx.get(url__startswith=settings.hips2fits_url).mock(
             return_value=httpx.Response(200, content=jpeg, headers=JPEG_HEADERS)
         )
@@ -485,6 +575,7 @@ async def test_each_survey_uses_its_hips_and_wide_fields_use_sin(
 ) -> None:
     jpeg = (fixtures / "hips2fits_dss_m31_64.jpg").read_bytes()
     with respx.mock:
+        respx.get(url__startswith=settings.skyview_url).mock(return_value=SKYVIEW_DOWN)
         route = respx.get(url__startswith=settings.hips2fits_url).mock(
             return_value=httpx.Response(200, content=jpeg, headers=JPEG_HEADERS)
         )
@@ -507,6 +598,7 @@ async def test_an_upstream_answer_that_is_not_a_jpeg_is_502(
     unknown = httpx.Response(400, json={"title": "Unknown HiPS", "description": "No such HiPS"})
     for upstream_answer in (page, unknown):
         with respx.mock:
+            respx.get(url__startswith=settings.skyview_url).mock(return_value=SKYVIEW_DOWN)
             respx.get(url__startswith=settings.hips2fits_url).mock(return_value=upstream_answer)
             response = await api.get("/api/object-image", params=params)
         assert response.status_code == 502

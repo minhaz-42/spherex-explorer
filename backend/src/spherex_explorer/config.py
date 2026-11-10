@@ -45,6 +45,8 @@ class Settings(BaseSettings):
     # plates (STScI Digitized Sky Survey).
     simbad_tap_url: str = "https://simbad.cds.unistra.fr/simbad/sim-tap/sync"
     hips2fits_url: str = "https://alasky.cds.unistra.fr/hips-image-services/hips2fits"
+    # NASA SkyView (HEASARC): the first source for those survey images; hips2fits is the fallback.
+    skyview_url: str = "https://skyview.gsfc.nasa.gov/current/cgi/runquery.pl"
     dss_url: str = "https://archive.stsci.edu/cgi-bin/dss_search"
 
     # The assistant's language model, running on this machine. "ollama" uses Ollama's own API;

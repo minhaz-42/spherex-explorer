@@ -160,9 +160,14 @@ export function About() {
           </p>
           <p lang={en}>
             This research has made use of the <Ext href="https://simbad.cds.unistra.fr/simbad/">SIMBAD database</Ext>,
-            operated at CDS, Strasbourg, France, for the facts about each object and the objects in each field. Images
-            of the same field in other light come through the CDS{" "}
-            <Ext href="https://alasky.cds.unistra.fr/hips-image-services/hips2fits">hips2fits</Ext> service.
+            operated at CDS, Strasbourg, France, for the facts about each object and the objects in each field; when
+            Strasbourg is unavailable, its mirrors at the Center for Astrophysics | Harvard &amp; Smithsonian and at IDIA
+            (South Africa) answer instead.
+          </p>
+          <p lang={en}>
+            This research has made use of the <Ext href="https://skyview.gsfc.nasa.gov/">SkyView</Ext> facility located at
+            NASA Goddard Space Flight Center, for the images of the same field in other light, with the CDS{" "}
+            <Ext href="https://alasky.cds.unistra.fr/hips-image-services/hips2fits">hips2fits</Ext> service as a fallback.
           </p>
           <p lang={en}>
             The Digitized Sky Surveys were produced at the Space Telescope Science Institute under U.S. Government grant

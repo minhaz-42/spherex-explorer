@@ -221,23 +221,34 @@ def stretch(values: NDArray[np.float32]) -> NDArray[np.uint8]:
     return np.where(np.isfinite(scaled), np.round(scaled * 255), 0).astype(np.uint8)
 
 
-def png_grey(pixels: NDArray[np.uint8]) -> bytes:
-    """An 8-bit greyscale PNG (colour type 0, filter 0 on every row), top row first."""
-    height, width = pixels.shape
-    rows = np.hstack([np.zeros((height, 1), dtype=np.uint8), pixels]).tobytes()
+def _png(pixels: NDArray[np.uint8], colour_type: int) -> bytes:
+    """An 8-bit PNG with filter 0 on every row, top row first, written with the standard library."""
+    height, width = pixels.shape[:2]
+    flat = pixels.reshape(height, -1)
+    rows = np.hstack([np.zeros((height, 1), dtype=np.uint8), flat]).tobytes()
 
     def chunk(kind: bytes, data: bytes) -> bytes:
         return (
             struct.pack(">I", len(data)) + kind + data + struct.pack(">I", zlib.crc32(kind + data))
         )
 
-    ihdr = struct.pack(">IIBBBBB", width, height, 8, 0, 0, 0, 0)
+    ihdr = struct.pack(">IIBBBBB", width, height, 8, colour_type, 0, 0, 0)
     return (
         b"\x89PNG\r\n\x1a\n"
         + chunk(b"IHDR", ihdr)
         + chunk(b"IDAT", zlib.compress(rows, 9))
         + chunk(b"IEND", b"")
     )
+
+
+def png_grey(pixels: NDArray[np.uint8]) -> bytes:
+    """A greyscale PNG (colour type 0) of a height × width image."""
+    return _png(pixels, 0)
+
+
+def png_rgb(pixels: NDArray[np.uint8]) -> bytes:
+    """A colour PNG (colour type 2) of a height × width × 3 image."""
+    return _png(pixels, 2)
 
 
 def plate_json(raw: bytes, request: PlateRequest) -> dict[str, Any]:

@@ -8,6 +8,7 @@ from fastapi import FastAPI
 
 from spherex_explorer.config import Settings
 from spherex_explorer.main import create_app
+from spherex_explorer.objects import simbad
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
@@ -15,6 +16,14 @@ FIXTURES = Path(__file__).parent / "fixtures"
 @pytest.fixture
 def fixtures() -> Path:
     return FIXTURES
+
+
+@pytest.fixture(autouse=True)
+def fresh_mirror_choice() -> Iterator[None]:
+    """Each test starts with SIMBAD's configured service first, whatever an earlier test chose."""
+    simbad._working = None
+    yield
+    simbad._working = None
 
 
 @pytest.fixture

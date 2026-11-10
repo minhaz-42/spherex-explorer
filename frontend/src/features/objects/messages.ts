@@ -41,7 +41,7 @@ export const PROFILE = defineMessages({
     nearPlane: "Close to the Milky Way's plane, so the field is crowded with stars and dust.",
     mapKey:
       "Band: the Milky Way's plane. Dashed line: the ecliptic, where the planets travel. Circles: SPHEREx's deep fields.",
-    credits: "Catalogue: {catalogue}. Images: {images}, via CDS hips2fits.",
+    credits: "Catalogue: {catalogue}. Images: {images}, via NASA SkyView (Goddard).",
   },
   bn: {
     kicker: "এই বস্তুর পরিচয়",
@@ -74,7 +74,7 @@ export const PROFILE = defineMessages({
     nearPlane: "আকাশগঙ্গার সমতলের কাছে, তাই এই অংশে তারা আর ধুলোর ভিড়।",
     mapKey:
       "চওড়া পট্টি: আকাশগঙ্গার সমতল। ভাঙা রেখা: ক্রান্তিবৃত্ত, যে পথ ধরে গ্রহরা চলে। বৃত্ত: SPHEREx-এর গভীর ক্ষেত্র।",
-    credits: "ক্যাটালগ: {catalogue}। ছবি: {images}, CDS hips2fits-এর মাধ্যমে।",
+    credits: "ক্যাটালগ: {catalogue}। ছবি: {images}, NASA SkyView (Goddard)-এর মাধ্যমে।",
   },
 });
 
