@@ -32,12 +32,12 @@ describe("i18n", () => {
       </>,
     );
     expect(screen.getByText("Hello, SPHEREx")).toBeInTheDocument();
-    await userEvent.click(screen.getByRole("button", { name: "Show the site in Bangla" }));
+    await userEvent.click(screen.getByRole("button", { name: /Show the site in Bangla/ }));
     expect(screen.getByText("হ্যালো, SPHEREx")).toBeInTheDocument();
     expect(document.documentElement.lang).toBe("bn");
     expect(currentLang()).toBe("bn");
     expect(localStorage.getItem("spherex-lang")).toBe("bn");
-    await userEvent.click(screen.getByRole("button", { name: "Show the site in English" }));
+    await userEvent.click(screen.getByRole("button", { name: /Show the site in English/ }));
     expect(screen.getByText("Hello, SPHEREx")).toBeInTheDocument();
   });
 });

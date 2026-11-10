@@ -371,7 +371,7 @@ describe("Ask, the chat app", () => {
       // The question is what the assistant understands best; only its hint is translated.
       expect(screen.getByRole("button", { name: /What is SPHEREx\?/ })).toHaveTextContent("টেলিস্কোপ আর তার 102টি রং");
       expect(screen.getByRole("textbox", { name: "আপনার প্রশ্ন" })).toBeInTheDocument();
-      expect(screen.getAllByRole("button", { name: "Show the site in English" }).length).toBeGreaterThan(0);
+      expect(screen.getAllByRole("button", { name: /Show the site in English/ }).length).toBeGreaterThan(0);
     } finally {
       setLang("en");
     }
