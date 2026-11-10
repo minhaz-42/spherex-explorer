@@ -4,13 +4,23 @@ import { queryOptions } from "@tanstack/react-query";
 
 import { type DataSource, getJson, postJson } from "./api";
 import { decodeCutout } from "./pixels";
-import type { Candidates, CasesFile, CutoutPayload, DecodedCutout, KnownObjects, Measurement, Observations, Target } from "./types";
+import type { Candidates, CasesFile, CutoutPayload, DecodedCutout, KnownObjects, Measurement, Movers, Observations, Target } from "./types";
 
 export function resolveQuery(q: string, source: DataSource) {
   return queryOptions({
     queryKey: ["resolve", q.trim().toLowerCase(), source],
     queryFn: ({ signal }) => getJson<Target>("/resolve", { q: q.trim(), source }, signal),
     staleTime: Infinity,
+  });
+}
+
+/** Catalogued moving stars and brown dwarfs around a position (CatWISE2020 via NASA/IPAC IRSA). */
+export function moversQuery(ra: number, dec: number, radius: number, source: DataSource) {
+  return queryOptions({
+    queryKey: ["movers", ra.toFixed(3), dec.toFixed(3), radius.toFixed(2), source],
+    queryFn: ({ signal }) => getJson<Movers>("/movers", { ra, dec, radius, source }, signal),
+    staleTime: Infinity,
+    retry: false,
   });
 }
 

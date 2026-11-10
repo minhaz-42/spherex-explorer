@@ -145,7 +145,7 @@ describe("About in Bangla", () => {
   it("keeps the credits in English, word for word, and marks them as English", () => {
     renderPage(<About />);
     const english = creditTexts();
-    expect(english).toHaveLength(9);
+    expect(english).toHaveLength(10);
 
     bangla();
     expect(screen.getByRole("heading", { level: 2, name: "ডেটা ও কৃতজ্ঞতা" })).toBeInTheDocument();
@@ -160,6 +160,7 @@ describe("About in Bangla", () => {
     expect(screen.getByRole("link", { name: "doi:10.26131/IRSA652" })).toHaveAttribute("href", "https://doi.org/10.26131/IRSA652");
     expect(screen.getByRole("link", { name: "SIMBAD database" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "SkyView" })).toHaveAttribute("href", "https://skyview.gsfc.nasa.gov/");
+    expect(screen.getByText(/^Known moving stars and brown dwarfs come from the CatWISE2020 catalogue/)).toHaveAttribute("lang", "en");
   });
 
   it("is English by default, unchanged, and switches both ways while open", () => {

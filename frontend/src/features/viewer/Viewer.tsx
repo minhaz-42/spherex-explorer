@@ -18,6 +18,8 @@ import {
 } from "../../lib/sequence";
 import { tokenRgb } from "../../lib/theme";
 import { useCoarsePointer } from "../../lib/usePointer";
+import { julianYear, moved } from "../../lib/motion";
+import { moversQuery } from "../../lib/queries";
 import type { Candidates, DecodedCutout, Frame, KnownObjects, Observations } from "../../lib/types";
 import { formatDec, formatRa, gridToSky, skyToGrid } from "../../lib/wcs";
 import { SPEEDS } from "../timeline/speeds";
@@ -30,7 +32,7 @@ import { CandidatesPanel } from "../known/Candidates";
 import { fieldObjectsQuery } from "../objects/queries";
 import { KnownObjectsPanel } from "../known/KnownObjects";
 import { frameCount, VIEWER, type ViewerKey } from "./messages";
-import { CandidateTrack, CatalogMarkers, PredictedTrack, ScaleAndCompass, TargetMarker } from "./overlays";
+import { CandidateTrack, CatalogMarkers, EpochTrail, MoverMarkers, PredictedTrack, ScaleAndCompass, TargetMarker } from "./overlays";
 import { SkyCanvas } from "./SkyCanvas";
 import { type CompareMode, FIELDS, type ViewerState } from "./state";
 import { useSequence } from "./useSequence";
@@ -44,9 +46,20 @@ const MODES: { id: CompareMode; label: ViewerKey; short?: ViewerKey; hint: Viewe
   { id: "diff", label: "diff", hint: "diffHint" },
 ];
 
+/**
+ * Where the viewer centres. For a fast-moving star, the position in these frames (moved on from its
+ * catalogue position by its proper motion), with `catalog` holding where it was at epoch 2000.
+ */
+export interface ViewerTarget {
+  ra: number;
+  dec: number;
+  label: string;
+  catalog?: { ra: number; dec: number; pmMas: number; year: number } | null;
+}
+
 interface Props {
   observations: Observations;
-  target: { ra: number; dec: number; label: string };
+  target: ViewerTarget;
   source: DataSource;
   initial?: Partial<ViewerState>;
   onStateChange?: (state: ViewerState) => void;
@@ -92,6 +105,12 @@ export function Viewer({ observations, target, source, initial, onStateChange }:
   const catalog = useQuery({
     ...fieldObjectsQuery(target.ra, target.dec, Math.min(0.5, Math.round(fov * 0.71 * 100) / 100), source),
     enabled: showCatalog,
+  });
+  // CatWISE2020's catalogued movers (NASA WISE/NEOWISE), asked for only when switched on.
+  const [showMovers, setShowMovers] = useState(false);
+  const moversData = useQuery({
+    ...moversQuery(target.ra, target.dec, Math.min(0.5, Math.round(fov * 0.71 * 100) / 100), source),
+    enabled: showMovers,
   });
 
   const pinned = useMemo(() => (compare === "single" ? [] : [ref]), [compare, ref]);
@@ -313,9 +332,42 @@ export function Viewer({ observations, target, source, initial, onStateChange }:
         : catalogPoints.length === 0
           ? t("catalogNone")
           : t("catalogCount", { n: catalogPoints.length });
+  // Each mover where its motion puts it on the shown frame's date, the 25 fastest inside the image.
+  const moverPointsFor = (shownFrame: Frame | undefined) => {
+    const data = moversData.data;
+    if (!showMovers || !data || !shownFrame) return [];
+    const years = julianYear(shownFrame.mjdMid) - julianYear(data.epochMjd);
+    const inside = (p: { x: number; y: number } | null) => p !== null && p.x >= 0 && p.y >= 0 && p.x <= size && p.y <= size;
+    return data.movers
+      .map((m) => {
+        const at = moved(m.ra, m.dec, m.pmRa, m.pmDec, years);
+        return { m, now: skyToGrid(grid, at.ra, at.dec), then: skyToGrid(grid, m.ra, m.dec) };
+      })
+      .filter(({ now, then }) => inside(now) && then !== null)
+      .slice(0, 25)
+      .map(({ m, now, then }) => {
+        const red = m.w1w2 !== null && m.w1w2 >= 1;
+        return { name: m.name, now: now!, then: then!, pm: m.pm, red, labelled: m.pm >= 1 || red };
+      });
+  };
+  const moversShown = moverPointsFor(mainFrame).length;
+  const moversStatus = !showMovers
+    ? null
+    : moversData.isPending
+      ? t("moversLoading")
+      : moversData.error
+        ? moversData.error instanceof ApiError && moversData.error.code === "not_in_snapshot"
+          ? t("moversSnapshot")
+          : t("moversError")
+        : moversShown === 0
+          ? t("moversNone")
+          : t("moversCount", { n: moversShown });
+  const epochFrom = target.catalog ? skyToGrid(grid, target.catalog.ra, target.catalog.dec) : null;
   const overlayFor = (shownFrame: Frame | undefined) => (scale: number) => (
     <>
       {catalogPoints.length > 0 && <CatalogMarkers points={catalogPoints} scale={scale} />}
+      {moverPointsFor(shownFrame).length > 0 && <MoverMarkers points={moverPointsFor(shownFrame)} scale={scale} />}
+      {epochFrom && <EpochTrail from={epochFrom} to={{ x: centre, y: centre }} scale={scale} />}
       <TargetMarker x={centre} y={centre} scale={scale} label={target.label} />
       {knownFor(shownFrame).map((t) => (
         <PredictedTrack key={t.name} name={t.name} points={t.points} scale={scale} />
@@ -671,6 +723,24 @@ export function Viewer({ observations, target, source, initial, onStateChange }:
           {catalogStatus && (
             <p className="text-xs text-faint" role="status">
               {catalogStatus}
+            </p>
+          )}
+          <label className="flex items-center gap-2 text-sm text-muted">
+            <input type="checkbox" checked={showMovers} onChange={(e) => setShowMovers(e.target.checked)} className="accent-[var(--accent)]" />
+            {t("showMovers")}
+          </label>
+          {moversStatus && (
+            <p className="text-xs text-faint" role="status">
+              {moversStatus}
+            </p>
+          )}
+          {target.catalog && (
+            <p className="text-xs text-faint">
+              {t("motionNote", {
+                name: target.label,
+                pm: formatNumber(target.catalog.pmMas / 1000, 3),
+                year: String(target.catalog.year),
+              })}
             </p>
           )}
           <p className="text-xs text-faint">

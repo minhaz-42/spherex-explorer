@@ -58,6 +58,7 @@
   /* Predicted positions of known bodies (JPL) and our own moving-source candidates, over images. */
   --track-on-image: #9cc2ff;
   --candidate-on-image: #7fe3b4;
+  --mover-on-image: #e4a8ff;
 
   --focus: #3a56d4;
   --live: #167347;

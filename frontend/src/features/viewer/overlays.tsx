@@ -199,3 +199,96 @@ export function CatalogMarkers({ points, scale }: { points: CatalogPoint[]; scal
   );
 }
 
+
+export interface MoverPoint {
+  name: string;
+  /** Where its motion puts it on the frame's date, and where WISE measured it (2015.4), in image pixels. */
+  now: { x: number; y: number };
+  then: { x: number; y: number };
+  /** Arcsec per year. */
+  pm: number;
+  /** W1 − W2 of 1 or more: as red as a cool brown dwarf. */
+  red: boolean;
+  labelled: boolean;
+}
+
+/**
+ * CatWISE2020's catalogued movers (NASA WISE/NEOWISE), moved to the date of the frame on screen: a
+ * small diamond where each should be, and a dashed trail back to where WISE measured it in 2015.
+ */
+export function MoverMarkers({ points, scale }: { points: MoverPoint[]; scale: number }) {
+  const t = useT(OVERLAYS);
+  const s = 5.5 / scale;
+  const size = 10.5 / scale;
+  return (
+    <g>
+      {points.map((p) => (
+        <g key={p.name}>
+          <title>{t(p.red ? "moverRed" : "mover", { name: p.name, pm: p.pm.toFixed(2) })}</title>
+          <line
+            x1={p.then.x}
+            y1={p.then.y}
+            x2={p.now.x}
+            y2={p.now.y}
+            stroke="var(--mover-on-image)"
+            strokeOpacity={0.8}
+            strokeWidth={1}
+            strokeDasharray="3 3"
+            vectorEffect="non-scaling-stroke"
+          />
+          <path
+            d={`M${p.now.x} ${p.now.y - s} L${p.now.x + s} ${p.now.y} L${p.now.x} ${p.now.y + s} L${p.now.x - s} ${p.now.y} Z`}
+            fill="none"
+            stroke="var(--mover-on-image)"
+            strokeWidth={p.red ? 1.75 : 1.25}
+            vectorEffect="non-scaling-stroke"
+          />
+          {p.labelled && (
+            <text
+              x={p.now.x + s * 1.5}
+              y={p.now.y + size * 0.35}
+              fontSize={size}
+              fill="var(--mover-on-image)"
+              stroke="rgb(0 0 0 / 0.65)"
+              strokeWidth={3 / scale}
+              paintOrder="stroke"
+              fontFamily="var(--font-sans)"
+            >
+              {`${p.pm.toFixed(1)}″/yr`}
+            </text>
+          )}
+        </g>
+      ))}
+    </g>
+  );
+}
+
+/**
+ * Where a fast star was at epoch 2000, its catalogue position: a small cross, joined by a dashed
+ * line to the target ring, which marks where it is in these frames.
+ */
+export function EpochTrail({ from, to, scale }: { from: { x: number; y: number }; to: { x: number; y: number }; scale: number }) {
+  const t = useT(OVERLAYS);
+  const k = 5 / scale;
+  const size = 10 / scale;
+  return (
+    <g stroke="var(--accent-on-image)" strokeWidth={1.25} fill="none" vectorEffect="non-scaling-stroke">
+      <title>{t("then2000")}</title>
+      <line x1={from.x} y1={from.y} x2={to.x} y2={to.y} strokeOpacity={0.7} strokeDasharray="4 3" vectorEffect="non-scaling-stroke" />
+      <line x1={from.x - k} y1={from.y - k} x2={from.x + k} y2={from.y + k} vectorEffect="non-scaling-stroke" />
+      <line x1={from.x - k} y1={from.y + k} x2={from.x + k} y2={from.y - k} vectorEffect="non-scaling-stroke" />
+      <text
+        x={from.x + k * 1.6}
+        y={from.y + size * 0.35}
+        fontSize={size}
+        fill="var(--accent-on-image)"
+        stroke="rgb(0 0 0 / 0.65)"
+        strokeWidth={3 / scale}
+        paintOrder="stroke"
+        fontFamily="var(--font-sans)"
+      >
+        2000
+      </text>
+    </g>
+  );
+}

@@ -21,3 +21,37 @@ export const EXAMPLES = [
     to: "/explore?ra=270&dec=66.56&name=North+ecliptic+pole",
   },
 ];
+
+/**
+ * The test targets the NASA Space Apps challenge "Planet X and SPHEREx" names: three fast movers
+ * and two variable stars. All are looked up by name, so SIMBAD's proper motion comes with them and
+ * the fast ones are followed to where they are now. WISE 0855 goes by its WISE designation, which
+ * is the challenge's coordinates: those are its 2010 position, 85″ from SIMBAD's for 2000.
+ */
+export const CHALLENGE_TARGETS: typeof EXAMPLES = [
+  {
+    en: { label: "Barnard's Star", detail: "The fastest-moving star in our sky, 10.4″ a year" },
+    bn: { label: "বার্নার্ডের তারা", detail: "আমাদের আকাশে সবচেয়ে দ্রুত সরে যাওয়া তারা, বছরে 10.4″" },
+    to: "/explore?q=Barnard%27s+Star",
+  },
+  {
+    en: { label: "Epsilon Indi B", detail: "A pair of brown dwarfs orbiting a nearby star" },
+    bn: { label: "এপসাইলন ইন্ডি বি", detail: "কাছের এক তারাকে ঘিরে ঘোরা একজোড়া বাদামি বামন" },
+    to: "/explore?q=eps+Ind+B",
+  },
+  {
+    en: { label: "WISE 0855−0714", detail: "A fast-moving brown dwarf · RA 08h55m10.831s, Dec −7°14′42.53″" },
+    bn: { label: "WISE 0855−0714", detail: "দ্রুত সরে যাওয়া এক বাদামি বামন · RA 08h55m10.831s, Dec −7°14′42.53″" },
+    to: "/explore?q=WISE+J085510.83-071442.5&name=WISE+0855%E2%88%920714&fov=0.3",
+  },
+  {
+    en: { label: "RW Aurigae", detail: "A young star whose brightness varies" },
+    bn: { label: "RW Aurigae", detail: "এক তরুণ তারা, যার উজ্জ্বলতা বদলায়" },
+    to: "/explore?q=RW+Aur",
+  },
+  {
+    en: { label: "R Draconis", detail: "A pulsating giant that brightens and fades over months" },
+    bn: { label: "R Draconis", detail: "এক স্পন্দনশীল দানব তারা, মাসের পর মাস ধরে উজ্জ্বল ও ম্লান হয়" },
+    to: "/explore?q=R+Dra",
+  },
+];

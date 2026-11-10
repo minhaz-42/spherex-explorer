@@ -19,8 +19,9 @@ import { ObjectProfile, type SkyContext } from "../features/objects/ObjectProfil
 import { objectQuery } from "../features/objects/queries";
 import { SearchForm } from "../features/search/SearchForm";
 import { type CompareMode, FIELDS, type ViewerState } from "../features/viewer/state";
-import { Viewer } from "../features/viewer/Viewer";
-import { EXAMPLES } from "../lib/examples";
+import { Viewer, type ViewerTarget } from "../features/viewer/Viewer";
+import { CHALLENGE_TARGETS, EXAMPLES } from "../lib/examples";
+import { VISIBLE_MOTION_MAS, formatPm, julianYear, moved, parsePm, speedMas } from "../lib/motion";
 import { EXPLORE, framesSummary } from "./explore.messages";
 
 function num(v: string | null): number | null {
@@ -52,6 +53,8 @@ export function Explore() {
   const posRa = hasPosition ? ra! : target?.ra;
   const posDec = hasPosition ? dec! : target?.dec;
   const name = params.get("name") ?? target?.name ?? null;
+  // A fast star's proper motion: from the name lookup, or carried in the URL (`pm=`, mas/yr).
+  const motion = hasPosition ? parsePm(params.get("pm")) : (target?.motion ?? null);
 
   const observations = useQuery({
     ...observationsQuery(posRa ?? 0, posDec ?? 0, source),
@@ -78,6 +81,7 @@ export function Explore() {
         p.set("ra", posRa.toFixed(6));
         p.set("dec", posDec.toFixed(6));
         if (name) p.set("name", name);
+        if (motion) p.set("pm", formatPm(motion));
       }
       p.set("seq", s.spec.mode);
       p.set("det", String(s.spec.detector));
@@ -100,7 +104,7 @@ export function Explore() {
         setParams(p, { replace: true, preventScrollReset: true });
       }
     },
-    [posRa, posDec, name, setParams],
+    [posRa, posDec, name, motion, setParams],
   );
 
   const initial = useMemo((): Partial<ViewerState> | undefined => {
@@ -201,7 +205,7 @@ export function Explore() {
           <Viewer
             key={`${posRa}:${posDec}:${source}`}
             observations={observations.data}
-            target={{ ra: posRa!, dec: posDec!, label }}
+            target={viewerTarget(posRa!, posDec!, label, motion, observations.data)}
             source={source}
             initial={initial}
             onStateChange={onStateChange}
@@ -216,6 +220,25 @@ export function Explore() {
       ) : null}
     </div>
   );
+}
+
+/**
+ * Where the viewer centres. A star moving fast enough to have left its catalogue position (epoch
+ * 2000) by a SPHEREx pixel is followed to where it is in these frames, at their median date, so the
+ * ring, the measurements and the spectrum are of the star, not of the sky it has left.
+ */
+function viewerTarget(
+  ra: number,
+  dec: number,
+  label: string,
+  motion: { pmRa: number; pmDec: number; epoch: number } | null,
+  observations: Observations,
+): ViewerTarget {
+  if (!motion || speedMas(motion) < VISIBLE_MOTION_MAS || observations.frames.length === 0) return { ra, dec, label };
+  const dates = observations.frames.map((f) => f.mjdMid).sort((a, b) => a - b);
+  const year = julianYear(dates[Math.floor(dates.length / 2)]!);
+  const now = moved(ra, dec, motion.pmRa / 1000, motion.pmDec / 1000, year - motion.epoch);
+  return { ...now, label, catalog: { ra, dec, pmMas: speedMas(motion), year: Math.round(year) } };
 }
 
 function TargetHeading({
@@ -398,10 +421,25 @@ function SearchStart({
             <p className="prose-body">{t("intro")}</p>
             <SearchForm initial={initial} error={error} onSearch={onSearch} />
           </div>
-          <div>
-            <h2 className="panel-title">{t("startWith")}</h2>
+          <div className="space-y-8">
+            <ExampleList title={t("startWith")} examples={EXAMPLES} lang={lang} />
+            <ExampleList title={t("challengeTargets")} examples={CHALLENGE_TARGETS} lang={lang} />
+          </div>
+        </div>
+      </section>
+      <div className="page pb-24 pt-4">
+        <ObjectAtlas />
+      </div>
+    </div>
+  );
+}
+
+function ExampleList({ title, examples, lang }: { title: string; examples: typeof EXAMPLES; lang: "en" | "bn" }) {
+  return (
+    <div>
+            <h2 className="panel-title">{title}</h2>
             <ul className="mt-3 grid gap-2">
-              {EXAMPLES.map((ex) => (
+              {examples.map((ex) => (
                 <li key={ex.to}>
                   <Link
                     to={ex.to}
@@ -420,12 +458,6 @@ function SearchStart({
                 </li>
               ))}
             </ul>
-          </div>
-        </div>
-      </section>
-      <div className="page pb-24 pt-4">
-        <ObjectAtlas />
-      </div>
     </div>
   );
 }

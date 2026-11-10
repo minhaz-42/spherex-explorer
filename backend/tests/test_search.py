@@ -72,6 +72,15 @@ def test_sesame_answer_is_parsed(fixtures) -> None:
     assert hit.resolver == "Simbad"
 
 
+def test_sesame_proper_motion_is_kept(fixtures) -> None:
+    hit = parse_sesame((fixtures / "sesame_barnard.xml").read_text(), "Barnard's Star")
+    assert hit.name == "Barnard's star"  # without SIMBAD's "NAME " prefix
+    assert (hit.pm_ra_mas, hit.pm_dec_mas) == (pytest.approx(-801.551), pytest.approx(10362.394))
+    # A galaxy has none.
+    m31 = parse_sesame((fixtures / "sesame_m31.xml").read_text(), "M31")
+    assert m31.pm_ra_mas is None and m31.pm_dec_mas is None
+
+
 def test_sesame_unknown_name_is_not_found(fixtures) -> None:
     with pytest.raises(NotFound, match="No object called"):
         parse_sesame((fixtures / "sesame_notfound.xml").read_text(), "NotARealObjectXYZ")

@@ -67,6 +67,20 @@ async def test_resolve_name_through_sesame(
     assert first.json()["kind"] == "Galaxy with an active nucleus"
     assert second.json() == first.json()
     assert route.call_count == 1  # the second lookup came from the cache
+    assert first.json()["motion"] is None
+
+
+async def test_resolve_gives_a_fast_stars_proper_motion(
+    api: httpx.AsyncClient, settings: Settings, fixtures: Path
+) -> None:
+    with respx.mock:
+        respx.get(url__startswith=settings.sesame_url).mock(
+            return_value=httpx.Response(200, text=(fixtures / "sesame_barnard.xml").read_text())
+        )
+        body = (await api.get("/api/resolve", params={"q": "Barnard's Star"})).json()
+    assert body["motion"] == {"pmRa": -801.551, "pmDec": 10362.394, "epoch": 2000.0}
+    coords_only = (await api.get("/api/resolve", params={"q": "269.452 4.693"})).json()
+    assert coords_only["motion"] is None
 
 
 async def test_resolve_unknown_name_is_404(

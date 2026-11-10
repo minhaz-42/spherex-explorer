@@ -12,6 +12,9 @@ import type { ObjectCategory } from "./types";
 export const PROFILE = defineMessages({
   en: {
     kicker: "About this object",
+    nearestKicker: "Nearest catalogued object",
+    farNote:
+      "{sep}″ from the position searched: the most-studied object SIMBAD lists nearby, which may not be the one you meant. A fast-moving star can have left its catalogued place; search it by name to follow it.",
     type: "Type",
     galaxy: "Galaxy",
     simbadClass: "SIMBAD class: {label}",
@@ -45,6 +48,9 @@ export const PROFILE = defineMessages({
   },
   bn: {
     kicker: "এই বস্তুর পরিচয়",
+    nearestKicker: "কাছের ক্যাটালগভুক্ত বস্তু",
+    farNote:
+      "খোঁজা অবস্থান থেকে {sep}″ দূরে: কাছাকাছি SIMBAD-এর সবচেয়ে বেশি গবেষিত বস্তু, যা হয়তো আপনার খোঁজা বস্তু নয়। দ্রুত সরে যাওয়া কোনো তারা তার ক্যাটালগ অবস্থান ছেড়ে চলে যেতে পারে; তাকে অনুসরণ করতে নাম দিয়ে খুঁজুন।",
     type: "ধরন",
     galaxy: "গ্যালাক্সি",
     simbadClass: "SIMBAD শ্রেণি: {label}",

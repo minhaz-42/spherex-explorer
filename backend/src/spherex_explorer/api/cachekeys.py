@@ -7,7 +7,7 @@ routes use. Defining them once here keeps the two from drifting apart.
 from __future__ import annotations
 
 from ..cache import cache_key
-from ..objects import images, plates, simbad
+from ..objects import catwise, images, plates, simbad
 from ..science.cutout import PIPELINE_VERSION
 from ..science.grid import Grid
 from ..science.sources import ALGORITHM_VERSION
@@ -45,6 +45,10 @@ def object_key(ra: float, dec: float, radius: float = simbad.DEFAULT_RADIUS_DEG)
 
 def field_objects_key(ra: float, dec: float, radius: float, limit: int) -> str:
     return cache_key(ra, dec, radius, limit, simbad.FORMAT_VERSION)
+
+
+def movers_key(ra: float, dec: float, radius: float) -> str:
+    return cache_key(ra, dec, radius, catwise.FORMAT_VERSION)
 
 
 def object_image_key(

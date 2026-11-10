@@ -29,7 +29,7 @@ from spherex_explorer.api.cachekeys import (
 from spherex_explorer.cache import DiskStore
 from spherex_explorer.config import Settings
 from spherex_explorer.errors import NotFound, UpstreamError
-from spherex_explorer.objects import images, plates, simbad
+from spherex_explorer.objects import catwise, images, plates, simbad
 from spherex_explorer.objects.categories import category
 
 M31 = {"ra": 10.684708, "dec": 41.26875}
@@ -850,3 +850,70 @@ async def test_snapshot_mode_never_calls_upstream(
     assert hit.status_code == 200 and hit.json() == recorded
     assert [m.status_code for m in misses] == [404, 404, 404, 404]
     assert {m.json()["error"]["code"] for m in misses} == {"not_in_snapshot"}
+
+
+# --- /api/movers (CatWISE2020) ---------------------------------------------------------------
+
+WISE0855 = {"ra": 133.795129, "dec": -7.245147, "radius": 0.15}
+
+
+def test_movers_query_asks_only_for_significant_motion() -> None:
+    adql = catwise.movers_query(133.795129, -7.245147, 0.15)
+    assert "FROM catwise_2020" in adql
+    assert "CIRCLE('ICRS', 133.7951290, -7.2451470, 0.1500000)" in adql
+    assert "pmra*pmra + pmdec*pmdec > 0.01" in adql
+    assert "> 25*(sigpmra*sigpmra + sigpmdec*sigpmdec)" in adql
+    with pytest.raises(ValueError):
+        catwise.movers_query(math.nan, 0, 0.1)
+
+
+def test_catwise_fragments_of_a_fast_mover_are_merged(fixtures: Path) -> None:
+    rows = catwise.parse_rows(200, (fixtures / "catwise_wise0855.csv").read_text())
+    assert len(rows) == 13
+    field = catwise.movers_json(rows, 133.795129, -7.245147, 0.15)
+    fast = [m for m in field["movers"] if m["pm"] > 7]
+    # WISE 0855−0714: three CatWISE entries, one mover, kept from the best-measured entry.
+    assert len(fast) == 1
+    wise0855 = fast[0]
+    assert wise0855["name"] == "CWISE J085507.96-071439.3"
+    assert (wise0855["pmRa"], wise0855["pmDec"]) == (-8.0212, 1.0357)
+    assert wise0855["w1w2"] == pytest.approx(3.79)  # very red: a Y dwarf
+    assert field["epochMjd"] == 57170.0
+    assert len(field["movers"]) == 11
+    assert [m["pm"] for m in field["movers"]] == sorted(
+        (m["pm"] for m in field["movers"]), reverse=True
+    )
+
+
+async def test_movers_route_caches_the_catwise_answer(
+    api: httpx.AsyncClient, settings: Settings, fixtures: Path
+) -> None:
+    csv_text = (fixtures / "catwise_wise0855.csv").read_text()
+    with respx.mock:
+        route = respx.post(settings.irsa_tap_url).mock(
+            return_value=httpx.Response(200, text=csv_text)
+        )
+        first = await api.get("/api/movers", params=WISE0855)
+        nearby = await api.get("/api/movers", params={**WISE0855, "ra": 133.7953})
+    assert first.status_code == 200, first.text
+    body = first.json()
+    assert body["catalog"] == "CatWISE2020"
+    assert body["credit"].endswith("via NASA/IPAC IRSA")
+    assert body["movers"][0]["pm"] > 8
+    assert nearby.json() == body
+    assert route.call_count == 1
+    sent = parse_qs(route.calls[0].request.content.decode())
+    assert sent["FORMAT"] == ["csv"]
+    assert "catwise_2020" in sent["QUERY"][0]
+
+
+async def test_movers_route_reports_an_irsa_failure(
+    api: httpx.AsyncClient, settings: Settings
+) -> None:
+    with respx.mock:
+        respx.post(settings.irsa_tap_url).mock(return_value=httpx.Response(503, text="down"))
+        response = await api.get("/api/movers", params=WISE0855)
+    assert response.status_code == 502
+    assert response.json()["error"]["service"] == "NASA/IPAC IRSA (CatWISE2020)"
+    big = await api.get("/api/movers", params={**WISE0855, "radius": 0.9})
+    assert big.status_code == 400

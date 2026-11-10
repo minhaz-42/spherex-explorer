@@ -27,7 +27,13 @@ it, and lets you browse those images by **observation time** and by **wavelength
   one matched wavelength (a fair light curve).
 - **Moving objects:**
   - JPL's predicted positions of catalogued asteroids and comets, as seen from SPHEREx;
-  - the app's own moving-source search, whose candidates are matched against those predictions.
+  - the app's own moving-source search, whose candidates are matched against those predictions;
+  - known moving stars and brown dwarfs from CatWISE2020 (NASA's WISE and NEOWISE), each drawn
+    where its motion puts it on the frame's date, with a trail back to where WISE measured it;
+  - fast stars followed: a star found by name (Barnard's Star moves 10.4″ a year) is shown,
+    measured and plotted where it is in the SPHEREx frames, with its J2000 position marked.
+- **The challenge's test targets** (Barnard's Star, Epsilon Indi B, WISE 0855−0714, RW Aurigae and
+  R Draconis) are one click away on the Explore page.
 - **Discover:** curated cases built from live data by a script, each with its evidence and cautions,
   such as asteroid (7) Iris caught moving past 36 Sextantis.
 - **About the object:** what SIMBAD knows about the target (its type in plain words, distance,
@@ -73,6 +79,7 @@ Context around the target comes from other public services, also without keys:
 | What | Where | Used for |
 |---|---|---|
 | SIMBAD TAP (CDS) | `https://simbad.cds.unistra.fr/simbad/sim-tap/sync`, falling back to its mirrors at CfA Harvard and IDIA | Object facts and the catalogued objects in a field |
+| CatWISE2020 (NASA WISE/NEOWISE, IRSA TAP) | `https://irsa.ipac.caltech.edu/TAP/sync`, table `catwise_2020` | Known moving stars and brown dwarfs in a field, with their motions |
 | SkyView (NASA HEASARC, Goddard) | `https://skyview.gsfc.nasa.gov/current/cgi/runquery.pl` | DSS2, 2MASS and AllWISE bands, made into colour images of the same field |
 | hips2fits (CDS) | `https://alasky.cds.unistra.fr/hips-image-services/hips2fits` | The same colour images, when SkyView fails |
 | Digitized Sky Survey (STScI) | `https://archive.stsci.edu/cgi-bin/dss_search` | Palomar plates from the 1950s (POSS-I) and about 1990 (POSS-II) |
@@ -239,7 +246,8 @@ backend/                   Python data service (FastAPI)
     archive/               IRSA SIA, FITS byte-range reader, frame normalisation
     science/               alignment, background, photometry, change tools
     solar_system/          JPL SBIdent and Horizons, parallax
-    resolve/               coordinate parsing, CDS Sesame
+    resolve/               coordinate parsing, CDS Sesame (with proper motions)
+    objects/               SIMBAD facts, CatWISE2020 movers, SkyView and hips2fits images, DSS plates
   scripts/                 build_cases.py (Discover + snapshot), extract_wave_tables.py
   tests/                   pytest suite with fixtures recorded from real responses
 frontend/                  Web app (Vite, React, TypeScript, Tailwind CSS)

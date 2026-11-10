@@ -14,6 +14,39 @@ export interface Target {
   ecliptic: { lon: number; lat: number };
   constellation: string;
   deepField: string | null;
+  /** SIMBAD's proper motion, when it knows one (from /api/resolve for a name; null for coordinates). */
+  motion?: Motion | null;
+}
+
+/** A star's proper motion: mas/yr, the RA part already times cos dec; the position is at `epoch`. */
+export interface Motion {
+  pmRa: number;
+  pmDec: number;
+  epoch: number;
+}
+
+/** /api/movers: catalogued moving sources in a cone (CatWISE2020, from NASA's WISE and NEOWISE). */
+export interface Movers {
+  field: { ra: number; dec: number; radiusDeg: number };
+  /** The epoch of every position below (MJD 57170, 2015.4). */
+  epochMjd: number;
+  catalog: string;
+  credit: string;
+  movers: Mover[];
+}
+
+export interface Mover {
+  name: string;
+  ra: number;
+  dec: number;
+  /** Arcsec per year, the RA part already times cos dec. */
+  pmRa: number;
+  pmDec: number;
+  pm: number;
+  w1: number | null;
+  w2: number | null;
+  /** WISE colour W1 − W2 (Vega magnitudes): 1 or more is typical of cool brown dwarfs. */
+  w1w2: number | null;
 }
 
 export interface Frame {

@@ -179,6 +179,15 @@ describe("object profile", () => {
     expect(screen.getByRole("link", { name: /SIMBAD/ })).toHaveAttribute("href", M31.links.simbad);
   });
 
+  it("calls a match tens of arcseconds away the nearest catalogued object, not this one", async () => {
+    // WISE 0855's 2010 coordinates land 28.7″ from a well-studied background blazar.
+    mockFetch({ "/api/object": { status: 200, body: { ...M31, separationArcsec: 28.74 } } });
+    wrap(<ObjectProfile ra={133.795129} dec={-7.245147} label="WISE 0855−0714" source="live" />);
+    expect(await screen.findByText("Nearest catalogued object")).toBeInTheDocument();
+    expect(screen.queryByText("About this object")).not.toBeInTheDocument();
+    expect(screen.getByRole("note")).toHaveTextContent(/^29″ from the position searched/);
+  });
+
   it("says so when nothing is catalogued at the position", async () => {
     mockFetch({});
     wrap(<ObjectProfile ra={270} dec={66.56} label="North ecliptic pole" source="live" />);

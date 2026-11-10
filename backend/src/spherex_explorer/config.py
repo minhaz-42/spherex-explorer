@@ -47,6 +47,8 @@ class Settings(BaseSettings):
     hips2fits_url: str = "https://alasky.cds.unistra.fr/hips-image-services/hips2fits"
     # NASA SkyView (HEASARC): the first source for those survey images; hips2fits is the fallback.
     skyview_url: str = "https://skyview.gsfc.nasa.gov/current/cgi/runquery.pl"
+    # NASA/IPAC IRSA's TAP service, for the CatWISE2020 catalogue of moving sources.
+    irsa_tap_url: str = "https://irsa.ipac.caltech.edu/TAP/sync"
     dss_url: str = "https://archive.stsci.edu/cgi-bin/dss_search"
 
     # The assistant's language model, running on this machine. "ollama" uses Ollama's own API;

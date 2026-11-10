@@ -120,6 +120,13 @@ function subtitle(info: ObjectInfo | null, local: string | null): string | null 
 }
 
 /**
+ * Farther than this from the position searched, SIMBAD's best match is called the nearest
+ * catalogued object, not "this object": coordinates typed from an old epoch (WISE 0855's
+ * designation, from 2010) can land beside a different, better-studied source.
+ */
+const NEAR_ARCSEC = 10;
+
+/**
  * "About this object": what SIMBAD knows about the target, how the same patch of sky looks to
  * other surveys, and where it sits on the whole sky.
  */
@@ -146,17 +153,23 @@ export function ObjectProfile({
   const title = local ?? info?.name ?? label;
   const sub = subtitle(info, local);
   const nearPlane = sky && Math.abs(sky.galactic.b) < 10;
+  const far = info !== null && info.separationArcsec > NEAR_ARCSEC;
 
   return (
     <section aria-labelledby="object-profile-title" className="card overflow-hidden">
       <div className="grid gap-0 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1.3fr)_minmax(0,0.95fr)]">
         <div className="flex flex-col gap-5 p-5 sm:p-6">
           <div>
-            <p className="kicker">{t("kicker")}</p>
+            <p className="kicker">{t(far ? "nearestKicker" : "kicker")}</p>
             <h2 id="object-profile-title" className="mt-2 text-[2rem] leading-tight">
               {title}
             </h2>
             {sub ? <p className="num mt-1 text-xs text-faint">{sub}</p> : null}
+            {far ? (
+              <p className="note mt-3 text-sm" role="note">
+                {t("farNote", { sep: info!.separationArcsec.toFixed(0) })}
+              </p>
+            ) : null}
           </div>
 
           {object.isPending ? (

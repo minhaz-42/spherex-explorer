@@ -67,6 +67,7 @@ async def resolve(
             "otype": None,
             "resolver": "coordinates" if position.system == "icrs" else "galactic coordinates",
             **describe(position.ra, position.dec),
+            "motion": None,
         }
     return await shared.resolve_name(svc, text, source, _client(request))
 

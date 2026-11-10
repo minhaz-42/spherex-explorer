@@ -47,6 +47,7 @@ async def resolve_name(svc: Services, text: str, source: Source, client: str) ->
     async def compute() -> dict[str, Any]:
         svc.limiter.check(client)
         hit = await sesame.resolve_name(svc.client, svc.settings.sesame_url, text)
+        moving = hit.pm_ra_mas is not None and hit.pm_dec_mas is not None
         return {
             "query": text,
             "name": hit.name,
@@ -54,6 +55,9 @@ async def resolve_name(svc: Services, text: str, source: Source, client: str) ->
             "otype": hit.otype,
             "resolver": hit.resolver,
             **describe(hit.ra, hit.dec),
+            "motion": {"pmRa": hit.pm_ra_mas, "pmDec": hit.pm_dec_mas, "epoch": 2000.0}
+            if moving
+            else None,
         }
 
     return await svc.store.get_or_compute(

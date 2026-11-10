@@ -7,6 +7,7 @@ export const EXPLORE = defineMessages({
     intro:
       "Name an object or paste coordinates. SPHEREx Explorer finds every SPHEREx image that covers that spot, lines them up, and lets you step through time, with what the catalogues know about the object beside it.",
     startWith: "Start with one of these",
+    challengeTargets: "The NASA challenge's test targets",
     lookingUp: "Looking up “{q}”…",
     searching: "Searching the SPHEREx archive for images of {label}…",
     usually: "Usually 3–10 seconds.",
@@ -35,6 +36,7 @@ export const EXPLORE = defineMessages({
     intro:
       "কোনো বস্তুর নাম লিখুন বা স্থানাঙ্ক দিন। SPHEREx Explorer ওই জায়গার প্রতিটি SPHEREx ছবি খুঁজে বের করে সময়ের ক্রমে সাজায়, আর আপনাকে এক ছবি থেকে পরের ছবিতে এগোতে দেয়; পাশে থাকে ক্যাটালগে বস্তুটি সম্পর্কে যা জানা আছে।",
     startWith: "এগুলোর যেকোনো একটি দিয়ে শুরু করুন",
+    challengeTargets: "নাসা চ্যালেঞ্জের পরীক্ষার লক্ষ্যগুলো",
     lookingUp: "“{q}” খোঁজা হচ্ছে…",
     searching: "{label}-এর ছবির জন্য SPHEREx আর্কাইভে খোঁজা হচ্ছে…",
     usually: "সাধারণত 3–10 সেকেন্ড লাগে।",

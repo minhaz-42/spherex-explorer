@@ -1,5 +1,5 @@
-"""Routes for catalogued objects: SIMBAD facts at a position or in a field, survey images and
-old photographic plates of the field.
+"""Routes for catalogued objects: SIMBAD facts at a position or in a field, CatWISE2020's moving
+sources, survey images and old photographic plates of the field.
 
 The browser may talk only to this app (``connect-src 'self'``, ``img-src 'self'``), so these proxy
 CDS and STScI services, with the same validation, rate limiting, caching and snapshot rules as the
@@ -16,9 +16,9 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Query, Request, Response
 
 from ..errors import UpstreamError
-from ..objects import images, plates, simbad, skyview
+from ..objects import catwise, images, plates, simbad, skyview
 from . import compute
-from .cachekeys import field_objects_key, object_image_key, plate_key
+from .cachekeys import field_objects_key, movers_key, object_image_key, plate_key
 from .routes import DAY, DEC, RA, Source, services
 
 router = APIRouter()
@@ -73,6 +73,32 @@ async def field_objects(
     key = field_objects_key(ra, dec, radius, limit)
     return await svc.store.get_or_compute(
         "field-objects", key, compute, ttl_s=7 * DAY, source=source
+    )
+
+
+@router.get("/movers")
+async def movers(
+    request: Request,
+    ra: RA,
+    dec: DEC,
+    radius: Annotated[float, Query(gt=0, le=0.5, description="Cone radius, degrees")] = 0.15,
+    source: Source = "live",
+) -> dict[str, Any]:
+    """Catalogued moving stars and brown dwarfs in a cone, from CatWISE2020 (NASA WISE/NEOWISE).
+
+    Positions are at the catalogue's epoch (``epochMjd``, 2015.4) with motions in arcsec/yr, so
+    the viewer can move each one to the date of the frame on screen.
+    """
+    svc = services(request)
+    # A 6′ cone and a 21′ one cost IRSA about the same; snap so nearby views share an answer.
+    snapped = (round(ra, 3), round(dec, 3), round(radius, 2))
+
+    async def compute() -> dict[str, Any]:
+        svc.limiter.check(_client(request))
+        return await catwise.field_movers(svc.client, svc.settings.irsa_tap_url, *snapped)
+
+    return await svc.store.get_or_compute(
+        "movers", movers_key(*snapped), compute, ttl_s=30 * DAY, source=source
     )
 
 

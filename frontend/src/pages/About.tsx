@@ -170,6 +170,10 @@ export function About() {
             <Ext href="https://alasky.cds.unistra.fr/hips-image-services/hips2fits">hips2fits</Ext> service as a fallback.
           </p>
           <p lang={en}>
+            Known moving stars and brown dwarfs come from the CatWISE2020 catalogue (Marocco et al. 2021, ApJS 253, 8),
+            built from NASA’s WISE and NEOWISE data and served by the NASA/IPAC Infrared Science Archive.
+          </p>
+          <p lang={en}>
             The Digitized Sky Surveys were produced at the Space Telescope Science Institute under U.S. Government grant
             NAG W-2166. The images of these surveys are based on photographic data obtained using the Oschin Schmidt
             Telescope on Palomar Mountain (POSS-I and POSS-II, Caltech) and the UK Schmidt Telescope.

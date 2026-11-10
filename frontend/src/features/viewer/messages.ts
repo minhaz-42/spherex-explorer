@@ -64,6 +64,15 @@ export const VIEWER = defineMessages({
     catalogNone: "SIMBAD catalogues nothing in this field.",
     catalogError: "SIMBAD's list could not be fetched.",
     catalogSnapshot: "The demo snapshot does not include SIMBAD's list for this field.",
+    showMovers: "Mark known moving stars and brown dwarfs (NASA WISE · CatWISE2020)",
+    moversLoading: "Asking NASA/IPAC IRSA for CatWISE2020's moving sources in this field…",
+    moversCount:
+      "{n} catalogued movers in view, each where its motion puts it on this frame's date; the dashed line runs back to where WISE measured it in 2015. Source: CatWISE2020, from NASA's WISE and NEOWISE, via NASA/IPAC IRSA.",
+    moversNone: "CatWISE2020 lists no fast-moving source in this field.",
+    moversError: "CatWISE2020's list could not be fetched.",
+    moversSnapshot: "The demo snapshot does not include CatWISE2020's list for this field.",
+    motionNote:
+      "{name} moves {pm}″ a year. These images are centred on where it is in {year}; the cross marks its catalogue position for 2000.",
     sameStretch:
       "Every frame uses the same stretch, taken from the reference frame, so brightness changes you see are in the data. The local background (zodiacal light and airglow) is removed from each frame.",
     fainter: "fainter",
@@ -138,6 +147,15 @@ export const VIEWER = defineMessages({
     catalogNone: "এই ক্ষেত্রে SIMBAD-এ কোনো বস্তু তালিকাভুক্ত নেই।",
     catalogError: "SIMBAD-এর তালিকা আনা যায়নি।",
     catalogSnapshot: "ডেমো স্ন্যাপশটে এই ক্ষেত্রের SIMBAD তালিকা নেই।",
+    showMovers: "পরিচিত চলমান তারা ও বাদামি বামন চিহ্নিত করুন (NASA WISE · CatWISE2020)",
+    moversLoading: "এই ক্ষেত্রের চলমান উৎসগুলোর জন্য NASA/IPAC IRSA-র CatWISE2020-কে জিজ্ঞাসা করা হচ্ছে…",
+    moversCount:
+      "দৃশ্যে {n}টি তালিকাভুক্ত চলমান উৎস; প্রতিটি এই ফ্রেমের তারিখে তার গতি অনুযায়ী যেখানে থাকার কথা, সেখানে। ড্যাশ রেখাটি ফিরে যায় 2015 সালে WISE যেখানে তাকে মেপেছিল, সেখানে। উৎস: CatWISE2020, NASA-র WISE ও NEOWISE থেকে, NASA/IPAC IRSA-র মাধ্যমে।",
+    moversNone: "এই ক্ষেত্রে CatWISE2020-এ দ্রুত চলমান কোনো উৎস নেই।",
+    moversError: "CatWISE2020-এর তালিকা আনা যায়নি।",
+    moversSnapshot: "ডেমো স্ন্যাপশটে এই ক্ষেত্রের CatWISE2020 তালিকা নেই।",
+    motionNote:
+      "{name} বছরে {pm}″ সরে যায়। ছবিগুলো {year} সালে এটি যেখানে আছে, সেখানে কেন্দ্র করা; ক্রস চিহ্নটি 2000 সালের ক্যাটালগ অবস্থান।",
     sameStretch:
       "প্রতিটি ফ্রেমে একই উজ্জ্বলতার মাপ ব্যবহার করা হয়, যা নেওয়া হয় রেফারেন্স ফ্রেম থেকে; তাই উজ্জ্বলতায় যে পরিবর্তন আপনি দেখেন, তা ডেটাতেই আছে। প্রতিটি ফ্রেম থেকে স্থানীয় পটভূমি (রাশিচক্রীয় আলো ও বায়ুদীপ্তি) সরিয়ে ফেলা হয়।",
     fainter: "ম্লানতর",
@@ -169,6 +187,9 @@ export const OVERLAYS = defineMessages({
     candidate: "Candidate {id}",
     weak: " (weak)",
     catalogued: "{name}: {type}, catalogued in SIMBAD",
+    mover: "{name}: moves {pm}″ a year (CatWISE2020)",
+    moverRed: "{name}: moves {pm}″ a year and is very red in WISE (W1 − W2 ≥ 1), like a cool brown dwarf",
+    then2000: "Catalogue position, epoch 2000",
   },
   bn: {
     target: "লক্ষ্য",
@@ -176,6 +197,9 @@ export const OVERLAYS = defineMessages({
     candidate: "সম্ভাব্য বস্তু {id}",
     weak: " (দুর্বল)",
     catalogued: "{name}: {type}, SIMBAD-এ তালিকাভুক্ত",
+    mover: "{name}: বছরে {pm}″ সরে (CatWISE2020)",
+    moverRed: "{name}: বছরে {pm}″ সরে, আর WISE-এ খুব লালচে (W1 − W2 ≥ 1), শীতল বাদামি বামনের মতো",
+    then2000: "ক্যাটালগ অবস্থান, 2000 সাল",
   },
 });
 

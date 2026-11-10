@@ -76,6 +76,18 @@ class Resolved:
     otype: str | None
     kind: str | None
     resolver: str
+    # Proper motion, mas/yr (RA component times cos dec), when SIMBAD knows it. The position is at
+    # epoch J2000, so a fast star has moved since: Barnard's Star by about 4.4′ by 2026.
+    pm_ra_mas: float | None = None
+    pm_dec_mas: float | None = None
+
+
+def _number(text: str | None) -> float | None:
+    try:
+        value = float(text) if text is not None else None
+    except ValueError:
+        return None
+    return value if value is not None and value == value else None
 
 
 def parse_sesame(xml_text: str, query: str) -> Resolved:
@@ -90,7 +102,8 @@ def parse_sesame(xml_text: str, query: str) -> Resolved:
         label = resolver.get("name", "")
         service = label.split("=", 1)[-1].split("(", 1)[0].strip() or "Sesame"
         otype = (resolver.findtext("otype") or "").strip() or None
-        name = " ".join((resolver.findtext("oname") or query).split())
+        # SIMBAD files common names as "NAME Barnard's star"; the prefix is not part of the name.
+        name = re.sub(r"^NAME\s+", "", " ".join((resolver.findtext("oname") or query).split()))
         return Resolved(
             name=name,
             ra=float(ra),
@@ -98,6 +111,8 @@ def parse_sesame(xml_text: str, query: str) -> Resolved:
             otype=otype,
             kind=OTYPES.get(otype or ""),
             resolver=service,
+            pm_ra_mas=_number(resolver.findtext("pm/pmRA")),
+            pm_dec_mas=_number(resolver.findtext("pm/pmDE")),
         )
     raise NotFound(_not_found_message(query))
 
