@@ -1,12 +1,17 @@
 // The film: loads the data every scene needs, then draws any moment `t` (seconds) on request.
 // render.mjs calls window.film.render(t) once per frame. Scenes q1–q4 are written on the source
 // timeline; edit.json assembles the finished film from stretches of it and the new scenes.
+// Other cuts (index.html?cut=<name>: the 30-second film, the app demo) are assembled the same way
+// from cuts/<name>/edit.json, with their own narration in build/<name>/vo.
 import { Clip, F, FPS, H, W, black, grain, json, makeGrain, settle, textFile } from "./core.js";
 import { OPENING_END, drawBug, drawOpening, drawTeam } from "./scenes/intro.js";
 import { q1, q1Cues } from "./scenes/q1.js";
 import { q2, q2Cues } from "./scenes/q2.js";
-import { q3, q3Cues } from "./scenes/q3.js";
+import { drawWhere, q3, q3Cues } from "./scenes/q3.js";
 import { q4, q4Cues } from "./scenes/q4.js";
+import { drawOverlay, tourCues, tourScenes } from "./scenes/tour.js";
+
+const CUT = new URLSearchParams(location.search).get("cut");
 
 // The finished length, from edit.json once it has loaded.
 let DURATION = 0;
@@ -16,7 +21,7 @@ const canvas = document.getElementById("c");
 const ctx = canvas.getContext("2d", { alpha: false });
 
 async function load() {
-  const clipNames = ["search", "irisImage", "irisPanel", "decades", "globe", "play", "bangla", "ask", "phone", "discover"];
+  const clipNames = ["search", "irisImage", "irisPanel", "decades", "globe", "play", "bangla", "ask", "phone", "discover", "iris", "targets", "barnard", "catwise"];
   const clips = {};
   await Promise.all(
     clipNames.map(async (n) => {
@@ -37,7 +42,7 @@ async function load() {
     textFile("/build/img/extras/code.txt"),
     json("/config.json").catch(() => ({})),
   ]);
-  PIECES = (await json("/edit.json")).pieces;
+  PIECES = (await json(CUT ? `/cuts/${CUT}/edit.json` : "/edit.json")).pieces;
   let at = 0;
   for (const p of PIECES) {
     p.at = at;
@@ -48,17 +53,19 @@ async function load() {
   // Optional: the team's own footage (footage/team.mp4, extracted by `make team`).
   const team = await json("/build/footage/team/frames.json").catch(() => null);
   // The narration as placed, so the team's cards land on their lines.
-  const lines = await json("/build/vo/lines.json").catch(() => []);
+  const lines = await json(CUT ? `/build/${CUT}/vo/lines.json` : "/build/vo/lines.json").catch(() => []);
   for (const f of [F.display, F.sans, F.mono, F.type, F.serif, F.bangla]) {
     for (const wgt of [300, 400, 500, 600, 700, 800]) await document.fonts.load(`${wgt} 40px "${f}"`, "SPHEREx Explorer আকাশ 0123");
   }
   await document.fonts.ready;
   makeGrain();
-  return { clips, iris, barnard, pluto, orbits, land, gitlog, code, config, team, lines };
+  return { clips, iris, barnard, pluto, orbits, land, gitlog, code, config, team, lines, cut: CUT };
 }
 
 const shots = [...q1, ...q2, ...q3, ...q4];
-const scenes = { opening: () => 0.045, team: drawTeam };
+const scenes = { opening: () => 0.045, team: drawTeam, where: drawWhere, ...tourScenes };
+// The Space Apps opening plays only in a cut that starts with it; otherwise the corner logo is there from the start.
+const opens = () => PIECES[0]?.scene === "opening";
 let D;
 
 /** The piece of the cut that is on screen at film time T, and the time within it. */
@@ -93,13 +100,17 @@ async function render(T) {
       grainAmount = scenes[piece.scene](ctx, local, D, frame, piece);
       ctx.restore();
     }
-    if (T < OPENING_END) {
+    // Another cut's own chapter title and caption over the piece (cuts/<name>/edit.json).
+    ctx.save();
+    drawOverlay(ctx, piece, local, D);
+    ctx.restore();
+    if (opens() && T < OPENING_END) {
       ctx.save();
       drawOpening(ctx, T, D);
       ctx.restore();
     }
     grain(ctx, frame, grainAmount);
-    drawBug(ctx, T, D, DURATION);
+    drawBug(ctx, T, D, DURATION, opens() ? OPENING_END : 0);
     if (T >= DURATION - 0.05) black(ctx, 1);
   });
 }
@@ -111,5 +122,22 @@ window.film = {
   }),
   render,
   // Sound cues on the source timeline; audio/score.py places them through edit.json.
-  cues: () => [...q1Cues(D), ...q2Cues(D), ...q3Cues(D), ...q4Cues(D)].sort((a, b) => a.t - b.t),
+  cues: () => sourceCues(),
+  // The same on this cut's own clock, with the new scenes' cues: what audio/cut.py mixes.
+  filmCues: () => {
+    const out = [];
+    const src = sourceCues();
+    for (const p of PIECES) {
+      if (p.src) {
+        for (const c of src) if (c.t >= p.src[0] && c.t < p.src[1]) out.push({ ...c, t: p.at + c.t - p.src[0] });
+      } else {
+        for (const c of tourCues(p, D)) out.push({ ...c, t: p.at + c.t });
+      }
+    }
+    return out.sort((a, b) => a.t - b.t);
+  },
 };
+
+function sourceCues() {
+  return [...q1Cues(D), ...q2Cues(D), ...q3Cues(D), ...q4Cues(D)].sort((a, b) => a.t - b.t);
+}

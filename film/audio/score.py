@@ -3,9 +3,9 @@
 mix to build/audio/.
 
 The score and the cues are written on the source timeline, like the scenes. They are cut to the
-finished film as edit.json says, with a crossfade at every join, and the new pieces (the opening
-and the team) get music of their own on the film's clock. The narration is placed on the film's
-clock directly.
+finished film as edit.json says, with a crossfade at every join, and the new pieces (the opening,
+the team and the globe in the demo) get music of their own on the film's clock. The narration is
+placed on the film's clock directly.
 
 Everything is generated from code: no samples, no third-party music.
 """
@@ -810,17 +810,42 @@ def compose_new(plan, n, lines):
         b = bell(midi(note(m)), 3.0, 0.16)
         mus.add(exit_ + 0.5 + j * 0.03, b, pan=-0.3 + j * 0.2)
         send.add(exit_ + 0.5 + j * 0.03, b, gain=1.5)
+
+    # Where was SPHEREx: the demo's groove drops out for a breath of orbit (a pad in its key, F,
+    # its plucks softly, a ping on each beat moving across like the spacecraft) and comes back on
+    # the beat as the decades window slides in. The scene stands in for source 159.2–162.8; the
+    # groove's eighths fall 0.2 s after its start, and it lasts six beats, so the return is in step.
+    where = next((p for p in plan if p.get("scene") == "where"), None)
+    if where:
+        t0, dur = where["at"], where["dur"]
+        fx.add(t0 - 0.15, whoosh(0.45, up=True, vel=0.25 * 0.45), pan=0.3)
+        ch = F_ + [note("E4")]
+        p = pad(F(ch), dur + 0.6, cutoff=1500, attack=0.2, release=0.7, voices=3)
+        mus.add(t0, p, gain=0.4)
+        send.add(t0, p, gain=0.35)
+        st = strings(F([note("A4"), note("C5"), note("E5")]), dur + 0.4, attack=0.8, release=0.6)
+        mus.add(t0, st, gain=0.22)
+        send.add(t0, st, gain=0.4)
+        eighth = 4 * 60 / 100 / 8
+        for i, ts in enumerate(np.arange(t0 + 0.2, t0 + dur - 0.05, eighth)):
+            m = note("F2") + [12, 19, 24, 19, 12, 19, 24, 31][(i + 6) % 8]
+            mus.add(ts, pluck(midi(m), 0.35, 0.16, bright=1.2), pan=(0.45 if i % 2 else -0.45))
+        for j, ts in enumerate(np.arange(t0 + 0.2, t0 + dur - 0.3, 2 * eighth)):
+            b = bell(midi(note(("C6", "A5", "F5", "C6", "E6", "C6")[j % 6])), 1.6, 0.2)
+            mus.add(ts, b, pan=-0.6 + j * 0.24)
+            send.add(ts, b, gain=1.3)
+        fx.add(t0 + dur - 0.6, reverse_swell(0.6, 0.3))
     return mus, send, fx
 
 
 # ---- Narration and the mix ------------------------------------------------------------------------------
 
 
-def narration(lines, n):
+def narration(lines, n, vo_dir=FILM / "build" / "vo"):
     vo = Bus(n=n)
     mask = np.zeros(n)
     for ln in lines:
-        x, sr = sf.read(FILM / "build" / "vo" / f"{ln['id']}.wav")
+        x, sr = sf.read(vo_dir / f"{ln['id']}.wav")
         assert sr == SR
         if x.ndim > 1:
             x = x.mean(axis=1)

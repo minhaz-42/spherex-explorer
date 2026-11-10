@@ -550,8 +550,10 @@ function drawEnd(ctx, t, D) {
   text(ctx, cfg.team || "Team Oblivion · Bangladesh", W / 2, H / 2 + 112, { size: 24, weight: 600, family: F.sans, color: C.ink, track: 0.5, alpha: 0.88 * E.out(inv(234.2, 235.0, t)) * fade });
   text(ctx, cfg.event || "NASA Space Apps Challenge 2026", W / 2, H / 2 + 150, { size: 19, weight: 500, family: F.sans, color: C.dim, alpha: E.out(inv(234.45, 235.25, t)) * fade });
   const cr = E.out(inv(234.6, 235.4, t)) * fade;
-  text(ctx, "SPHEREx data NASA/JPL-Caltech/IPAC via IRSA · SPHEREx QR2 maps via CDS hips2fits · DSS (STScI/AURA, Palomar) · 2MASS · AllWISE · JPL Horizons & SBIdent", W / 2, H - 92, { size: 14, weight: 500, family: F.sans, color: C.faint, alpha: cr });
-  text(ctx, "Narration: synthetic voice · Music: original · The QR2 map's unfinished Galactic-centre tiles are smoothed for display · Not affiliated with or endorsed by NASA, JPL, Caltech or IPAC", W / 2, H - 66, { size: 14, weight: 500, family: F.sans, color: C.faint, alpha: cr });
+  // The NASA data the app works from, readable; then the film's other sources and notes.
+  text(ctx, "NASA DATA IN THE APP", W / 2, H - 132, { size: 15, weight: 700, family: F.mono, track: 5, color: C.accent, alpha: cr });
+  text(ctx, "SPHEREx (NASA/JPL-Caltech/IPAC, via NASA/IPAC IRSA) · WISE & NEOWISE: CatWISE2020 (IRSA) · NASA SkyView (HEASARC, Goddard) · JPL Horizons & SBIdent", W / 2, H - 100, { size: 19, weight: 500, family: F.sans, color: C.dim, alpha: cr });
+  text(ctx, "Also in the film: SPHEREx QR2 maps via CDS hips2fits · DSS plates (STScI/AURA, Palomar) · 2MASS · AllWISE · Narration: synthetic voice · Music: original · The QR2 map's unfinished Galactic-centre tiles are smoothed for display · Not affiliated with or endorsed by NASA, JPL, Caltech or IPAC", W / 2, H - 64, { size: 13, weight: 500, family: F.sans, color: C.faint, alpha: cr });
   return 0.03;
 }
 

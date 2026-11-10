@@ -2,6 +2,7 @@
 48 kHz stereo. build/audio/{mix,bed}_pre.wav → build/audio/{master,master_no_voice}.wav"""
 
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -9,7 +10,8 @@ from pathlib import Path
 import imageio_ffmpeg
 
 FF = imageio_ffmpeg.get_ffmpeg_exe()
-A = Path(__file__).resolve().parents[1] / "build" / "audio"
+# CUT=<name> masters another cut, in build/<name>/audio.
+A = Path(__file__).resolve().parents[1] / "build" / os.environ.get("CUT", "") / "audio"
 TARGET = "I=-14:TP=-1.0:LRA=11"
 
 

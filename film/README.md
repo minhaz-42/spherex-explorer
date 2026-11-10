@@ -6,9 +6,9 @@ from code, public data and recordings of the real app. It follows the four-part 
 | Part | Time | Title | What happens |
 |---|---|---|---|
 | Who / attention | 0:00–1:05 | The Dot | The Space Apps logo and "Team Oblivion presents"; the logo moves to the corner and stays. Real SPHEREx stars of the field around asteroid (7) Iris appear one by one; one point moves; freeze. The view pulls back through the SPHEREx maps to the whole sky in six bands. Code and the app at work; Team Oblivion, each of the five in turn, by name and by what they did; the name. |
-| Why | 1:05–2:05 | The Blink | 1930: Tombaugh's blink comparator and Pluto (a labelled reconstruction). Barnard's Star across 75 years of real surveys to SPHEREx. Three real SPHEREx frames of Iris. "The method is simple. The scale isn't." Searching by hand. |
-| What | 2:05–3:03 | The demo | Real footage of SPHEREx Explorer on live data: search, blink, our own moving-source search, JPL's check, the honest difference view, the decades blink, the game, Bangla, the assistant. |
-| Impact | 3:03–3:59 | The Invitation | Stay on the discovery; pull back to Iris's orbit and to Earth; every generation's way of seeing; more data, more people; "A student. A citizen scientist. An astronomer."; the first shot's dot, caught; the name. |
+| Why | 1:05–2:03 | The Blink | 1930: Tombaugh's blink comparator and Pluto (a labelled reconstruction). Barnard's Star across 75 years of real surveys to SPHEREx. Three real SPHEREx frames of Iris. "The method is simple. The scale isn't." Searching by hand. |
+| What | 2:03–3:04 | The demo | Real footage of SPHEREx Explorer on live data: search, blink, our own moving-source search (its numbers drawn as a funnel), JPL's check, the honest difference view, where SPHEREx was for the frame, the decades blink, the game, Bangla, the assistant. |
+| Impact | 3:04–3:59 | The Invitation | Stay on the discovery; pull back to Iris's orbit and to Earth; every generation's way of seeing; more data, more people; "A student. A citizen scientist. An astronomer."; the first shot's dot, caught; the name. |
 
 The narration, with timecodes, is in [SCRIPT.md](SCRIPT.md).
 
@@ -33,6 +33,31 @@ another way (a drive link, or a GitHub release):
 
 Sound is mastered to −14 LUFS with peaks at −1 dBTP.
 
+## The other two videos
+
+Two more cuts are built from the same shots, each defined in `cuts/<name>/` and written to
+`build/<name>/delivery/`:
+
+- **The 30-second film** (`make -C film short`, `cuts/short/`): the global submission, a condensed
+  version of the main film. The hook, the whole sky in 102 colours, search, the blink, our search's
+  funnel, NASA JPL's match, where SPHEREx was, NASA WISE's moving stars, and the name with the NASA
+  data credited. Narrated (`cuts/short/script.json`); delivered narrated, captioned and without voice
+  as `SPHEREx-Explorer-30s*.mp4`. `deliver.py` checks it is under 30 seconds.
+- **The app demonstration** (`make -C film demo`, `cuts/demo/`): every feature of the web app, one
+  numbered chapter each, on real footage of the app on live data, for a reviewer who wants to see
+  what it does. No narration: a chapter title and a one-line caption on each; it ends on a card of
+  the NASA data the app uses. About two minutes, as `SPHEREx-Explorer-app-demo.mp4`.
+
+A cut's `edit.json` lists its pieces: stretches of the main film's source timeline (the demo shots of
+`render/scenes/q3.js`, whose own chapter labels are switched off in other cuts) and scenes from
+`render/scenes/tour.js` (app-footage chapters, the title, NASA-data and end cards). Any piece can
+carry a chapter title (`n`, `label`, `labels`) and a caption (`captions`). Its `music` sections
+(`air`, `groove`, `end`) are composed by `audio/cut.py` with the main score's instruments.
+
+The footage the main film does not use (the challenge's test targets, Barnard's Star followed to
+2026, CatWISE2020's movers on WISE 0855) is recorded by `capture/clips.mjs` (`targets`, `barnard`,
+`catwise`). `SPHEREX_BASE=http://127.0.0.1:<port>` records from a local build instead of `:8000`.
+
 ## What is real
 
 - **Real data:** every sky image. The SPHEREx frames of Iris and Barnard's Star come from IRSA
@@ -41,7 +66,8 @@ Sound is mastered to −14 LUFS with peaks at −1 dBTP.
   1930 positions and the orbits come from JPL Horizons; JPL's prediction for Iris and the app's
   candidate C1 are the app's own results.
 - **Real app:** every shot of the interface is a screen recording of the app running on live data
-  (`capture/`). The pointer is drawn over it, because headless browsers draw none.
+  (`capture/`). The pointer is drawn over it, because headless browsers draw none. The funnel over
+  the moving-source search is a graphic drawn by the film from the numbers the app gave for that pass.
 - **Reconstruction, labelled on screen:** the 1930 plates are a 1954 Palomar plate of the same field
   with Pluto drawn at JPL's positions for 23 and 29 January 1930.
 - **Adjusted for display:** the QR2 colour map has unfinished tiles at the Galactic centre; they are
@@ -71,9 +97,10 @@ touching the code.
 `audio/voice.py` warns when a line runs into the next one.
 
 `edit.json` is the cut. The scenes and the score are written on a 238-second source timeline; the
-film is assembled from stretches of it plus two new scenes, the opening and the team
-(`render/scenes/intro.js`). The trims are still holds, cuts the picture already had, and two beats
-of a blink, so nothing visibly jumps.
+film is assembled from stretches of it plus three new scenes: the opening and the team
+(`render/scenes/intro.js`), and the globe in the demo (`drawWhere` in `render/scenes/q3.js`). The
+trims are still holds, cuts the picture already had, and beats of a blink, so nothing visibly jumps.
+The new scenes get music of their own (`compose_new` in `audio/score.py`).
 `script.json`'s times are on the finished film's clock. Changing the cut means changing those
 times too, and keeping the total under 240 seconds: `deliver.py` checks.
 

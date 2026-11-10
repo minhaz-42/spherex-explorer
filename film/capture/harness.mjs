@@ -10,11 +10,12 @@ export const FILM = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "
 // Playwright comes from the web app's own dependencies (npm ci in frontend/).
 const require = createRequire(path.join(FILM, "..", "frontend", "package.json"));
 const { chromium } = require("playwright");
-export const BASE = "http://127.0.0.1:8000";
+// The app to record: `make serve` serves it on :8000; SPHEREX_BASE points elsewhere.
+export const BASE = process.env.SPHEREX_BASE || "http://127.0.0.1:8000";
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const ease = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
 
-export async function record(name, { width = 1600, height = 900, dsf = 2, theme = "dark", lang = "en", mobile = false, fps = 50 }, script) {
+export async function record(name, { width = 1600, height = 900, dsf = 2, theme = "dark", lang = "en", mobile = false, fps = 50, keepalive = false }, script) {
   const dir = path.join(FILM, "build", "capture", name);
   rmSync(dir, { recursive: true, force: true });
   mkdirSync(path.join(dir, "frames"), { recursive: true });
@@ -35,6 +36,27 @@ export async function record(name, { width = 1600, height = 900, dsf = 2, theme 
       localStorage.setItem("spherex-lang", l);
     } catch {}
   }, [theme, lang]);
+  // Chrome sends a screencast frame only when the page repaints, so a still page leaves a gap that
+  // starts the clip late. keepalive repaints two near-black pixels in the top corner every frame.
+  if (keepalive) {
+    await context.addInitScript(() => {
+      const go = () => {
+        const d = document.createElement("div");
+        d.setAttribute("aria-hidden", "true");
+        d.style.cssText = "position:fixed;left:0;top:0;width:2px;height:2px;z-index:2147483647;pointer-events:none";
+        document.documentElement.appendChild(d);
+        let k = 0;
+        const tick = () => {
+          k ^= 1;
+          d.style.background = k ? "rgba(0,0,0,0.02)" : "rgba(0,0,0,0.04)";
+          requestAnimationFrame(tick);
+        };
+        tick();
+      };
+      if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", go);
+      else go();
+    });
+  }
   const page = await context.newPage();
   const cdp = await context.newCDPSession(page);
 

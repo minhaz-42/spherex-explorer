@@ -5,7 +5,7 @@ PY := .venv/bin/python
 NODE := node
 export FFMPEG = $(shell $(PY) -c "import imageio_ffmpeg; print(imageio_ffmpeg.get_ffmpeg_exe())" 2>/dev/null)
 
-.PHONY: help setup all assets capture team voice cues audio render deliver release preview clean
+.PHONY: help setup all assets capture team voice cues audio render deliver release preview clean short demo
 
 help:
 	@echo "make setup      Python env (TTS, ffmpeg, astropy), voice model"
@@ -18,6 +18,8 @@ help:
 	@echo "make deliver    final MP4s in build/delivery/"
 	@echo "make release    copy the final files into release/ (captions and poster are tracked; the videos are not)"
 	@echo "make preview    a contact sheet of the whole film, one frame every 4 s"
+	@echo "make short      the 30-second film (cuts/short) into build/short/delivery/"
+	@echo "make demo       the app demonstration (cuts/demo) into build/demo/delivery/"
 
 setup:
 	uv venv -q .venv --python 3.12
@@ -65,6 +67,18 @@ release:
 
 preview:
 	$(NODE) render/render.mjs sheet 0 238 4
+
+# The other cuts, each from cuts/<name>/ into build/<name>/: narration (if any), cues, music and mix,
+# master, captions, picture, delivery. They reuse the main film's shots, so `assets` and `capture`
+# come first; the new app footage is recorded by `capture` too.
+short demo:
+	CUT=$@ $(PY) audio/voice.py
+	$(NODE) render/render.mjs cues --cut $@
+	CUT=$@ $(PY) audio/cut.py
+	CUT=$@ $(PY) audio/master.py
+	CUT=$@ $(PY) audio/captions.py
+	$(NODE) render/render.mjs video --cut $@ --workers 6
+	CUT=$@ $(PY) deliver.py
 
 clean:
 	rm -rf build/video build/stills build/delivery

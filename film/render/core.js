@@ -502,10 +502,7 @@ export class Clip {
  */
 export function drawClip(ctx, clip, t, dst, view = {}, o = {}) {
   const im = img(clip.frame(t));
-  const vw = view.w ?? clip.w;
-  const vx = view.x ?? 0;
-  const vy = view.y ?? 0;
-  const s = dst.w / vw; // screen px per CSS px
+  const { vx, vy, vw, s } = fitView(clip, dst, view);
   ctx.save();
   rrect(ctx, dst.x, dst.y, dst.w, dst.h, o.radius ?? 0);
   ctx.clip();
@@ -524,11 +521,23 @@ export function drawClip(ctx, clip, t, dst, view = {}, o = {}) {
   return s;
 }
 
+/**
+ * The view drawClip actually shows: kept inside the recorded page, so a zoom near an edge never
+ * runs past it and leaves an empty band in the window.
+ */
+function fitView(clip, dst, view) {
+  const vw = view.w ?? clip.w;
+  const s = dst.w / vw; // screen px per CSS px
+  const vh = dst.h / s;
+  const vx = clamp(view.x ?? 0, 0, Math.max(0, clip.w - vw));
+  const vy = clamp(view.y ?? 0, 0, Math.max(0, clip.h - vh));
+  return { vx, vy, vw, s };
+}
+
 /** Map a CSS point of the clip's page to the screen, for the same view as drawClip. */
 export function clipToScreen(clip, dst, view, x, y) {
-  const vw = view.w ?? clip.w;
-  const s = dst.w / vw;
-  return [dst.x + (x - (view.x ?? 0)) * s, dst.y + (y - (view.y ?? 0)) * s, s];
+  const { vx, vy, s } = fitView(clip, dst, view);
+  return [dst.x + (x - vx) * s, dst.y + (y - vy) * s, s];
 }
 
 const cursorPath = new Path2D("M0 0 L0 23 L5.6 17.6 L9.6 26.6 L13.4 25 L9.5 16.2 L17 16.2 Z");

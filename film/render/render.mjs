@@ -4,6 +4,7 @@
 //   node render/render.mjs cues                       sound cues for the mixer (build/cues.json)
 //   node render/render.mjs video [from] [to] [--workers 6] [--draft]
 //                                                     build/video/picture.mp4 (no sound)
+//   … --cut short                                    another cut (cuts/short/edit.json), into build/short/
 import { spawn } from "child_process";
 import { createReadStream, existsSync, mkdirSync, statSync, writeFileSync, rmSync } from "fs";
 import http from "http";
@@ -40,7 +41,7 @@ async function openFilm(browser, port) {
     if (m.type() === "error") console.error("  page:", m.text());
   });
   page.on("pageerror", (e) => console.error("  page error:", e.message));
-  await page.goto(`http://127.0.0.1:${port}/render/index.html`);
+  await page.goto(`http://127.0.0.1:${port}/render/index.html${CUT ? `?cut=${CUT}` : ""}`);
   const info = await page.evaluate(() => window.film.ready);
   return { page, info };
 }
@@ -58,6 +59,8 @@ const opt = (name, dflt) => {
   const i = rest.indexOf(`--${name}`);
   return i >= 0 ? Number(rest[i + 1]) : dflt;
 };
+const CUT = rest.includes("--cut") ? rest[rest.indexOf("--cut") + 1] : null;
+const BUILD = CUT ? path.join(FILM, "build", CUT) : path.join(FILM, "build");
 
 const server = await serve();
 const port = server.address().port;
@@ -65,7 +68,7 @@ const browser = await chromium.launch({ args: ["--disable-web-security", "--auto
 
 try {
   if (mode === "stills") {
-    const out = path.join(FILM, "build", "stills");
+    const out = path.join(BUILD, "stills");
     mkdirSync(out, { recursive: true });
     const { page } = await openFilm(browser, port);
     for (const t of nums) {
@@ -75,7 +78,7 @@ try {
     }
   } else if (mode === "sheet") {
     const [a, b, step = 2] = nums;
-    const out = path.join(FILM, "build", "stills", `sheet_${a}_${b}`);
+    const out = path.join(BUILD, "stills", `sheet_${a}_${b}`);
     rmSync(out, { recursive: true, force: true });
     mkdirSync(out, { recursive: true });
     const { page } = await openFilm(browser, port);
@@ -85,15 +88,17 @@ try {
       writeFileSync(f, await frameAt(page, t, "jpeg"));
       files.push(f);
     }
-    const sheet = path.join(FILM, "build", "stills", `sheet_${a}_${b}.jpg`);
+    const sheet = path.join(BUILD, "stills", `sheet_${a}_${b}.jpg`);
     await new Promise((res) =>
       spawn("magick", ["montage", "-font", "/System/Library/Fonts/Helvetica.ttc", "-label", "%t", ...files, "-tile", "4x", "-geometry", "480x270+4+4", "-pointsize", "14", "-fill", "white", "-background", "#111", sheet], { stdio: "inherit" }).on("close", res),
     );
     console.log("✓", sheet);
   } else if (mode === "cues") {
     const { page } = await openFilm(browser, port);
-    const cues = await page.evaluate(() => window.film.cues());
-    writeFileSync(path.join(FILM, "build", "cues.json"), JSON.stringify(cues, null, 1));
+    // The main film's cues are on the source timeline (audio/score.py cuts them); another cut's on its own clock.
+    const cues = await page.evaluate((cut) => (cut ? window.film.filmCues() : window.film.cues()), CUT);
+    mkdirSync(BUILD, { recursive: true });
+    writeFileSync(path.join(BUILD, "cues.json"), JSON.stringify(cues, null, 1));
     console.log(`✓ ${cues.length} cues`);
   } else if (mode === "video") {
     const { page: probe, info } = await openFilm(browser, port);
@@ -105,7 +110,7 @@ try {
     const first = Math.round(from * FPS);
     const last = Math.round(to * FPS); // exclusive
     const total = last - first;
-    const outDir = path.join(FILM, "build", "video");
+    const outDir = path.join(BUILD, "video");
     mkdirSync(outDir, { recursive: true });
     const per = Math.ceil(total / workers);
     const started = Date.now();

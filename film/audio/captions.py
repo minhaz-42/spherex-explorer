@@ -3,11 +3,16 @@ and an .ass file styled for burning in. Long lines are split at sentence or clau
 by their share of the characters."""
 
 import json
+import os
 import re
 from pathlib import Path
 
 FILM = Path(__file__).resolve().parents[1]
-OUT = FILM / "build" / "delivery"
+# CUT=<name> captions another cut: build/<name>/vo → build/<name>/delivery.
+CUT = os.environ.get("CUT", "")
+B = FILM / "build" / CUT
+OUT = B / "delivery"
+NAME = {"": "SPHEREx-Explorer-film", "short": "SPHEREx-Explorer-30s", "demo": "SPHEREx-Explorer-app-demo"}.get(CUT, f"SPHEREx-Explorer-{CUT}")
 
 
 def pieces(text, a, b, limit=62):
@@ -41,15 +46,18 @@ def ass_stamp(t):
 
 
 def main():
-    lines = json.loads((FILM / "build" / "vo" / "lines.json").read_text())
+    lines = json.loads((B / "vo" / "lines.json").read_text()) if (B / "vo" / "lines.json").exists() else []
     OUT.mkdir(parents=True, exist_ok=True)
+    if not lines:
+        print("no narration, no captions")
+        return
     cues = []
     for ln in lines:
         cues.extend(pieces(ln["text"].replace("…", "").strip(), ln["at"] - 0.05, ln["end"] + 0.35))
     srt = []
     for i, (txt, a, b) in enumerate(cues, 1):
         srt.append(f"{i}\n{stamp(a)} --> {stamp(b)}\n{txt}\n")
-    (OUT / "SPHEREx-Explorer-film.en.srt").write_text("\n".join(srt))
+    (OUT / f"{NAME}.en.srt").write_text("\n".join(srt))
     head = """[Script Info]
 ScriptType: v4.00+
 PlayResX: 1920

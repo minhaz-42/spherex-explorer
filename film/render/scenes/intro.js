@@ -21,10 +21,11 @@ function bugRect(im) {
   return { x: W - 40 - w, y: 66 - h / 2, w, h };
 }
 
-export function drawBug(ctx, T, D, duration) {
-  if (T < OPENING_END) return;
+/** The corner logo from `from` (the opening's end, or the start of a cut without the opening) to the end. */
+export function drawBug(ctx, T, D, duration, from = OPENING_END) {
+  if (T < from) return;
   const im = cornerLogo(D);
-  const a = BUG_ALPHA * (1 - E.sine(inv(duration - 0.9, duration, T)));
+  const a = BUG_ALPHA * (from > 0 ? 1 : E.sine(inv(0, 0.6, T))) * (1 - E.sine(inv(duration - 0.9, duration, T)));
   if (!im || a <= 0) return;
   const r = bugRect(im);
   ctx.save();
@@ -215,7 +216,8 @@ function card(ctx, m, i, n, t, a0, b0) {
   const kr = E.out(inv(a0 + 0.12, a0 + 0.6, t));
   text(ctx, m.role.toUpperCase(), x0, 540, { size: 20, weight: 600, family: F.mono, color: C.accent, align: "left", track: lerp(10, 6, kr), alpha: kr * (1 - kout) });
   const kd = E.out(inv(a0 + 0.25, a0 + 0.75, t));
-  if (m.did) wrapped(ctx, m.did, x0, 600, 660, 42, { size: 29, weight: 400, family: F.sans, color: C.dim, align: "left", alpha: kd * (1 - kout) });
+  // Bright enough to read on a projector over the teammate in shadow behind it.
+  if (m.did) wrapped(ctx, m.did, x0, 600, 660, 42, { size: 29, weight: 400, family: F.sans, color: "rgba(226,232,255,0.84)", align: "left", alpha: kd * (1 - kout), glow: 12, glowColor: "rgba(0,0,0,0.9)" });
 }
 
 export function drawTeam(ctx, t, D, frame, piece) {

@@ -8,6 +8,9 @@ const IRIS =
   "/explore?ra=161.29678&dec=2.44824&name=Asteroid+%287%29+Iris+near+36+Sextantis&seq=pass&det=2" +
   "&f=2025W49_1A_0423_1&fa=2025W49_1A_0332_1&cmp=blink&fov=0.3";
 const BARNARD = "/explore?q=Barnard%27s+Star";
+// WISE 0855 by name, so it resolves to the brown dwarf and the frames centre on where it is now;
+// the December 2025 pass covers the whole field.
+const WISE0855 = "/explore?q=WISE+J085510.83-071442.5&name=WISE+0855%E2%88%920714&fov=0.3&seq=pass&det=3&pass=2&cmp=single";
 
 async function waitText(page, text, timeout = 240000) {
   await page.getByText(text, { exact: false }).first().waitFor({ state: "visible", timeout });
@@ -361,6 +364,88 @@ const clips = {
         await a.sleep(2500);
         await a.scrollBy(900, 2000);
         await a.sleep(2000);
+      },
+    },
+  ],
+
+  // The NASA challenge's five test targets, one click each; Barnard's Star opens.
+  targets: [
+    {},
+    {
+      async prepare({ page }) {
+        await page.goto(BASE + "/explore", { waitUntil: "load" });
+        await waitText(page, "The NASA challenge");
+        await page.waitForTimeout(1200);
+      },
+      async run(a) {
+        const { page } = a;
+        await a.sleep(900);
+        await a.scrollTo(page.getByText("The NASA challenge").first(), 330, 1300);
+        await a.box("targets", page.getByText("The NASA challenge").first());
+        await a.sleep(500);
+        for (const name of ["Barnard's Star", "Epsilon Indi B", "WISE 0855", "RW Aurigae", "R Draconis"]) {
+          await a.moveToEl(page.getByRole("link", { name: new RegExp(name) }).first(), 420, 0.3, 0.5);
+          await a.sleep(260);
+        }
+        await a.click(page.getByRole("link", { name: /Barnard's Star/ }).first(), 700);
+        a.mark("open");
+        await waitText(page, "About this object");
+        await a.sleep(3800);
+      },
+    },
+  ],
+
+  // Barnard's Star, followed: the SPHEREx frames centred on where it is now, the 2000 cross, the note.
+  barnard: [
+    { height: 1250, dsf: 1.6, fps: 32 },
+    {
+      async prepare({ page }) {
+        await page.goto(BASE + BARNARD, { waitUntil: "load" });
+        await allFramesLoaded(page);
+        await scrollToInstant(page, page.getByRole("radio", { name: "Single" }).first(), 84);
+        await page.waitForTimeout(1500);
+      },
+      async run(a) {
+        const { page } = a;
+        await a.boxBiggestCanvas("image");
+        await a.box("note", page.getByText(/These images are centred on where it is in/).first());
+        await a.sleep(1500);
+        await a.moveTo(a.width * 0.3, a.height * 0.42, 900);
+        await a.sleep(800);
+        // Blink through the pass: the star stays put on its 2026 position.
+        await a.click(page.getByRole("radio", { name: "Blink" }).first(), 900);
+        a.mark("blink");
+        await a.sleep(5000);
+      },
+    },
+  ],
+
+  // NASA WISE data in the viewer: CatWISE2020's catalogued movers on the frame's date, WISE 0855.
+  catwise: [
+    { height: 1250, dsf: 1.6, fps: 32, keepalive: true },
+    {
+      async prepare({ page }) {
+        await page.goto(BASE + WISE0855, { waitUntil: "load" });
+        await allFramesLoaded(page);
+        await scrollToInstant(page, page.getByRole("radio", { name: "Single" }).first(), 84);
+        const box = page.getByLabel(/Mark known moving stars/).first();
+        if (await box.isChecked()) await box.evaluate((el) => el.click());
+        await page.waitForTimeout(1500);
+      },
+      async run(a) {
+        const { page } = a;
+        await a.boxBiggestCanvas("image");
+        await a.sleep(1600);
+        // The switch sits in the Display panel below the image; press it without scrolling away.
+        await page.getByLabel(/Mark known moving stars/).first().evaluate((el) => el.click());
+        a.mark("movers");
+        await waitText(page, "catalogued movers in view", 90000);
+        a.mark("movers-shown");
+        await a.sleep(400);
+        const mover = page.locator("svg g").filter({ has: page.locator("title", { hasText: /moves 8\.\d+″/ }) }).locator("path").first();
+        await a.box("mover0855", mover);
+        await a.moveToEl(mover, 1100, 0.5, 1.6);
+        await a.sleep(4200);
       },
     },
   ],

@@ -1,0 +1,101 @@
+{
+  "_about": "The 30-second film for the global submission: a condensed version of the main film. Pieces are stretches of the main film's source timeline (render/scenes/q1–q4.js, with the film's chapter labels off) and scenes from render/scenes/tour.js. Music: audio/cut.py from the sections below. Build: make -C film short.",
+  "poster": 28.0,
+  "music": [
+    {
+      "at": 0.0,
+      "dur": 3.5,
+      "kind": "air"
+    },
+    {
+      "at": 3.5,
+      "dur": 21.95,
+      "kind": "groove"
+    },
+    {
+      "at": 25.45,
+      "dur": 4.0,
+      "kind": "end"
+    }
+  ],
+  "pieces": [
+    {
+      "src": [
+        10.0,
+        12.75
+      ],
+      "_": "the hook: a real SPHEREx point moves"
+    },
+    {
+      "src": [
+        13.55,
+        14.3
+      ],
+      "_": "Did you see it move?"
+    },
+    {
+      "src": [
+        19.4,
+        24.8
+      ],
+      "_": "the whole sky, in 102 colours"
+    },
+    {
+      "src": [
+        126.3,
+        128.3
+      ],
+      "_": "a search, typed"
+    },
+    {
+      "src": [
+        128.9,
+        130.3
+      ],
+      "_": "every SPHEREx image of the place"
+    },
+    {
+      "src": [
+        138.5,
+        140.9
+      ],
+      "_": "the blink: Iris has moved"
+    },
+    {
+      "src": [
+        143.0,
+        145.2
+      ],
+      "_": "our search, as a funnel"
+    },
+    {
+      "src": [
+        148.9,
+        150.9
+      ],
+      "_": "NASA JPL's match"
+    },
+    {
+      "scene": "where",
+      "dur": 2.0
+    },
+    {
+      "scene": "chapter",
+      "chapter": "catwise",
+      "from": 1.2,
+      "dur": 2.4
+    },
+    {
+      "src": [
+        219.2,
+        221.35
+      ],
+      "_": "Anyone curious enough to look"
+    },
+    {
+      "scene": "end",
+      "dur": 4.0,
+      "credits": true
+    }
+  ]
+}

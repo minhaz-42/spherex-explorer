@@ -6,6 +6,7 @@ it at voice/<id>.wav and it is used instead of the synthetic one.
 """
 
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -14,7 +15,10 @@ import soundfile as sf
 from scipy.signal import resample_poly
 
 FILM = Path(__file__).resolve().parents[1]
-OUT = FILM / "build" / "vo"
+# CUT=<name> narrates another cut: cuts/<name>/script.json into build/<name>/vo.
+CUT = os.environ.get("CUT")
+SCRIPT = FILM / "cuts" / CUT / "script.json" if CUT else FILM / "script.json"
+OUT = FILM / "build" / CUT / "vo" if CUT else FILM / "build" / "vo"
 HUMAN = FILM / "voice"
 RATE = 48000
 
@@ -31,8 +35,13 @@ def trim(x: np.ndarray, rate: int, floor_db: float = -45.0, pad_s: float = 0.04)
 
 
 def main() -> None:
-    script = json.loads((FILM / "script.json").read_text())
     OUT.mkdir(parents=True, exist_ok=True)
+    if not SCRIPT.exists():
+        # A cut with no narration (the app demo): no lines, so no voice, captions or no-voice copy.
+        (OUT / "lines.json").unlink(missing_ok=True)
+        print(f"no narration for {CUT}")
+        return
+    script = json.loads(SCRIPT.read_text())
     only = set(sys.argv[1:])
     kokoro = None
     lines = []

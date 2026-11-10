@@ -119,121 +119,127 @@
     },
     {
       "id": "q3a",
-      "at": 125.81,
+      "at": 123.41,
       "text": "So we built a new way to look.",
       "say": "So we built a new way to look."
     },
     {
       "id": "q3b",
-      "at": 129.41,
+      "at": 127.01,
       "text": "Name any place in the sky. SPHEREx Explorer finds every image SPHEREx has taken of it, live from the public archive.",
       "say": "Name any place in the sky. Sphere X Explorer finds every image Sphere X has taken of it, live from the public archive."
     },
     {
       "id": "q3c",
-      "at": 138.61,
+      "at": 136.21,
       "text": "Then it does what Tombaugh did. It blinks the frames.",
       "say": "Then it does what Tombaw did. It blinks the frames."
     },
     {
       "id": "q3d",
-      "at": 143.41,
+      "at": 141.01,
       "text": "And something moves.",
       "say": "And something moves."
     },
     {
       "id": "q3e",
-      "at": 147.01,
+      "at": 144.61,
       "text": "Its own search finds the moving point, knowing nothing about asteroids. Then it checks with NASA's JPL.",
       "say": "Its own search finds the moving point, knowing nothing about asteroids. Then it checks with NASA's J.P.L."
     },
     {
       "id": "q3f",
-      "at": 154.61,
+      "at": 152.21,
       "text": "It's the asteroid Iris, caught by SPHEREx in December 2025.",
       "say": "It's the asteroid Iris, caught by Sphere X in December twenty twenty-five."
     },
     {
       "id": "q3g",
-      "at": 160.61,
+      "at": 158.21,
       "text": "And it's honest. Each frame sees a different colour, so it never mistakes colour for change.",
       "say": "And it's honest. Each frame sees a different colour, so it never mistakes colour for change."
     },
     {
+      "id": "q3w",
+      "at": 165.66,
+      "text": "It even knows where SPHEREx was, for every frame.",
+      "say": "It even knows where Sphere X was, for every frame."
+    },
+    {
       "id": "q3h",
-      "at": 168.01,
+      "at": 169.21,
       "text": "Seventy-five years of sky surveys, side by side. A game that trains your eye. In English, and in Bangla.",
       "say": "Seventy-five years of sky surveys, side by side. A game that trains your eye. In English, and in Bangla."
     },
     {
       "id": "q3i",
-      "at": 177.41,
+      "at": 178.61,
       "text": "Ask it anything. Every answer shows its sources.",
       "say": "Ask it anything. Every answer shows its sources."
     },
     {
       "id": "q4a",
-      "at": 190.37,
+      "at": 190.33,
       "text": "For most of human history, the universe was something we could only look at.",
       "say": "For most of human history, the universe was something we could only look at."
     },
     {
       "id": "q4b",
-      "at": 200.77,
+      "at": 200.73,
       "text": "Every generation built a better way to see.",
       "say": "Every generation built a better way to see."
     },
     {
       "id": "q4c",
-      "at": 204.37,
+      "at": 204.33,
       "text": "Our generation has something different.",
       "say": "Our generation has something different."
     },
     {
       "id": "q4d",
-      "at": 207.77,
+      "at": 207.73,
       "text": "We have more data than ever before.",
       "say": "We have more data than ever before."
     },
     {
       "id": "q4e",
-      "at": 211.17,
+      "at": 211.13,
       "text": "Now we need more people looking at it.",
       "say": "Now we need more people looking at it."
     },
     {
       "id": "q4f",
-      "at": 215.37,
+      "at": 215.33,
       "text": "A student.",
       "say": "A student."
     },
     {
       "id": "q4g",
-      "at": 217.17,
+      "at": 217.13,
       "text": "A citizen scientist.",
       "say": "A citizen scientist."
     },
     {
       "id": "q4h",
-      "at": 219.17,
+      "at": 219.13,
       "text": "An astronomer.",
       "say": "An astronomer."
     },
     {
       "id": "q4i",
-      "at": 220.97,
+      "at": 220.93,
       "text": "Anyone curious enough to look.",
       "say": "Anyone curious enough to look."
     },
     {
       "id": "q4j",
-      "at": 226.37,
+      "at": 226.33,
       "text": "Because the next discovery may not be hiding from humanity.",
       "say": "Because the next discovery may not be hiding from humanity."
     },
     {
       "id": "q4k",
-      "at": 230.77,
+      "at": 230.73,
       "text": "It may simply be waiting for someone to notice.",
       "say": "It may simply be waiting for someone to notice."
     }

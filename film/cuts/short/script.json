@@ -1,0 +1,37 @@
+{
+  "_about": "Narration for the 30-second film. `at` is seconds on its own clock (cuts/short/edit.json). Build: make -C film short.",
+  "voice": "af_heart",
+  "speed": 0.94,
+  "lines": [
+    {
+      "id": "s1",
+      "at": 3.6,
+      "text": "NASA's SPHEREx maps the entire sky in 102 colours of infrared light.",
+      "say": "NASA's Sphere X maps the entire sky, in a hundred and two colours of infrared light."
+    },
+    {
+      "id": "s2",
+      "at": 9.1,
+      "text": "SPHEREx Explorer lets anyone search it, and blink the frames to see what moved.",
+      "say": "Sphere X Explorer lets anyone search it, and blink the frames to see what moved."
+    },
+    {
+      "id": "s3",
+      "at": 14.4,
+      "text": "Its own search finds the mover. NASA's JPL confirms it.",
+      "say": "Its own search finds the mover. NASA's J.P.L. confirms it."
+    },
+    {
+      "id": "s4",
+      "at": 19.0,
+      "text": "It even shows where SPHEREx was, and NASA WISE's moving stars.",
+      "say": "It even shows where Sphere X was, and NASA WISE's moving stars."
+    },
+    {
+      "id": "s5",
+      "at": 23.6,
+      "text": "Built on NASA data, for anyone curious enough to look.",
+      "say": "Built on NASA data, for anyone curious enough to look."
+    }
+  ]
+}

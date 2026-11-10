@@ -1,0 +1,271 @@
+{
+  "_about": "The web app demonstration (for Ma'am): every feature, one chapter each, on real footage of the app on live data. No narration: a chapter title and a one-line caption on each. Pieces are the main film's demo shots (source timeline, chapter labels off) and scenes from render/scenes/tour.js. Music: audio/cut.py. Build: make -C film demo.",
+  "poster": 2.6,
+  "music": [
+    {
+      "at": 0.0,
+      "dur": 4.0,
+      "kind": "air"
+    },
+    {
+      "at": 4.0,
+      "dur": 110.9,
+      "kind": "groove",
+      "level": 0.9
+    },
+    {
+      "at": 114.9,
+      "dur": 4.5,
+      "kind": "end"
+    }
+  ],
+  "pieces": [
+    {
+      "scene": "title",
+      "dur": 4.0
+    },
+    {
+      "src": [
+        123.2,
+        133.6
+      ],
+      "n": 1,
+      "label": "SEARCH ANY PLACE IN THE SKY",
+      "captions": [
+        [
+          0,
+          "Type the name of any object, or paste sky coordinates"
+        ],
+        [
+          5.4,
+          "It finds every SPHEREx image of that spot, live from NASA's IRSA archive"
+        ]
+      ]
+    },
+    {
+      "scene": "chapter",
+      "chapter": "targets",
+      "dur": 11.0,
+      "n": 2,
+      "label": "THE NASA CHALLENGE'S TEST TARGETS",
+      "captions": [
+        [
+          0,
+          "The challenge's five test targets are one click away"
+        ],
+        [
+          7.6,
+          "Each opens with facts from SIMBAD, the patch in other light from NASA SkyView, and its place in the sky"
+        ]
+      ]
+    },
+    {
+      "scene": "chapter",
+      "chapter": "followed",
+      "dur": 7.0,
+      "n": 3,
+      "label": "FAST STARS, FOLLOWED",
+      "captions": [
+        [
+          0,
+          "Barnard's Star moves 10.4″ a year across the sky"
+        ],
+        [
+          2.4,
+          "so its SPHEREx images are centred on where it is now; the cross marks where it was in 2000"
+        ]
+      ]
+    },
+    {
+      "scene": "chapter",
+      "chapter": "catwise",
+      "dur": 8.5,
+      "n": 4,
+      "label": "NASA WISE: KNOWN MOVING STARS",
+      "captions": [
+        [
+          0,
+          "One switch adds NASA WISE data: CatWISE2020's known moving stars and brown dwarfs"
+        ],
+        [
+          2.6,
+          "each placed where it is on the frame's date. The brown dwarf WISE 0855 moves 8.1″ a year"
+        ]
+      ]
+    },
+    {
+      "src": [
+        133.6,
+        141.8
+      ],
+      "n": 5,
+      "label": "BLINK THE FRAMES",
+      "captions": [
+        [
+          0,
+          "Every SPHEREx frame of the spot, in time order: step through, play, or blink two"
+        ],
+        [
+          4.9,
+          "Asteroid (7) Iris: 9.7 hours apart, it has moved"
+        ]
+      ]
+    },
+    {
+      "scene": "chapter",
+      "chapter": "brightness",
+      "dur": 6.5,
+      "n": 6,
+      "label": "BRIGHTNESS ACROSS WAVELENGTH",
+      "captions": [
+        [
+          0,
+          "Every frame is measured at the target: across one pass, the points trace its spectrum"
+        ]
+      ]
+    },
+    {
+      "src": [
+        141.8,
+        155.6
+      ],
+      "labels": [
+        [
+          0,
+          "FIND WHAT MOVED",
+          7
+        ],
+        [
+          7.0,
+          "CHECK IT WITH NASA JPL",
+          8
+        ]
+      ],
+      "captions": [
+        [
+          0,
+          "Its own moving-source search: of 1,405 sources, one moves in a straight line"
+        ],
+        [
+          5.2,
+          "Then NASA JPL's known asteroids: it is 7 Iris, 0.8″ from JPL's prediction"
+        ]
+      ]
+    },
+    {
+      "src": [
+        155.6,
+        162.8
+      ],
+      "n": 9,
+      "label": "HONEST ABOUT WAVELENGTH",
+      "captions": [
+        [
+          0,
+          "It warns when a difference image would mislead: each frame sees a different colour"
+        ]
+      ]
+    },
+    {
+      "scene": "where",
+      "dur": 3.6,
+      "n": 10,
+      "label": "WHERE WAS SPHEREx?",
+      "captions": [
+        [
+          0,
+          "Where SPHEREx was in orbit for the frame on screen, from the frame's own record"
+        ]
+      ]
+    },
+    {
+      "src": [
+        162.8,
+        172.0
+      ],
+      "labels": [
+        [
+          0,
+          "75 YEARS OF SURVEYS",
+          11
+        ],
+        [
+          2.9,
+          "SPOT THE MOVER: A GAME",
+          12
+        ],
+        [
+          5.55,
+          "ENGLISH  ·  বাংলা",
+          13
+        ]
+      ],
+      "captions": [
+        [
+          0,
+          "Seventy-five years of sky surveys on one grid: Barnard's Star moves across them"
+        ],
+        [
+          2.9,
+          "A game on real SPHEREx frames that trains your eye"
+        ],
+        [
+          5.55,
+          "Every page in English and in Bangla"
+        ]
+      ]
+    },
+    {
+      "src": [
+        172.0,
+        180.0
+      ],
+      "n": 14,
+      "label": "ASK, AND SEE THE SOURCES",
+      "captions": [
+        [
+          0,
+          "Ask about the view: answers come from the app's own measurements and JPL"
+        ],
+        [
+          4.4,
+          "and every answer lists its numbered sources"
+        ]
+      ]
+    },
+    {
+      "scene": "chapter",
+      "chapter": "discover",
+      "dur": 5.5,
+      "n": 15,
+      "label": "DISCOVER",
+      "captions": [
+        [
+          0,
+          "Discover: changes SPHEREx has seen, built from live data"
+        ]
+      ]
+    },
+    {
+      "scene": "chapter",
+      "chapter": "phone",
+      "dur": 5.5,
+      "n": 16,
+      "label": "ON A PHONE",
+      "captions": [
+        [
+          0,
+          "The whole app works on a phone, in either language"
+        ]
+      ]
+    },
+    {
+      "scene": "nasa",
+      "dur": 6.5
+    },
+    {
+      "scene": "end",
+      "dur": 4.5
+    }
+  ]
+}

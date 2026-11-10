@@ -1,4 +1,4 @@
-SPHEREx EXPLORER · PITCH FILM SCRIPT (v3)
+SPHEREx EXPLORER · PITCH FILM SCRIPT (v4)
 Team Oblivion · Bangladesh · NASA Space Apps Challenge 2026
 Length: 3:59  (under 4:00)
 
@@ -64,7 +64,7 @@ On screen: The app rises out of the dark. Stars gather into "SPHEREx
               tools to look for it.
 
 ========================================================================
-2 · THE BLINK  (Why)   1:05 - 2:05
+2 · THE BLINK  (Why)   1:05 - 2:03
 ========================================================================
 
 2.1  Arizona, 1930   [1:05 - 1:18]
@@ -90,60 +90,68 @@ On screen: "102 colours x the whole sky x every six months". "450
 1:36  NARRATOR: The method is simple.
 1:39  NARRATOR: The scale isn't.
 
-2.5  By hand   [1:50 - 2:05]
+2.5  By hand   [1:50 - 2:03]
 On screen: Someone scrolling an endless archive, comparing by eye. One
   dot remains.
 1:50  NARRATOR: Somewhere inside all of this, something could be moving.
 1:56  NARRATOR: The question is: will anyone notice?
 
 ========================================================================
-3 · THE DEMO  (What)   2:05 - 3:03
+3 · THE DEMO  (What)   2:03 - 3:04
 ========================================================================
 
-3.1  A new way to look   [2:05 - 2:08]
+3.1  A new way to look   [2:03 - 2:06]
 On screen: The dot opens into the app.
-2:05  NARRATOR: So we built a new way to look.
+2:03  NARRATOR: So we built a new way to look.
 
-3.2  01 Search any place in the sky   [2:08 - 2:18]
+3.2  01 Search any place in the sky   [2:06 - 2:16]
 On screen: "Andromeda Galaxy" typed; every SPHEREx frame of it found;
   the timeline plays.
-2:09  NARRATOR: Name any place in the sky. SPHEREx Explorer finds every
+2:07  NARRATOR: Name any place in the sky. SPHEREx Explorer finds every
               image SPHEREx has taken of it, live from the public
               archive.
 
-3.3  02 Blink the frames   [2:18 - 2:26]
+3.3  02 Blink the frames   [2:16 - 2:24]
 On screen: The Iris case blinking. "9.7 hours later, it had moved".
-2:18  NARRATOR: Then it does what Tombaugh did. It blinks the frames.
-2:23  NARRATOR: And something moves.
+2:16  NARRATOR: Then it does what Tombaugh did. It blinks the frames.
+2:21  NARRATOR: And something moves.
 
-3.4  03 Find what moved / 04 Check it with NASA JPL   [2:26 - 2:40]
-On screen: Our search finds candidate C1; JPL's predicted track matches:
-  7 Iris, 0.8" away.
-2:27  NARRATOR: Its own search finds the moving point, knowing nothing
+3.4  03 Find what moved / 04 Check it with NASA JPL   [2:24 - 2:38]
+On screen: Our search's own numbers as a funnel: 1,405 sources detected,
+  99 not seen again at the same place, 10 repeated within a pointing,
+  1 lined up across three or more pointings: candidate C1. Then JPL's
+  predicted track matches: 7 Iris, 0.8" away.
+2:24  NARRATOR: Its own search finds the moving point, knowing nothing
               about asteroids. Then it checks with NASA's JPL.
-2:34  NARRATOR: It's the asteroid Iris, caught by SPHEREx in December
+2:32  NARRATOR: It's the asteroid Iris, caught by SPHEREx in December
               2025.
 
-3.5  05 Honest about wavelength   [2:40 - 2:47]
+3.5  05 Honest about wavelength   [2:38 - 2:45]
 On screen: "A difference image would be misleading here."
-2:40  NARRATOR: And it's honest. Each frame sees a different colour, so
+2:38  NARRATOR: And it's honest. Each frame sees a different colour, so
               it never mistakes colour for change.
 
-3.6  06 Surveys, a game, Bangla   [2:47 - 2:57]
+3.6  06 Where was SPHEREx?   [2:45 - 2:49]
+On screen: The app's "Where was SPHEREx for this frame?": the Earth,
+  SPHEREx's orbit and the way to the target. Height 656 km, speed
+  7.53 km/s, above 6.4° S, 122.0° E.
+2:45  NARRATOR: It even knows where SPHEREx was, for every frame.
+
+3.7  07 Surveys, a game, Bangla   [2:49 - 2:58]
 On screen: 75 years of surveys side by side; Spot the mover (a game);
   English / Bangla.
-2:48  NARRATOR: Seventy-five years of sky surveys, side by side. A game
+2:49  NARRATOR: Seventy-five years of sky surveys, side by side. A game
               that trains your eye. In English, and in Bangla.
 
-3.7  07 Ask, and see the sources   [2:57 - 3:03]
+3.8  08 Ask, and see the sources   [2:58 - 3:04]
 On screen: The assistant answers, with numbered sources.
-2:57  NARRATOR: Ask it anything. Every answer shows its sources.
+2:58  NARRATOR: Ask it anything. Every answer shows its sources.
 
 ========================================================================
-4 · THE INVITATION  (Impact)   3:03 - 3:59
+4 · THE INVITATION  (Impact)   3:04 - 3:59
 ========================================================================
 
-4.1  Stay on the discovery   [3:03 - 3:13]
+4.1  Stay on the discovery   [3:04 - 3:13]
 On screen: Iris on its track. Pull back to its orbit, then to Earth.
 3:10  NARRATOR: For most of human history, the universe was something we
               could only look at.
